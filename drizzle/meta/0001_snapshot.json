@@ -1,6 +1,6 @@
 {
-  "id": "f3d5fb56-6dbb-4ead-9d85-3b941a886e98",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "9621327f-d7ff-4084-b3f1-cb09c6e02453",
+  "prevId": "f3d5fb56-6dbb-4ead-9d85-3b941a886e98",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -583,7 +583,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'PENDING_PAYMENT'"
+        },
+        "preferred_payment_method": {
+          "name": "preferred_payment_method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -966,7 +972,18 @@
   },
   "enums": {},
   "schemas": {},
-  "sequences": {},
+  "sequences": {
+    "public.member_number_seq": {
+      "name": "member_number_seq",
+      "schema": "public",
+      "increment": "1",
+      "startWith": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775807",
+      "cache": "1",
+      "cycle": false
+    }
+  },
   "roles": {},
   "policies": {},
   "views": {},

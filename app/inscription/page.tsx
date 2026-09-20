@@ -1,28 +1,38 @@
-import { SiteFooter, SiteHeader } from "@/components/site-chrome";
-import { formatEuros } from "@/lib/constants";
-import { getAnnualFeeCents, getSeason } from "@/lib/settings";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { GROUP_NAMES, type GroupName } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/settings";
 
-import { RegistrationForm } from "./registration-form";
+import { RegistrationWizard } from "./registration-wizard";
 
 export const dynamic = "force-dynamic";
 
-export default async function InscriptionPage() {
-  const [season, feeCents] = await Promise.all([getSeason(), getAnnualFeeCents()]);
+export const metadata = {
+  title: "Inscription — Banat Sport Club",
+};
+
+export default async function InscriptionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ creneau?: string }>;
+}) {
+  const { creneau } = await searchParams;
+  const { season, annualFeeCents, groups } = await getSiteSettings();
+
+  // Créneau présélectionné depuis les cartes de la page d'accueil.
+  const defaultGroup = GROUP_NAMES.includes(creneau as GroupName) ? creneau! : "";
 
   return (
     <>
       <SiteHeader />
 
-      <main className="mx-auto max-w-3xl px-5 py-12">
-        <h1 className="text-3xl font-bold text-brand-dark">Inscription</h1>
-        <p className="mt-3 text-brand-dark/80">
-          Saison {season} — cotisation annuelle {formatEuros(feeCents)}. Le
-          paiement se fait après validation de l&apos;inscription par le bureau.
-        </p>
-
-        <div className="mt-8">
-          <RegistrationForm />
-        </div>
+      <main className="mx-auto max-w-2xl px-5 py-10 sm:py-14">
+        <RegistrationWizard
+          groups={groups}
+          season={season}
+          annualFeeCents={annualFeeCents}
+          defaultGroup={defaultGroup}
+        />
       </main>
 
       <SiteFooter />

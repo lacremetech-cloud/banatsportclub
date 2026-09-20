@@ -7,6 +7,18 @@ CREATE TABLE "attendance" (
 	"recorded_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "consents" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"member_id" uuid NOT NULL,
+	"type" text NOT NULL,
+	"accepted" boolean DEFAULT false NOT NULL,
+	"guardian_full_name" text,
+	"signature_file_key" text,
+	"document_version" text,
+	"accepted_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "documents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"member_id" uuid NOT NULL,
@@ -98,6 +110,7 @@ CREATE TABLE "settings" (
 --> statement-breakpoint
 ALTER TABLE "attendance" ADD CONSTRAINT "attendance_session_id_sessions_id_fk" FOREIGN KEY ("session_id") REFERENCES "public"."sessions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attendance" ADD CONSTRAINT "attendance_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "consents" ADD CONSTRAINT "consents_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "documents" ADD CONSTRAINT "documents_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "emergency_contacts" ADD CONSTRAINT "emergency_contacts_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guardians" ADD CONSTRAINT "guardians_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -105,6 +118,7 @@ ALTER TABLE "medical_info" ADD CONSTRAINT "medical_info_member_id_members_id_fk"
 ALTER TABLE "notes" ADD CONSTRAINT "notes_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "attendance_session_member_unique" ON "attendance" USING btree ("session_id","member_id");--> statement-breakpoint
+CREATE INDEX "consents_member_idx" ON "consents" USING btree ("member_id");--> statement-breakpoint
 CREATE INDEX "documents_member_idx" ON "documents" USING btree ("member_id");--> statement-breakpoint
 CREATE INDEX "emergency_contacts_member_idx" ON "emergency_contacts" USING btree ("member_id");--> statement-breakpoint
 CREATE INDEX "guardians_member_idx" ON "guardians" USING btree ("member_id");--> statement-breakpoint
