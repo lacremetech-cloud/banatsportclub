@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 
+import { SCHOOL_LEVEL_LABELS, type SchoolLevel } from "@/lib/constants";
+import {
+  sendBureauNotification,
+  sendRegistrationEmail,
+  type RegistrationEmailData,
+} from "@/lib/notifications";
 import { createRegistration } from "@/lib/registration";
+import { getSiteSettings } from "@/lib/settings";
 import { formatZodErrors, registrationSchema } from "@/lib/validation";
 
 /**
@@ -32,9 +39,9 @@ export async function POST(request: Request) {
     );
   }
 
+  let registration;
   try {
-    const registration = await createRegistration(parsed.data);
-    return NextResponse.json(registration, { status: 201 });
+    registration = await createRegistration(parsed.data);
   } catch (error) {
     // Jamais de message technique renvoyé à la famille : le détail va dans les logs.
     console.error("[registration]", error);
@@ -46,4 +53,39 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  // Les emails sont accessoires : une panne Resend ne doit jamais faire
+  // échouer une inscription déjà écrite en base.
+  try {
+    const { groups } = await getSiteSettings();
+    const group = groups.find((item) => item.key === registration.groupName);
+
+    const emailData: RegistrationEmailData = {
+      memberNumber: registration.memberNumber,
+      firstName: registration.firstName,
+      lastName: registration.lastName,
+      season: registration.season,
+      groupLabel: group
+        ? `${group.day} ${group.time} — ${group.place}`
+        : registration.groupName,
+      annualFeeCents: registration.annualFeeCents,
+      preferredPaymentMethod: registration.preferredPaymentMethod,
+      schoolLevelLabel:
+        SCHOOL_LEVEL_LABELS[parsed.data.schoolLevel as SchoolLevel] ??
+        parsed.data.schoolLevel,
+      guardianFirstName: parsed.data.guardianFirstName,
+      guardianLastName: parsed.data.guardianLastName,
+      guardianPhone: parsed.data.guardianPhone,
+      guardianEmail: parsed.data.guardianEmail,
+    };
+
+    await Promise.allSettled([
+      sendRegistrationEmail(emailData),
+      sendBureauNotification(emailData),
+    ]);
+  } catch (error) {
+    console.error("[registration] envoi des emails impossible :", error);
+  }
+
+  return NextResponse.json(registration, { status: 201 });
 }

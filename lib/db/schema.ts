@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -143,10 +144,19 @@ export const payments = pgTable(
     paidAt: timestamp("paid_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     notes: text("notes"),
+    // Horodatage de l'email « paiement reçu ». Sert à ne l'envoyer qu'une
+    // fois, même si le webhook du prestataire arrive plusieurs fois.
+    paidEmailSentAt: timestamp("paid_email_sent_at", { withTimezone: true }),
   },
   (t) => [
     index("payments_member_idx").on(t.memberId),
     index("payments_status_idx").on(t.status),
+    // Idempotence : un paiement prestataire ne peut donner qu'une seule
+    // ligne. Index partiel, car les saisies manuelles n'ont pas d'identifiant
+    // externe et doivent rester multiples.
+    uniqueIndex("payments_provider_payment_id_unique")
+      .on(t.providerPaymentId)
+      .where(sql`${t.providerPaymentId} is not null`),
   ],
 );
 

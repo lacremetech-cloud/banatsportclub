@@ -16,7 +16,11 @@ import {
 import type { GroupInfo } from "@/lib/settings";
 import { REGISTRATION_STEP_SCHEMAS, formatZodErrors } from "@/lib/validation";
 
-import { ConfirmationScreen, type RegistrationResult } from "./confirmation";
+import {
+  ConfirmationScreen,
+  type BankDetails,
+  type RegistrationResult,
+} from "./confirmation";
 import {
   CheckboxField,
   ChoiceCard,
@@ -126,11 +130,13 @@ export function RegistrationWizard({
   season,
   annualFeeCents,
   defaultGroup,
+  bank,
 }: {
   groups: GroupInfo[];
   season: string;
   annualFeeCents: number;
   defaultGroup: string;
+  bank: BankDetails;
 }) {
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Values>(() => emptyValues(defaultGroup));
@@ -230,7 +236,7 @@ export function RegistrationWizard({
   }
 
   if (result) {
-    return <ConfirmationScreen result={result} groups={groups} />;
+    return <ConfirmationScreen result={result} groups={groups} bank={bank} />;
   }
 
   const group = groups.find((item) => item.key === values.groupName);

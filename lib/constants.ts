@@ -79,19 +79,10 @@ export const PREFERRED_PAYMENT_METHOD_LABELS: Record<PreferredPaymentMethod, str
 
 /** Phrase affichée sous chaque option à l'étape 7 du formulaire. */
 export const PREFERRED_PAYMENT_METHOD_HINTS: Record<PreferredPaymentMethod, string> = {
-  CARD: "Paiement en ligne sécurisé.",
+  CARD: "Paiement en ligne sécurisé, dès la fin de l'inscription.",
   BANK_TRANSFER: "Les informations de virement seront affichées après l'inscription.",
   CHEQUE: "À remettre directement au club.",
   CASH: "À remettre directement au club.",
-};
-
-/** Message affiché sur l'écran de confirmation, selon le mode choisi. */
-export const PREFERRED_PAYMENT_METHOD_CONFIRMATIONS: Record<PreferredPaymentMethod, string> = {
-  CARD: "Vous pourrez régler votre cotisation en ligne. Le paiement par carte sera activé prochainement.",
-  BANK_TRANSFER:
-    "Les coordonnées bancaires et votre référence de virement vous seront communiquées.",
-  CHEQUE: "Le chèque pourra être remis directement à l'équipe Banat Sport Club.",
-  CASH: "Le règlement en espèces pourra être remis directement à l'équipe Banat Sport Club.",
 };
 
 /** Encaissements constatés par le bureau (table `payments`). */
