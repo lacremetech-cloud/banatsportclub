@@ -1,13 +1,24 @@
 import Link from "next/link";
 
 import { StatCard } from "@/components/admin/ui";
+import { getTreasurySummary } from "@/lib/accounting";
 import { formatEuros } from "@/lib/constants";
 import { getDashboardStats } from "@/lib/crm";
+import { FEE_TYPE_LABELS } from "@/lib/fees";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const stats = await getDashboardStats();
+  const [stats, treasury] = await Promise.all([
+    getDashboardStats(),
+    getTreasurySummary(),
+  ]);
+
+  // Une ligne n'apparaît que si elle concerne quelqu'un : tant que toutes les
+  // adhérentes sont au tarif standard, rien ne vient encombrer l'écran.
+  const specialFees = (["SOLIDARITY", "FREE"] as const).filter(
+    (feeType) => (stats.byFeeType[feeType] ?? 0) > 0,
+  );
 
   return (
     <div className="space-y-8">
@@ -41,7 +52,16 @@ export default async function AdminDashboard() {
           <StatCard
             label="Cotisations attendues"
             value={formatEuros(stats.expectedCents)}
-            hint={`${formatEuros(stats.annualFeeCents)} par adhérente non annulée`}
+            hint={
+              specialFees.length > 0
+                ? specialFees
+                    .map(
+                      (feeType) =>
+                        `${stats.byFeeType[feeType]} ${FEE_TYPE_LABELS[feeType].toLowerCase()}${stats.byFeeType[feeType] > 1 ? "s" : ""}`,
+                    )
+                    .join(" · ")
+                : `${formatEuros(stats.annualFeeCents)} par adhérente non annulée`
+            }
           />
           <StatCard label="Montant encaissé" value={formatEuros(stats.collectedCents)} />
           <StatCard
@@ -57,12 +77,28 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
+      <section>
+        <h2 className="mb-3 text-lg font-bold text-brand-dark">Trésorerie suivie</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard label="Recettes" value={formatEuros(treasury.incomeCents)} />
+          <StatCard label="Dépenses" value={formatEuros(treasury.expenseCents)} />
+          <StatCard label="Solde" value={formatEuros(treasury.balanceCents)} />
+        </div>
+        <p className="mt-2 text-sm text-brand-dark/60">
+          Vue d’ensemble. Le détail des mouvements est dans{" "}
+          <Link href="/admin/comptabilite" className="text-brand underline">
+            Comptabilité
+          </Link>
+          .
+        </p>
+      </section>
+
       <div className="flex flex-wrap gap-3">
         <Link href="/admin/adherentes" className="btn-ghost">
           Voir les adhérentes
         </Link>
         <Link href="/admin/paiements?filtre=unpaid-open" className="btn-ghost">
-          Voir les impayés
+          Voir le reste à encaisser
         </Link>
         <Link href="/admin/presences" className="btn-ghost">
           Saisir les présences

@@ -68,7 +68,8 @@ export async function POST(request: Request) {
       groupLabel: group
         ? `${group.day} ${group.time} — ${group.place}`
         : registration.groupName,
-      annualFeeCents: registration.annualFeeCents,
+      feeAmountCents: registration.feeAmountCents,
+      paymentInstallments: registration.paymentInstallments,
       preferredPaymentMethod: registration.preferredPaymentMethod,
       schoolLevelLabel:
         SCHOOL_LEVEL_LABELS[parsed.data.schoolLevel as SchoolLevel] ??

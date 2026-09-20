@@ -131,6 +131,7 @@ export function ChoiceCard({
   onSelect,
   title,
   lines,
+  badge,
 }: {
   name: string;
   value: string;
@@ -138,6 +139,8 @@ export function ChoiceCard({
   onSelect: (value: string) => void;
   title: string;
   lines: string[];
+  /** Petite étiquette, pour signaler le choix le plus courant. */
+  badge?: string;
 }) {
   return (
     <label
@@ -158,6 +161,11 @@ export function ChoiceCard({
       <span className="flex items-center justify-between gap-3">
         <span className="text-lg font-extrabold uppercase tracking-tight text-brand-dark">
           {title}
+          {badge && (
+            <span className="ml-2 rounded-full bg-brand px-2.5 py-1 align-middle text-[11px] font-bold uppercase tracking-wide text-white">
+              {badge}
+            </span>
+          )}
         </span>
         <span
           aria-hidden

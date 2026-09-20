@@ -7,6 +7,7 @@ import {
   type ConsentType,
 } from "./constants";
 import { db, schema } from "./db";
+import { DEFAULT_FEE_TYPE, DEFAULT_INSTALLMENTS } from "./fees";
 import { getSiteSettings } from "./settings";
 import type { RegistrationInput } from "./validation";
 
@@ -14,7 +15,9 @@ export type RegistrationResult = {
   id: string;
   memberNumber: string;
   season: string;
-  annualFeeCents: number;
+  /** Montant figé sur cette adhésion, pas le tarif général. */
+  feeAmountCents: number;
+  paymentInstallments: number;
   firstName: string;
   lastName: string;
   groupName: string;
@@ -74,6 +77,12 @@ function buildConsents(
  *
  * Aucun paiement n'est créé ici : seul le mode de règlement souhaité est
  * enregistré sur l'adhérente.
+ *
+ * La cotisation est FIGÉE à l'inscription : le tarif du jour est recopié sur
+ * la fiche. Une révision ultérieure du tarif général ne modifiera donc pas ce
+ * que cette adhérente devait pour sa saison. Toute inscription publique est
+ * STANDARD : les cotisations solidaire et offerte sont accordées par le
+ * bureau depuis le CRM, jamais choisies par la famille.
  */
 export async function createRegistration(
   input: RegistrationInput,
@@ -96,6 +105,9 @@ export async function createRegistration(
       season,
       registrationStatus: DEFAULT_REGISTRATION_STATUS,
       preferredPaymentMethod: input.preferredPaymentMethod,
+      feeType: DEFAULT_FEE_TYPE,
+      feeAmountCents: annualFeeCents,
+      paymentInstallments: input.paymentInstallments ?? DEFAULT_INSTALLMENTS,
     }),
     db.insert(schema.guardians).values({
       memberId,
@@ -132,7 +144,8 @@ export async function createRegistration(
     id: memberId,
     memberNumber,
     season,
-    annualFeeCents,
+    feeAmountCents: annualFeeCents,
+    paymentInstallments: input.paymentInstallments ?? DEFAULT_INSTALLMENTS,
     firstName: input.firstName,
     lastName: input.lastName,
     groupName: input.groupName,

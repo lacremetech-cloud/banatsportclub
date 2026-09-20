@@ -5,16 +5,22 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
+import { ACCOUNTING_TYPES } from "@/lib/accounting";
 import {
   ATTENDANCE_STATUSES,
+  EXPENSE_CATEGORIES,
   GROUP_NAMES,
   GROUPS,
+  INCOME_CATEGORIES,
   PAYMENT_METHODS,
   SCHOOL_LEVELS,
   type GroupName,
 } from "@/lib/constants";
 import { recomputeMemberStatus } from "@/lib/crm";
 import { db, schema } from "@/lib/db";
+import { FEE_TYPES, type FeeType } from "@/lib/fees";
+import { getFeeScale, getSeason } from "@/lib/settings";
+import { adminInstallmentsSchema } from "@/lib/validation";
 
 /**
  * Mutations de l'espace bureau.
@@ -38,6 +44,12 @@ function refreshMember(memberId: string) {
   revalidatePath(`/admin/adherentes/${memberId}`);
   revalidatePath("/admin/adherentes");
   revalidatePath("/admin/paiements");
+  revalidatePath("/admin/comptabilite");
+  revalidatePath("/admin");
+}
+
+function refreshAccounting() {
+  revalidatePath("/admin/comptabilite");
   revalidatePath("/admin");
 }
 
@@ -121,6 +133,81 @@ export async function deletePayment(formData: FormData): Promise<ActionResult> {
     );
 
   await recomputeMemberStatus(memberId);
+  refreshMember(memberId);
+  return { ok: true };
+}
+
+// --- Cotisation et échéancier ---------------------------------------------
+
+const feeTypeSchema = z.object({
+  memberId: z.uuid(),
+  feeType: z.enum(FEE_TYPES, { error: "Type de cotisation invalide" }),
+});
+
+/**
+ * Change le type de cotisation d'une adhérente.
+ *
+ * Le montant est pris dans le barème en vigueur (`settings`) au moment du
+ * changement, puis FIGÉ sur la fiche : une révision ultérieure du tarif ne
+ * viendra pas réécrire cette adhésion. Aucune raison n'est demandée, et aucune
+ * catégorie de situation personnelle n'est enregistrée : le bureau peut
+ * ajouter une note interne s'il le souhaite.
+ */
+export async function updateMemberFee(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = feeTypeSchema.safeParse({
+    memberId: formData.get("memberId"),
+    feeType: formData.get("feeType"),
+  });
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Cotisation invalide.");
+  }
+
+  const scale = await getFeeScale();
+  const feeType = parsed.data.feeType as FeeType;
+
+  await db
+    .update(schema.members)
+    .set({
+      feeType,
+      feeAmountCents: scale[feeType],
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.members.id, parsed.data.memberId));
+
+  // Une cotisation offerte vaut 0 : l'adhésion devient ACTIVE d'elle-même,
+  // sans qu'aucun faux paiement de 0 € ne soit créé. Une adhésion annulée,
+  // elle, reste annulée.
+  await recomputeMemberStatus(parsed.data.memberId);
+  refreshMember(parsed.data.memberId);
+  return { ok: true };
+}
+
+/**
+ * Change l'échéancier. Le 3 fois n'existe qu'ici : le formulaire public ne
+ * propose que 1 ou 2 fois.
+ */
+export async function updateMemberInstallments(
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const memberId = String(formData.get("memberId") ?? "");
+  if (!z.uuid().safeParse(memberId).success) return fail("Adhérente introuvable.");
+
+  const parsed = adminInstallmentsSchema.safeParse(formData.get("installments"));
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Échéancier invalide.");
+  }
+
+  await db
+    .update(schema.members)
+    .set({ paymentInstallments: parsed.data, updatedAt: new Date() })
+    .where(eq(schema.members.id, memberId));
+
+  // L'échéancier change ce que le bureau voit et ce que Mollie propose, jamais
+  // le statut : celui-ci dépend du total encaissé.
   refreshMember(memberId);
   return { ok: true };
 }
@@ -351,5 +438,93 @@ export async function saveAttendance(
 
   revalidatePath("/admin/presences");
   revalidatePath("/admin/adherentes");
+  return { ok: true };
+}
+
+// --- Comptabilité ---------------------------------------------------------
+
+const CATEGORIES: Record<string, readonly string[]> = {
+  INCOME: INCOME_CATEGORIES,
+  EXPENSE: EXPENSE_CATEGORIES,
+};
+
+const accountingSchema = z
+  .object({
+    type: z.enum(ACCOUNTING_TYPES, { error: "Type de mouvement invalide" }),
+    category: z.string().trim().min(1, "La catégorie est obligatoire").max(80),
+    label: z.string().trim().min(1, "L’intitulé est obligatoire").max(160),
+    amountEuros: z.coerce
+      .number({ error: "Montant invalide" })
+      .positive("Le montant doit être supérieur à 0")
+      .max(100_000, "Montant trop élevé"),
+    entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
+    paymentMethod: z.string().trim().max(40).optional(),
+    note: z.string().trim().max(500).optional(),
+  })
+  // La catégorie doit appartenir à la liste du bon type : pas de dépense
+  // rangée dans « Subvention ».
+  .refine((value) => CATEGORIES[value.type]?.includes(value.category), {
+    path: ["category"],
+    message: "Cette catégorie ne correspond pas au type de mouvement.",
+  });
+
+/** Saisie manuelle d'une recette ou d'une dépense. */
+export async function addAccountingEntry(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = accountingSchema.safeParse({
+    type: formData.get("type"),
+    category: formData.get("category"),
+    label: formData.get("label"),
+    amountEuros: formData.get("amountEuros"),
+    entryDate: formData.get("entryDate"),
+    paymentMethod: formData.get("paymentMethod") || undefined,
+    note: formData.get("note") || undefined,
+  });
+
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Mouvement invalide.");
+  }
+
+  const v = parsed.data;
+
+  await db.insert(schema.accountingEntries).values({
+    type: v.type,
+    category: v.category,
+    // Toujours positif en base : c'est `type` qui porte le sens.
+    amountCents: Math.round(v.amountEuros * 100),
+    label: v.label,
+    entryDate: v.entryDate,
+    season: await getSeason(),
+    paymentMethod: v.paymentMethod || null,
+    note: v.note || null,
+  });
+
+  refreshAccounting();
+  return { ok: true };
+}
+
+/**
+ * Supprime une saisie manuelle.
+ *
+ * Seules les lignes de `accounting_entries` sont concernées : un encaissement
+ * de cotisation n'est pas atteignable depuis ici, puisqu'il vit dans
+ * `payments`. Une erreur sur une cotisation se corrige dans le module
+ * Paiements.
+ */
+export async function deleteAccountingEntry(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+
+  const entryId = String(formData.get("entryId") ?? "");
+  if (!z.uuid().safeParse(entryId).success) return fail("Mouvement introuvable.");
+
+  const deleted = await db
+    .delete(schema.accountingEntries)
+    .where(eq(schema.accountingEntries.id, entryId))
+    .returning({ id: schema.accountingEntries.id });
+
+  if (deleted.length === 0) return fail("Mouvement introuvable.");
+
+  refreshAccounting();
   return { ok: true };
 }

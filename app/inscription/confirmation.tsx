@@ -8,16 +8,18 @@ import {
   formatEuros,
   type PreferredPaymentMethod,
 } from "@/lib/constants";
+import { installmentLabel, splitInstallments } from "@/lib/fees";
 import type { GroupInfo } from "@/lib/settings";
 
 export type RegistrationResult = {
   id: string;
   memberNumber: string;
+  paymentInstallments: number;
   firstName: string;
   lastName: string;
   groupName: string;
   preferredPaymentMethod: string;
-  annualFeeCents: number;
+  feeAmountCents: number;
   season: string;
 };
 
@@ -28,7 +30,15 @@ export type BankDetails = {
 };
 
 /** Bouton de paiement carte : le montant est calculé côté serveur. */
-function PayByCard({ memberId, amountCents }: { memberId: string; amountCents: number }) {
+function PayByCard({
+  memberId,
+  amountCents,
+  installments,
+}: {
+  memberId: string;
+  amountCents: number;
+  installments: number;
+}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,8 +75,9 @@ function PayByCard({ memberId, amountCents }: { memberId: string; amountCents: n
         </p>
       )}
       <p className="mt-3 text-sm text-brand-dark/60">
-        Paiement sécurisé. Vous pouvez aussi régler plus tard : le bureau vous
-        recontactera.
+        {installments > 1
+          ? `Paiement sécurisé. Vous réglez la première des ${installments} échéances ; la suivante pourra être payée plus tard.`
+          : "Paiement sécurisé. Vous pouvez aussi régler plus tard : le bureau vous recontactera."}
       </p>
     </div>
   );
@@ -75,10 +86,14 @@ function PayByCard({ memberId, amountCents }: { memberId: string; amountCents: n
 function BankTransfer({
   memberNumber,
   amountCents,
+  totalCents,
+  installments,
   bank,
 }: {
   memberNumber: string;
   amountCents: number;
+  totalCents: number;
+  installments: number;
   bank: BankDetails;
 }) {
   return (
@@ -86,6 +101,12 @@ function BankTransfer({
       <h3 className="font-bold text-brand-dark">Paiement par virement</h3>
       <p className="mt-2 text-brand-dark/80">
         Montant à virer : <strong>{formatEuros(amountCents)}</strong>
+        {installments > 1 && (
+          <span className="block text-sm text-brand-dark/60">
+            Première des {installments} échéances, sur {formatEuros(totalCents)}{" "}
+            au total.
+          </span>
+        )}
       </p>
 
       <div className="mt-4 rounded-xl bg-brand-light/20 px-4 py-3">
@@ -141,6 +162,10 @@ export function ConfirmationScreen({
 }) {
   const group = groups.find((item) => item.key === result.groupName);
   const method = result.preferredPaymentMethod as PreferredPaymentMethod;
+  // Le serveur recalcule toujours le montant : ce qui suit ne sert qu'à
+  // annoncer la bonne somme avant de cliquer.
+  const installments = result.paymentInstallments;
+  const firstDueCents = splitInstallments(result.feeAmountCents, installments)[0];
 
   return (
     <div>
@@ -162,7 +187,13 @@ export function ConfirmationScreen({
           label="Créneau"
           value={group ? `${group.day} ${group.time} — ${group.place}` : "—"}
         />
-        <Line label="Cotisation" value={formatEuros(result.annualFeeCents)} />
+        <Line label="Cotisation" value={formatEuros(result.feeAmountCents)} />
+        {installments > 1 && (
+          <Line
+            label="Rythme"
+            value={`${installmentLabel(installments)} — ${installments} × ${formatEuros(firstDueCents)}`}
+          />
+        )}
         <Line
           label="Mode de paiement choisi"
           value={PREFERRED_PAYMENT_METHOD_LABELS[method] ?? "—"}
@@ -172,13 +203,19 @@ export function ConfirmationScreen({
 
       <div className="mt-6">
         {method === "CARD" && (
-          <PayByCard memberId={result.id} amountCents={result.annualFeeCents} />
+          <PayByCard
+            memberId={result.id}
+            amountCents={firstDueCents}
+            installments={installments}
+          />
         )}
 
         {method === "BANK_TRANSFER" && (
           <BankTransfer
             memberNumber={result.memberNumber}
-            amountCents={result.annualFeeCents}
+            amountCents={firstDueCents}
+            totalCents={result.feeAmountCents}
+            installments={installments}
             bank={bank}
           />
         )}
@@ -189,6 +226,8 @@ export function ConfirmationScreen({
             <p className="mt-2">
               Votre adhésion sera validée par le bureau après réception du
               règlement. Merci d’indiquer {result.memberNumber} au dos du chèque.
+              {installments > 1 &&
+                ` Vous avez choisi le paiement en ${installments} fois : prévoyez ${installments} chèques de ${formatEuros(firstDueCents)}.`}
             </p>
           </div>
         )}

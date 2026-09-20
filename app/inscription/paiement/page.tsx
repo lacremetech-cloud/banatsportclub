@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { formatEuros } from "@/lib/constants";
+import { installmentLabel } from "@/lib/fees";
 import { getPaymentSummary } from "@/lib/payments";
 
 import { RetryPaymentButton } from "./retry-payment-button";
@@ -71,6 +72,8 @@ export default async function PaiementPage({
             <p className="mt-3 text-brand-dark/80">
               Il reste {formatEuros(summary.remainingCents)} à régler pour
               valider l’adhésion de {summary.firstName}.
+              {summary.installments > 1 &&
+                ` Prochaine échéance : ${formatEuros(summary.nextPaymentCents)}.`}
             </p>
           </>
         ) : (
@@ -89,17 +92,26 @@ export default async function PaiementPage({
         <dl className="card mt-6 space-y-3">
           <Line label="Adhérente" value={summary.firstName} />
           <Line label="Numéro adhérente" value={summary.memberNumber} mono />
-          <Line label="Cotisation" value={formatEuros(summary.annualFeeCents)} />
+          <Line label="Cotisation" value={formatEuros(summary.feeAmountCents)} />
           <Line label="Déjà réglé" value={formatEuros(summary.paidCents)} />
           <Line label="Reste à régler" value={formatEuros(summary.remainingCents)} />
+          {summary.installments > 1 && (
+            <Line label="Échéancier" value={installmentLabel(summary.installments)} />
+          )}
         </dl>
 
-        {!fullyPaid && (
+        {summary.nextPaymentCents > 0 && (
           <div className="mt-6">
             <RetryPaymentButton
               memberId={summary.memberId}
-              amountCents={summary.remainingCents}
+              amountCents={summary.nextPaymentCents}
             />
+            {summary.installments > 1 && (
+              <p className="mt-3 text-sm text-brand-dark/60">
+                Vous réglez l’échéance en cours. Les suivantes pourront être
+                payées plus tard.
+              </p>
+            )}
           </div>
         )}
 

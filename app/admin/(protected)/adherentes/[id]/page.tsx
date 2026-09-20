@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { SmsButton } from "@/components/admin/sms-button";
 import {
   BackLink,
   DataLine,
@@ -22,10 +23,15 @@ import {
   formatEuros,
 } from "@/lib/constants";
 import { getMemberDetail } from "@/lib/crm";
+import { FEE_TYPE_LABELS, installmentLabel, type FeeType } from "@/lib/fees";
+import { getFeeScale } from "@/lib/settings";
+import { paymentReminderSms } from "@/lib/sms";
 
 import {
   AddPaymentForm,
   CancelMembershipButton,
+  ChangeFeeButton,
+  ChangeInstallmentsButton,
   DeletePaymentButton,
   NotesSection,
 } from "./member-actions";
@@ -42,7 +48,7 @@ export default async function MemberPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const detail = await getMemberDetail(id);
+  const [detail, feeScale] = await Promise.all([getMemberDetail(id), getFeeScale()]);
   if (!detail) notFound();
 
   const {
@@ -58,7 +64,7 @@ export default async function MemberPage({
     paidCents,
     dueCents,
     paymentStatus,
-    annualFeeCents,
+    installments,
     group,
   } = detail;
 
@@ -85,7 +91,7 @@ export default async function MemberPage({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <RegistrationBadge status={member.registrationStatus} />
-            <PaymentBadge status={paymentStatus} />
+            <PaymentBadge status={paymentStatus} full />
           </div>
         </div>
 
@@ -203,14 +209,49 @@ export default async function MemberPage({
           />
         }
       >
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Cotisation" value={formatEuros(annualFeeCents)} />
-          <StatCard label="Total payé" value={formatEuros(paidCents)} />
+        <p className="text-brand-dark/80">
+          Cotisation{" "}
+          <strong className="text-brand-dark">
+            {FEE_TYPE_LABELS[member.feeType as FeeType] ?? member.feeType}
+          </strong>{" "}
+          · {installmentLabel(installments.plan)}
+        </p>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <StatCard label="Cotisation" value={formatEuros(member.feeAmountCents)} />
+          <StatCard label="Payé" value={formatEuros(paidCents)} />
           <StatCard
-            label="Reste à régler"
+            label="Reste"
             value={formatEuros(dueCents)}
             accent={dueCents > 0 && member.registrationStatus !== "CANCELLED"}
           />
+        </div>
+
+        {installments.plan > 1 && (
+          <p className="mt-4 rounded-xl bg-brand-light/15 px-4 py-3 font-semibold text-brand-dark">
+            Échéances réglées : {installments.settled} / {installments.plan}
+          </p>
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <ChangeFeeButton
+            memberId={member.id}
+            currentFeeType={member.feeType}
+            scale={feeScale}
+          />
+          <ChangeInstallmentsButton
+            memberId={member.id}
+            currentPlan={installments.plan}
+            feeAmountCents={member.feeAmountCents}
+          />
+          {dueCents > 0 && member.registrationStatus !== "CANCELLED" && (
+            <SmsButton
+              phone={guardian?.phone}
+              message={paymentReminderSms(member.firstName, dueCents)}
+              label="SMS de relance"
+              title={`Rappeler qu’il reste ${formatEuros(dueCents)} à régler`}
+            />
+          )}
         </div>
 
         <p className="mt-4 text-brand-dark/70">

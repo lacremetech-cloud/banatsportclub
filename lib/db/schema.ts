@@ -52,6 +52,14 @@ export const members = pgTable(
     // Mode de règlement choisi à l'inscription : CARD | BANK_TRANSFER | CHEQUE | CASH.
     // C'est une intention, pas un encaissement (voir la table payments).
     preferredPaymentMethod: text("preferred_payment_method"),
+    // Type de cotisation accordé par le bureau : STANDARD | SOLIDARITY | FREE.
+    // Purement administratif, jamais proposé sur le formulaire public.
+    feeType: text("fee_type").notNull().default("STANDARD"),
+    // Montant dû pour CETTE adhésion, figé à l'inscription. Changer le tarif
+    // général ne réécrit donc pas l'historique des saisons précédentes.
+    feeAmountCents: integer("fee_amount_cents").notNull().default(20000),
+    // Échéancier accepté : 1, 2 (choix public) ou 3 (accordé par le bureau).
+    paymentInstallments: integer("payment_installments").notNull().default(1),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -223,6 +231,37 @@ export const documents = pgTable(
   (t) => [index("documents_member_idx").on(t.memberId)],
 );
 
+/**
+ * Mouvements de trésorerie saisis à la main par le bureau.
+ *
+ * Cette table ne contient QUE les mouvements manuels : dons, subventions,
+ * achats, reversements. Les cotisations ne sont jamais recopiées ici — la page
+ * Comptabilité agrège `payments` encaissés et `accounting_entries`, ce qui
+ * évite une double saisie et une double source de vérité.
+ */
+export const accountingEntries = pgTable(
+  "accounting_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // INCOME | EXPENSE
+    type: text("type").notNull(),
+    category: text("category").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    label: text("label").notNull(),
+    entryDate: date("entry_date").notNull(),
+    // Saison de rattachement, pour que le filtre « saison » reste juste
+    // quand l'association passera à 2027-2028.
+    season: text("season").notNull(),
+    paymentMethod: text("payment_method"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("accounting_entries_season_idx").on(t.season),
+    index("accounting_entries_date_idx").on(t.entryDate),
+  ],
+);
+
 /** Réglages de l'association (saison en cours, montant de la cotisation...). */
 export const settings = pgTable("settings", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -237,3 +276,5 @@ export type NewConsent = typeof consents.$inferInsert;
 export type Payment = typeof payments.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
+export type AccountingEntry = typeof accountingEntries.$inferSelect;
+export type NewAccountingEntry = typeof accountingEntries.$inferInsert;

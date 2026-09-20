@@ -4,7 +4,11 @@ import {
   REGISTRATION_STATUS_LABELS,
   type RegistrationStatus,
 } from "@/lib/constants";
-import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/crm";
+import {
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_SHORT_LABELS,
+  type PaymentStatus,
+} from "@/lib/crm";
 
 /** Briques d'interface de l'espace bureau. Volontairement minimales. */
 
@@ -90,16 +94,28 @@ export function RegistrationBadge({ status }: { status: string }) {
 
 const PAYMENT_TONES: Record<PaymentStatus, string> = {
   PAID: "bg-emerald-100 text-emerald-900",
+  EXEMPT: "bg-sky-100 text-sky-900",
+  // Un échéancier suivi n'est pas un impayé : il a sa propre couleur, pour
+  // que le bureau fasse la différence d'un coup d'œil.
+  ON_SCHEDULE: "bg-indigo-100 text-indigo-900",
   PARTIAL: "bg-amber-100 text-amber-900",
-  UNPAID: "bg-brand-light/30 text-brand-dark",
+  UNPAID: "bg-rose-100 text-rose-900",
 };
 
-export function PaymentBadge({ status }: { status: PaymentStatus }) {
+export function PaymentBadge({
+  status,
+  full,
+}: {
+  status: PaymentStatus;
+  /** Libellé complet quand la place le permet (fiche adhérente). */
+  full?: boolean;
+}) {
   return (
     <span
+      title={PAYMENT_STATUS_LABELS[status]}
       className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${PAYMENT_TONES[status]}`}
     >
-      {PAYMENT_STATUS_LABELS[status]}
+      {full ? PAYMENT_STATUS_LABELS[status] : PAYMENT_STATUS_SHORT_LABELS[status]}
     </span>
   );
 }
