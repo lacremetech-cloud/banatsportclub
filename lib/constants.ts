@@ -80,6 +80,20 @@ export const ATTENDANCE_STATUS_LABELS: Record<
   late: "En retard",
 };
 
+export const CONSENT_TYPES = [
+  "INTERNAL_RULES",
+  "PARENTAL_AUTHORIZATION",
+  "IMAGE_RIGHTS",
+] as const;
+
+export type ConsentType = (typeof CONSENT_TYPES)[number];
+
+export const CONSENT_TYPE_LABELS: Record<ConsentType, string> = {
+  INTERNAL_RULES: "Règlement intérieur",
+  PARENTAL_AUTHORIZATION: "Autorisation parentale",
+  IMAGE_RIGHTS: "Droit à l'image",
+};
+
 export const SESSION_STATUSES = ["planned", "done", "cancelled"] as const;
 
 /** Valeurs par défaut, également insérées dans la table `settings` par le seed. */

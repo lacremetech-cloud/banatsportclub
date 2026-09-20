@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   index,
   integer,
@@ -85,6 +86,29 @@ export const medicalInfo = pgTable(
     healthNotes: text("health_notes"),
   },
   (t) => [index("medical_info_member_idx").on(t.memberId)],
+);
+
+/**
+ * Consentements et autorisations signés à l'inscription.
+ * `signature_file_key` pointera vers l'objet Cloudflare R2 ; il reste nullable
+ * tant que R2 n'est pas branché.
+ */
+export const consents = pgTable(
+  "consents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    accepted: boolean("accepted").notNull().default(false),
+    guardianFullName: text("guardian_full_name"),
+    signatureFileKey: text("signature_file_key"),
+    documentVersion: text("document_version"),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("consents_member_idx").on(t.memberId)],
 );
 
 export const payments = pgTable(
@@ -182,6 +206,8 @@ export const settings = pgTable("settings", {
 
 export type Member = typeof members.$inferSelect;
 export type NewMember = typeof members.$inferInsert;
+export type Consent = typeof consents.$inferSelect;
+export type NewConsent = typeof consents.$inferInsert;
 export type Payment = typeof payments.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;

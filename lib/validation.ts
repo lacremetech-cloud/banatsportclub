@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   ATTENDANCE_STATUSES,
+  CONSENT_TYPES,
   GROUP_NAMES,
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
@@ -54,6 +55,46 @@ export const registrationSchema = z.object({
 });
 
 export type RegistrationInput = z.infer<typeof registrationSchema>;
+
+/**
+ * Une ligne de la table `consents`.
+ *
+ * `signatureFileKey` reste optionnel tant que Cloudflare R2 n'est pas branché :
+ * la signature sera stockée plus tard et la clé de l'objet ajoutée ici.
+ */
+export const consentSchema = z.object({
+  memberId: z.uuid(),
+  type: z.enum(CONSENT_TYPES),
+  accepted: z.boolean().default(false),
+  guardianFullName: optionalText(160),
+  signatureFileKey: optionalText(300),
+  documentVersion: optionalText(40),
+  acceptedAt: z.coerce.date().optional(),
+});
+
+export type ConsentInput = z.infer<typeof consentSchema>;
+
+/**
+ * Consentements tels que le formulaire d'inscription les enverra.
+ *
+ * Règlement intérieur et autorisation parentale sont obligatoires : sans eux
+ * l'adhérente ne peut pas participer. Le droit à l'image reste un choix libre,
+ * accepté ou refusé, et se stocke donc en booléen.
+ */
+export const registrationConsentsSchema = z.object({
+  acceptsInternalRules: z
+    .boolean()
+    .refine((value) => value, "Le règlement intérieur doit être accepté"),
+  acceptsParentalAuthorization: z
+    .boolean()
+    .refine((value) => value, "L'autorisation parentale est obligatoire"),
+  acceptsImageRights: z.boolean().default(false),
+  guardianFullName: requiredText("Le nom du parent signataire", 160),
+  signatureFileKey: optionalText(300),
+  documentVersion: optionalText(40),
+});
+
+export type RegistrationConsentsInput = z.infer<typeof registrationConsentsSchema>;
 
 /** Enregistrement d'un paiement depuis l'admin (/api/payments). */
 export const paymentSchema = z.object({
