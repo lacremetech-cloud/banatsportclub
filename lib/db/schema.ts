@@ -3,6 +3,7 @@ import {
   date,
   index,
   integer,
+  pgSequence,
   pgTable,
   text,
   time,
@@ -22,6 +23,18 @@ import {
  * - les montants sont stockés en CENTIMES (entier) pour éviter tout arrondi.
  */
 
+/**
+ * Source des numéros d'adhérente (BSC-26-0001).
+ *
+ * Une séquence Postgres garantit l'unicité même si deux inscriptions
+ * arrivent en même temps : `nextval()` est atomique, contrairement à un
+ * SELECT COUNT(*) + 1 qui peut renvoyer deux fois la même valeur.
+ */
+export const memberNumberSeq = pgSequence("member_number_seq", {
+  startWith: 1,
+  increment: 1,
+});
+
 export const members = pgTable(
   "members",
   {
@@ -34,7 +47,10 @@ export const members = pgTable(
     schoolName: text("school_name"),
     groupName: text("group_name").notNull(),
     season: text("season").notNull(),
-    registrationStatus: text("registration_status").notNull().default("pending"),
+    registrationStatus: text("registration_status").notNull().default("PENDING_PAYMENT"),
+    // Mode de règlement choisi à l'inscription : CARD | BANK_TRANSFER | CHEQUE | CASH.
+    // C'est une intention, pas un encaissement (voir la table payments).
+    preferredPaymentMethod: text("preferred_payment_method"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

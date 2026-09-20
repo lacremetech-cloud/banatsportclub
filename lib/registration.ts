@@ -1,79 +1,134 @@
 import { randomUUID } from "node:crypto";
-import { count, eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
+import {
+  CONSENT_TYPES,
+  DEFAULT_REGISTRATION_STATUS,
+  type ConsentType,
+} from "./constants";
 import { db, schema } from "./db";
-import { getSeason } from "./settings";
+import { getSiteSettings } from "./settings";
 import type { RegistrationInput } from "./validation";
 
-/** Numéro d'adhérente lisible : BSC-2026-001. */
-function buildMemberNumber(season: string, sequence: number): string {
-  const year = season.split("-")[0];
-  return `BSC-${year}-${String(sequence).padStart(3, "0")}`;
+export type RegistrationResult = {
+  id: string;
+  memberNumber: string;
+  season: string;
+  annualFeeCents: number;
+  firstName: string;
+  lastName: string;
+  groupName: string;
+  preferredPaymentMethod: string;
+  registrationStatus: string;
+};
+
+/**
+ * Numéro d'adhérente : BSC-26-0001.
+ *
+ * Le compteur vient d'une séquence Postgres (`member_number_seq`).
+ * `nextval()` est atomique : deux inscriptions simultanées obtiennent deux
+ * valeurs différentes, là où un SELECT COUNT(*) + 1 renverrait deux fois le
+ * même numéro. La contrainte UNIQUE sur member_number reste le filet final.
+ */
+async function nextMemberNumber(season: string): Promise<string> {
+  const result = await db.execute<{ value: string }>(
+    sql`SELECT nextval('member_number_seq') AS value`,
+  );
+  const rows = Array.isArray(result) ? result : result.rows;
+  const sequence = Number(rows[0].value);
+  const shortYear = season.slice(2, 4); // "2026-2027" -> "26"
+  return `BSC-${shortYear}-${String(sequence).padStart(4, "0")}`;
+}
+
+/** Les 3 lignes de consentement, créées systématiquement. */
+function buildConsents(
+  memberId: string,
+  input: RegistrationInput,
+  documentVersion: string,
+) {
+  const accepted: Record<ConsentType, boolean> = {
+    INTERNAL_RULES: input.acceptsInternalRules,
+    PARENTAL_AUTHORIZATION: input.acceptsParentalAuthorization,
+    // Un refus est enregistré tel quel : la ligne existe avec accepted = false.
+    IMAGE_RIGHTS: input.acceptsImageRights,
+  };
+
+  return CONSENT_TYPES.map((type) => ({
+    memberId,
+    type,
+    accepted: accepted[type],
+    guardianFullName: input.guardianFullName,
+    signatureFileKey: input.signatureFileKey,
+    documentVersion,
+    acceptedAt: accepted[type] ? new Date() : null,
+  }));
 }
 
 /**
- * Crée une adhérente et ses enregistrements liés.
+ * Crée une adhérente et tous ses enregistrements liés.
  *
- * Le driver HTTP de Neon ne gère pas les transactions interactives : on génère
- * donc l'uuid côté application et on envoie les quatre INSERT via db.batch(),
- * qui les exécute dans une seule transaction.
+ * Le driver HTTP de Neon ne gère pas les transactions interactives : les
+ * INSERT partent donc via db.batch(), qui les exécute dans une seule
+ * transaction. L'uuid de l'adhérente est généré côté application pour que les
+ * clés étrangères soient connues avant l'envoi.
+ *
+ * Aucun paiement n'est créé ici : seul le mode de règlement souhaité est
+ * enregistré sur l'adhérente.
  */
-export async function createRegistration(input: RegistrationInput) {
-  const season = await getSeason();
-  const [{ total }] = await db
-    .select({ total: count() })
-    .from(schema.members)
-    .where(eq(schema.members.season, season));
+export async function createRegistration(
+  input: RegistrationInput,
+): Promise<RegistrationResult> {
+  const { season, annualFeeCents } = await getSiteSettings();
+  const memberId = randomUUID();
+  const memberNumber = await nextMemberNumber(season);
+  const consents = buildConsents(memberId, input, season);
 
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const memberId = randomUUID();
-    const memberNumber = buildMemberNumber(season, total + 1 + attempt);
+  await db.batch([
+    db.insert(schema.members).values({
+      id: memberId,
+      memberNumber,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      birthDate: input.birthDate,
+      schoolLevel: input.schoolLevel,
+      schoolName: input.schoolName,
+      groupName: input.groupName,
+      season,
+      registrationStatus: DEFAULT_REGISTRATION_STATUS,
+      preferredPaymentMethod: input.preferredPaymentMethod,
+    }),
+    db.insert(schema.guardians).values({
+      memberId,
+      firstName: input.guardianFirstName,
+      lastName: input.guardianLastName,
+      phone: input.guardianPhone,
+      email: input.guardianEmail,
+    }),
+    db.insert(schema.emergencyContacts).values({
+      memberId,
+      firstName: input.emergencyFirstName,
+      lastName: input.emergencyLastName,
+      phone: input.emergencyPhone,
+      relationship: input.emergencyRelationship,
+    }),
+    db.insert(schema.medicalInfo).values({
+      memberId,
+      allergies: input.allergies,
+      currentTreatments: input.currentTreatments,
+      healthNotes: input.healthNotes,
+    }),
+    db.insert(schema.consents).values(consents),
+  ]);
 
-    try {
-      await db.batch([
-        db.insert(schema.members).values({
-          id: memberId,
-          memberNumber,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          birthDate: input.birthDate,
-          schoolLevel: input.schoolLevel,
-          schoolName: input.schoolName,
-          groupName: input.groupName,
-          season,
-          registrationStatus: "pending",
-        }),
-        db.insert(schema.guardians).values({
-          memberId,
-          firstName: input.guardianFirstName,
-          lastName: input.guardianLastName,
-          phone: input.guardianPhone,
-          email: input.guardianEmail,
-        }),
-        db.insert(schema.emergencyContacts).values({
-          memberId,
-          firstName: input.emergencyFirstName,
-          lastName: input.emergencyLastName,
-          phone: input.emergencyPhone,
-          relationship: input.emergencyRelationship,
-        }),
-        db.insert(schema.medicalInfo).values({
-          memberId,
-          allergies: input.allergies,
-          currentTreatments: input.currentTreatments,
-          healthNotes: input.healthNotes,
-        }),
-      ]);
-
-      return { id: memberId, memberNumber, season };
-    } catch (error) {
-      // 23505 = violation de contrainte unique : le numéro vient d'être pris,
-      // on retente avec le suivant.
-      const isDuplicate =
-        error instanceof Error && "code" in error && (error as { code?: string }).code === "23505";
-      if (!isDuplicate) throw error;
-    }
-  }
-
-  throw new Error("Impossible de générer un numéro d'adhérente unique.");
+  return {
+    id: memberId,
+    memberNumber,
+    season,
+    annualFeeCents,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    groupName: input.groupName,
+    preferredPaymentMethod: input.preferredPaymentMethod,
+    registrationStatus: DEFAULT_REGISTRATION_STATUS,
+  };
 }

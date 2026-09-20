@@ -8,6 +8,13 @@
       "when": 1789915828766,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789917212409,
+      "tag": "0001_preferred_payment_and_member_number_seq",
+      "breakpoints": true
     }
   ]
 }

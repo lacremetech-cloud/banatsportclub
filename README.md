@@ -63,9 +63,13 @@ Ce script écrit dans la table `settings` :
 | Clé | Valeur |
 | --- | --- |
 | `season` | `2026-2027` |
-| `annual_fee_cents` | `15000` (150 €) |
-| `group_jeudi` | `Jeudi 18h00 – 19h30 — Dojo Montpellier` |
-| `group_dimanche` | `Dimanche 10h30 – 12h30 — Stade de Grabels` |
+| `annual_fee_cents` | `20000` (200 €) |
+| `group_jeudi_day` / `_time` / `_place` | `Jeudi` / `18h00 – 19h30` / `Dojo Montpellier` |
+| `group_dimanche_day` / `_time` / `_place` | `Dimanche` / `10h30 – 12h30` / `Stade de Grabels` |
+
+Le tarif et les créneaux affichés sur le site viennent **toujours** de cette
+table, jamais d'une constante recopiée dans un composant (voir
+`getSiteSettings()` dans `lib/settings.ts`).
 
 ### 6. Lancer le serveur
 
@@ -107,9 +111,10 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 
 | Route | Contenu |
 | --- | --- |
-| `/` | Présentation de l'association et des deux groupes |
-| `/informations` | Horaires, lieux, cotisation, documents à fournir |
-| `/inscription` | Formulaire d'inscription complet |
+| `/` | Landing page : mission, créneaux, esprit BSC, cotisation |
+| `/informations` | Horaires, lieux, cotisation, tenue, règles essentielles |
+| `/reglement` | Règlement intérieur |
+| `/inscription` | Parcours d'inscription en 8 étapes |
 
 ### Bureau (authentifié)
 
@@ -144,19 +149,32 @@ changer aussi `SESSION_SECRET` pour les invalider immédiatement.
 
 ## Base de données
 
-Dix tables, décrites dans `lib/db/schema.ts` :
+Onze tables, décrites dans `lib/db/schema.ts` :
 
-`members`, `guardians`, `emergency_contacts`, `medical_info`, `payments`,
-`sessions` (séances d'entraînement), `attendance`, `notes`, `documents`,
-`settings`.
+`members`, `guardians`, `emergency_contacts`, `medical_info`, `consents`,
+`payments`, `sessions` (séances d'entraînement), `attendance`, `notes`,
+`documents`, `settings`.
 
-Deux conventions à connaître :
+Une inscription crée en une transaction : 1 `members`, 1 `guardians`,
+1 `emergency_contacts`, 1 `medical_info` et exactement 3 `consents`
+(`INTERNAL_RULES`, `PARENTAL_AUTHORIZATION`, `IMAGE_RIGHTS` — la ligne existe
+même en cas de refus, avec `accepted = false`). L'adhérente démarre en
+`registration_status = PENDING_PAYMENT`.
+
+Quatre conventions à connaître :
 
 - **Les montants sont en centimes** (`payments.amount_cents`, `settings.annual_fee_cents`),
   pour éviter tout arrondi. `formatEuros()` dans `lib/constants.ts` les affiche.
 - **Les statuts sont de simples colonnes `text`**, validées par Zod côté
   application (`lib/validation.ts`). Faire évoluer une liste de valeurs ne
   demande donc pas de migration.
+- **`members.member_number`** (`BSC-26-0001`) est alimenté par la séquence
+  Postgres `member_number_seq`. `nextval()` est atomique : deux inscriptions
+  simultanées obtiennent deux numéros différents.
+- **`members.preferred_payment_method`** (`CARD`, `BANK_TRANSFER`, `CHEQUE`,
+  `CASH`) est le mode de règlement *souhaité*, choisi à l'inscription. Il ne
+  crée aucune ligne dans `payments` : cette table ne contient que des
+  encaissements réellement constatés par le bureau.
 
 Pour modifier le schéma : éditer `lib/db/schema.ts`, puis
 
@@ -177,9 +195,10 @@ npm run db:migrate    # l'applique
 
 ```
 app/
-  page.tsx                  Accueil
-  inscription/              Formulaire public
+  page.tsx                  Landing page publique
+  inscription/              Parcours d'inscription en 8 étapes
   informations/             Informations pratiques
+  reglement/                Règlement intérieur
   admin/
     login/                  Connexion + server actions
     (protected)/            Pages protégées (layout qui exige la session)
@@ -191,12 +210,13 @@ app/
     registration/route.ts
     payments/route.ts
     attendance/route.ts
-components/site-chrome.tsx  En-tête et pied de page publics
+components/site-header.tsx  En-tête public (menu mobile)
+components/site-footer.tsx  Pied de page public
 lib/
   auth.ts                   Session admin (cookie signé)
-  constants.ts              Groupes, classes, statuts, formatage
-  validation.ts             Schémas Zod
-  settings.ts               Lecture de la table settings
+  constants.ts              Classes, statuts, libellés, formatage
+  validation.ts             Schémas Zod (dont un par étape du formulaire)
+  settings.ts               Lecture de la table settings (tarif, créneaux)
   registration.ts           Création d'une inscription
   db/index.ts               Client Drizzle + Neon
   db/schema.ts              Schéma des tables

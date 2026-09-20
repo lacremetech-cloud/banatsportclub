@@ -1,15 +1,14 @@
 import { count, eq, sum } from "drizzle-orm";
 import Link from "next/link";
 
-import { GROUPS, formatEuros } from "@/lib/constants";
+import { formatEuros } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
-import { getAnnualFeeCents, getSeason } from "@/lib/settings";
+import { getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const season = await getSeason();
-  const feeCents = await getAnnualFeeCents();
+  const { season, annualFeeCents: feeCents, groups } = await getSiteSettings();
 
   const [byStatus, byGroup, [collected]] = await Promise.all([
     db
@@ -29,8 +28,9 @@ export default async function AdminDashboard() {
   ]);
 
   const totalMembers = byStatus.reduce((acc, row) => acc + row.total, 0);
-  const confirmed = byStatus.find((row) => row.status === "confirmed")?.total ?? 0;
-  const pending = byStatus.find((row) => row.status === "pending")?.total ?? 0;
+  const active = byStatus.find((row) => row.status === "ACTIVE")?.total ?? 0;
+  const pendingPayment =
+    byStatus.find((row) => row.status === "PENDING_PAYMENT")?.total ?? 0;
   const collectedCents = Number(collected?.total ?? 0);
 
   return (
@@ -44,24 +44,24 @@ export default async function AdminDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Adhérentes" value={String(totalMembers)} />
-        <Stat label="Inscriptions confirmées" value={String(confirmed)} />
-        <Stat label="En attente" value={String(pending)} />
+        <Stat label="Adhésions validées" value={String(active)} />
+        <Stat label="En attente de règlement" value={String(pendingPayment)} />
         <Stat label="Encaissé" value={formatEuros(collectedCents)} />
       </div>
 
       <section className="card">
         <h2 className="text-lg font-semibold text-brand-dark">Effectifs par groupe</h2>
         <ul className="mt-4 space-y-3">
-          {Object.entries(GROUPS).map(([key, group]) => (
-            <li key={key} className="flex items-baseline justify-between gap-4">
+          {groups.map((group) => (
+            <li key={group.key} className="flex items-baseline justify-between gap-4">
               <span>
-                <strong className="text-brand-dark">{group.label}</strong>
+                <strong className="text-brand-dark">{group.day}</strong>
                 <span className="ml-2 text-sm text-brand-dark/60">
-                  {group.schedule} — {group.place}
+                  {group.time} — {group.place}
                 </span>
               </span>
               <span className="text-lg font-semibold text-brand">
-                {byGroup.find((row) => row.groupName === key)?.total ?? 0}
+                {byGroup.find((row) => row.groupName === group.key)?.total ?? 0}
               </span>
             </li>
           ))}

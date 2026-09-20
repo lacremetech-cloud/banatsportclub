@@ -1,19 +1,17 @@
 import { asc, eq } from "drizzle-orm";
 
 import {
-  GROUPS,
   REGISTRATION_STATUS_LABELS,
   SCHOOL_LEVEL_LABELS,
-  type GroupName,
   formatDate,
 } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
-import { getSeason } from "@/lib/settings";
+import { getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdherentesPage() {
-  const season = await getSeason();
+  const { season, groups } = await getSiteSettings();
 
   const rows = await db
     .select({
@@ -76,7 +74,7 @@ export default async function AdherentesPage() {
                     {SCHOOL_LEVEL_LABELS[row.schoolLevel as keyof typeof SCHOOL_LEVEL_LABELS] ??
                       row.schoolLevel}
                   </Td>
-                  <Td>{GROUPS[row.groupName as GroupName]?.label ?? row.groupName}</Td>
+                  <Td>{groups.find((g) => g.key === row.groupName)?.day ?? row.groupName}</Td>
                   <Td>
                     <span className="block">{row.guardianPhone}</span>
                     <span className="block text-xs text-brand-dark/60">{row.guardianEmail}</span>

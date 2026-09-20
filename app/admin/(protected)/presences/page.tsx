@@ -2,7 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { GROUPS, GROUP_NAMES, type GroupName } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
-import { getSeason } from "@/lib/settings";
+import { getSiteSettings } from "@/lib/settings";
 
 import { AttendanceSheet } from "./attendance-sheet";
 
@@ -22,7 +22,7 @@ export default async function PresencesPage({
   searchParams: Promise<{ group?: string; date?: string }>;
 }) {
   const params = await searchParams;
-  const season = await getSeason();
+  const { season, groups } = await getSiteSettings();
 
   const groupName: GroupName = GROUP_NAMES.includes(params.group as GroupName)
     ? (params.group as GroupName)
@@ -62,12 +62,14 @@ export default async function PresencesPage({
         .where(eq(schema.attendance.sessionId, session.id))
     : [];
 
+  const currentGroup = groups.find((item) => item.key === groupName)!;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand-dark">Présences</h1>
         <p className="mt-1 text-brand-dark/70">
-          {GROUPS[groupName].schedule} — {GROUPS[groupName].place}
+          {currentGroup.day} {currentGroup.time} — {currentGroup.place}
         </p>
       </div>
 
@@ -77,9 +79,9 @@ export default async function PresencesPage({
             Groupe
           </label>
           <select id="group" name="group" className="field" defaultValue={groupName}>
-            {GROUP_NAMES.map((name) => (
-              <option key={name} value={name}>
-                {GROUPS[name].label}
+            {groups.map((item) => (
+              <option key={item.key} value={item.key}>
+                {item.day}
               </option>
             ))}
           </select>
