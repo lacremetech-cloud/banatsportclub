@@ -66,6 +66,27 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   };
 }
 
+export type BankDetails = {
+  holder: string | null;
+  iban: string | null;
+  bic: string | null;
+};
+
+/**
+ * Coordonnées bancaires pour les virements.
+ *
+ * Rien n'est codé en dur : tant que ces clés ne sont pas renseignées dans
+ * `settings`, la page de confirmation indique que le bureau les communiquera.
+ */
+export async function getBankDetails(): Promise<BankDetails> {
+  const settings = await getSettings();
+  return {
+    holder: settings.bank_holder?.trim() || null,
+    iban: settings.bank_iban?.trim() || null,
+    bic: settings.bank_bic?.trim() || null,
+  };
+}
+
 export async function getSeason(): Promise<string> {
   const settings = await getSettings();
   return settings.season ?? DEFAULT_SEASON;

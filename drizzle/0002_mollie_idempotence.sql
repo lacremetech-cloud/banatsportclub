@@ -1,0 +1,2 @@
+ALTER TABLE "payments" ADD COLUMN "paid_email_sent_at" timestamp with time zone;--> statement-breakpoint
+CREATE UNIQUE INDEX "payments_provider_payment_id_unique" ON "payments" USING btree ("provider_payment_id") WHERE "payments"."provider_payment_id" is not null;

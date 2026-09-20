@@ -96,6 +96,24 @@ export async function deletePayment(formData: FormData): Promise<ActionResult> {
   const memberId = String(formData.get("memberId") ?? "");
   if (!paymentId || !memberId) return fail("Paiement introuvable.");
 
+  const [payment] = await db
+    .select({ provider: schema.payments.provider })
+    .from(schema.payments)
+    .where(
+      and(eq(schema.payments.id, paymentId), eq(schema.payments.memberId, memberId)),
+    );
+
+  if (!payment) return fail("Paiement introuvable.");
+
+  // La suppression est réservée aux saisies manuelles du bureau. Un
+  // encaissement passé par un prestataire correspond à un vrai mouvement
+  // d'argent : le supprimer ferait mentir la comptabilité.
+  if (payment.provider) {
+    return fail(
+      "Ce paiement a été encaissé en ligne : il ne peut pas être supprimé depuis le CRM.",
+    );
+  }
+
   await db
     .delete(schema.payments)
     .where(

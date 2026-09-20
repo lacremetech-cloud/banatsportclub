@@ -243,14 +243,22 @@ export default async function MemberPage({
                   </span>
                   <span className="block text-sm text-brand-dark/60">
                     {formatDate(payment.paidAt ?? payment.createdAt)}
+                    {payment.provider ? ` · ${payment.provider}` : " · saisie manuelle"}
+                    {payment.status !== "paid" ? ` · ${payment.status}` : ""}
                     {payment.notes ? ` · ${payment.notes}` : ""}
                   </span>
                 </span>
-                <DeletePaymentButton
-                  memberId={member.id}
-                  paymentId={payment.id}
-                  amountCents={payment.amountCents}
-                />
+                {payment.provider ? (
+                  <span className="text-sm text-brand-dark/50">
+                    Encaissement en ligne
+                  </span>
+                ) : (
+                  <DeletePaymentButton
+                    memberId={member.id}
+                    paymentId={payment.id}
+                    amountCents={payment.amountCents}
+                  />
+                )}
               </li>
             ))}
           </ul>

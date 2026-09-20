@@ -88,6 +88,22 @@ Le site est sur <http://localhost:3000>, l'espace bureau sur
 | `ADMIN_EMAIL` | Email de l'identifiant commun du bureau |
 | `ADMIN_PASSWORD` | Mot de passe de l'identifiant commun du bureau |
 | `SESSION_SECRET` | Clé de signature du cookie de session, 32 caractères minimum |
+| `MOLLIE_API_KEY` | Clé API Mollie, **clé TEST tant qu'on n'est pas en production réelle** |
+| `RESEND_API_KEY` | Clé API Resend pour les emails transactionnels |
+| `RESEND_FROM_EMAIL` | Expéditeur des emails, sur un domaine vérifié dans Resend |
+| `APP_URL` | URL publique du site, pour l'URL de retour Mollie et celle du webhook |
+
+Seules les quatre premières sont obligatoires. Les quatre suivantes sont
+**optionnelles et dégradantes** : sans `MOLLIE_API_KEY`, le paiement par carte
+disparaît de l'écran de confirmation et le virement, le chèque et les espèces
+restent proposés ; sans `RESEND_API_KEY`, aucun email n'est envoyé mais
+l'inscription aboutit quand même. Une inscription n'est jamais bloquée par
+l'absence de configuration de paiement ou d'email.
+
+`MOLLIE_API_KEY`, `RESEND_API_KEY`, `SESSION_SECRET` et `DATABASE_URL` sont
+strictement serveur. Elles ne sont jamais lues depuis un composant client,
+jamais placées dans une variable `NEXT_PUBLIC_*`, et jamais écrites dans les
+logs : le code ne journalise que des identifiants Mollie et des motifs d'échec.
 
 En local ces variables vivent dans `.env.local` (jamais commité).
 Sur Vercel, les ajouter dans *Settings → Environment Variables*.
@@ -115,6 +131,7 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | `/informations` | Horaires, lieux, cotisation, tenue, règles essentielles |
 | `/reglement` | Règlement intérieur |
 | `/inscription` | Parcours d'inscription en 8 étapes |
+| `/inscription/paiement` | Retour après paiement Mollie : état réel de la cotisation |
 
 ### Bureau (authentifié)
 
@@ -133,6 +150,8 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | `/api/registration` | `POST` | Public — crée une inscription |
 | `/api/payments` | `GET`, `POST` | Bureau — liste et enregistre les paiements |
 | `/api/attendance` | `GET`, `POST` | Bureau — lit et enregistre les présences |
+| `/api/payments/mollie` | `POST` | Public — ouvre un paiement carte pour une adhérente |
+| `/api/webhooks/mollie` | `POST` | Mollie — notification de changement de statut |
 
 ## Authentification
 
@@ -146,6 +165,58 @@ valable 12 heures (`lib/auth.ts`, une centaine de lignes).
 Pour changer le mot de passe : modifier la variable d'environnement et
 redéployer. Toutes les sessions ouvertes restent valides jusqu'à expiration ;
 changer aussi `SESSION_SECRET` pour les invalider immédiatement.
+
+## Paiement en ligne et emails
+
+### Parcours
+
+1. L'adhérente termine le formulaire. L'inscription est créée en
+   `PENDING_PAYMENT` avec son numéro `BSC-26-XXXX`.
+2. Deux emails partent : confirmation à la famille, notification au bureau.
+3. L'écran de confirmation propose les quatre moyens de paiement retenus à
+   l'étape « mode de paiement » : carte, virement, chèque, espèces.
+4. Carte : le navigateur appelle `/api/payments/mollie` avec **le seul
+   identifiant de l'adhérente**. Le serveur relit la cotisation et le déjà-payé
+   en base, calcule le reste dû, crée le paiement chez Mollie et renvoie
+   l'URL de checkout.
+5. Mollie appelle `/api/webhooks/mollie`. Le serveur **rappelle Mollie** pour
+   lire le statut réel, marque l'encaissement, recalcule le statut de
+   l'adhérente et envoie l'email « paiement reçu ».
+6. L'adhérente revient sur `/inscription/paiement`, qui affiche l'état lu en
+   base — pas l'état supposé par le navigateur.
+
+### Règles de sécurité tenues par le code
+
+- La clé Mollie n'est utilisée que côté serveur (`lib/mollie.ts`). Le
+  navigateur ne voit que l'URL de checkout renvoyée par Mollie.
+- **Aucun montant n'est accepté du client.** `/api/payments/mollie` ne lit que
+  `memberId` ; le montant vient de `settings.annual_fee_cents` moins les
+  encaissements déjà enregistrés.
+- Le contenu du webhook n'est jamais une preuve de paiement : seul compte le
+  `GET /payments/:id` refait vers Mollie.
+- Idempotence : `payments.provider_payment_id` porte un index unique partiel, et
+  l'encaissement comme l'envoi de l'email se font par `UPDATE … WHERE` +
+  `RETURNING`, donc un webhook rejoué ne crée ni double encaissement ni second
+  email.
+- Une adhérente `CANCELLED` ne redevient jamais `ACTIVE` automatiquement, même
+  si un paiement arrive (`recomputeMemberStatus`).
+- Un paiement encaissé par Mollie ne peut pas être supprimé depuis le CRM
+  comme une saisie manuelle.
+- L'email au bureau ne contient **aucune donnée médicale**.
+
+### Passage en production
+
+Tant que `MOLLIE_API_KEY` commence par `test_`, aucun argent ne circule : les
+paiements se règlent depuis l'écran de test de Mollie. Le passage à une clé
+`live_` est une décision du bureau, à prendre une fois les tests terminés et le
+compte Mollie validé. Rien d'autre n'est à changer dans le code.
+
+### Webhook et Preview
+
+Le webhook doit pouvoir être appelé par Mollie depuis l'extérieur. Une Preview
+Vercel protégée par SSO renvoie une page de connexion à Mollie : le webhook
+n'arrive jamais. Pour tester le parcours complet sur une Preview, il faut
+lever la protection de déploiement sur cette URL, ou tester sur la Production.
 
 ## Base de données
 
@@ -196,10 +267,16 @@ déploie toute seule :
 
 ### Variables d'environnement
 
-Les quatre variables (`DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
-`SESSION_SECRET`) doivent être cochées pour **Production ET Preview** dans
-*Settings → Environment Variables*. Une variable absente d'un environnement y
-donne un 500 sur toutes les pages qui lisent la base.
+Les quatre variables obligatoires (`DATABASE_URL`, `ADMIN_EMAIL`,
+`ADMIN_PASSWORD`, `SESSION_SECRET`) doivent être cochées pour **Production ET
+Preview** dans *Settings → Environment Variables*. Une variable absente d'un
+environnement y donne un 500 sur toutes les pages qui lisent la base.
+
+Les variables du paiement et des emails (`MOLLIE_API_KEY`, `RESEND_API_KEY`,
+`RESEND_FROM_EMAIL`, `APP_URL`) s'ajoutent au même endroit. Les poser en type
+*Encrypted*, jamais en type *Secret* : un *Secret* rouvert affiche une valeur
+vide et l'enregistrer écrase la vraie valeur par du vide — c'est ce qui avait
+mis toutes les pages en 500 à l'étape 2.
 
 Vercel fige les variables au moment du build : après en avoir ajouté ou modifié
 une, il faut **relancer un déploiement** pour qu'elle soit prise en compte.
@@ -224,6 +301,7 @@ npm run db:migrate
 app/
   page.tsx                  Landing page publique
   inscription/              Parcours d'inscription en 8 étapes
+  inscription/paiement/     Retour après paiement Mollie
   informations/             Informations pratiques
   reglement/                Règlement intérieur
   admin/
@@ -236,7 +314,9 @@ app/
   api/
     registration/route.ts
     payments/route.ts
+    payments/mollie/route.ts   Ouverture d'un paiement carte
     attendance/route.ts
+    webhooks/mollie/route.ts   Notification Mollie (source de vérité : Mollie)
 components/site-header.tsx  En-tête public (menu mobile)
 components/site-footer.tsx  Pied de page public
 lib/
@@ -245,6 +325,12 @@ lib/
   validation.ts             Schémas Zod (dont un par étape du formulaire)
   settings.ts               Lecture de la table settings (tarif, créneaux)
   registration.ts           Création d'une inscription
+  payments.ts               Paiement Mollie : ouverture et confirmation
+  mollie.ts                 Appels à l'API Mollie
+  email.ts                  Envoi Resend (n'échoue jamais bruyamment)
+  notifications.ts          Contenu des emails transactionnels
+  app-url.ts                URL publique (retour et webhook)
+  crm.ts                    Lectures du CRM et statuts calculés
   db/index.ts               Client Drizzle + Neon
   db/schema.ts              Schéma des tables
 drizzle/                    Migrations SQL générées
@@ -255,11 +341,8 @@ scripts/seed.ts             Réglages initiaux
 
 Non implémenté pour l'instant, volontairement :
 
-- **Mollie** — paiement par carte. Les colonnes `payments.provider` et
-  `payments.provider_payment_id` sont déjà prévues.
-- **Resend** — email de confirmation d'inscription et relances de paiement.
+- **Relances** — email automatique aux inscriptions restées impayées.
+- **Qonto** — rapprochement des virements reçus avec les paiements attendus.
 - **Cloudflare R2** — certificats médicaux, autorisations parentales et
   signatures. La table `documents` (`file_key`) est déjà prévue.
-- **Qonto** — rapprochement des virements avec les paiements.
-- Changement de statut d'une inscription depuis l'admin (confirmer / annuler).
 - Export CSV de la liste des adhérentes.
