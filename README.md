@@ -185,11 +185,38 @@ npm run db:migrate    # l'applique
 
 ## Déploiement sur Vercel
 
-1. Importer le dépôt sur [vercel.com](https://vercel.com).
-2. Ajouter les quatre variables d'environnement.
-3. Déployer — Vercel détecte Next.js automatiquement.
-4. Appliquer les migrations depuis son poste (`npm run db:migrate`) en pointant
-   `DATABASE_URL` sur la base de production.
+Le dépôt est connecté au projet Vercel `banatsportclub`. L'intégration GitHub
+déploie toute seule :
+
+| Évènement | Résultat |
+| --- | --- |
+| push sur une branche | Preview Deployment |
+| pull request | URL de Preview commentée sur la PR |
+| push sur la branche de production | Production Deployment |
+
+### Variables d'environnement
+
+Les quatre variables (`DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
+`SESSION_SECRET`) doivent être cochées pour **Production ET Preview** dans
+*Settings → Environment Variables*. Une variable absente d'un environnement y
+donne un 500 sur toutes les pages qui lisent la base.
+
+Vercel fige les variables au moment du build : après en avoir ajouté ou modifié
+une, il faut **relancer un déploiement** pour qu'elle soit prise en compte.
+Un simple enregistrement dans l'interface ne suffit pas.
+
+Preview et Production partagent aujourd'hui la même base Neon. C'est un choix
+de phase de développement, à revoir dès qu'il y aura de vraies adhérentes :
+une Preview peut écrire dans la base.
+
+### Migrations
+
+Elles ne sont pas jouées par le build. Les appliquer depuis son poste en
+pointant `DATABASE_URL` sur la base visée :
+
+```bash
+npm run db:migrate
+```
 
 ## Structure
 
