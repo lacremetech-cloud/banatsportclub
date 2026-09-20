@@ -1,103 +1,136 @@
-import { asc, eq } from "drizzle-orm";
+import Link from "next/link";
 
+import { EmptyState, PaymentBadge, RegistrationBadge } from "@/components/admin/ui";
 import {
+  REGISTRATION_STATUSES,
   REGISTRATION_STATUS_LABELS,
   SCHOOL_LEVEL_LABELS,
-  formatDate,
+  formatEuros,
 } from "@/lib/constants";
-import { db, schema } from "@/lib/db";
+import { listMembers } from "@/lib/crm";
 import { getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdherentesPage() {
-  const { season, groups } = await getSiteSettings();
+/**
+ * Les filtres passent par l'URL, dans un simple formulaire GET : ils sont
+ * combinables, partageables, et fonctionnent sans JavaScript.
+ */
+export default async function AdherentesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; groupe?: string; statut?: string }>;
+}) {
+  const params = await searchParams;
+  const { groups } = await getSiteSettings();
 
-  const rows = await db
-    .select({
-      id: schema.members.id,
-      memberNumber: schema.members.memberNumber,
-      firstName: schema.members.firstName,
-      lastName: schema.members.lastName,
-      birthDate: schema.members.birthDate,
-      schoolLevel: schema.members.schoolLevel,
-      schoolName: schema.members.schoolName,
-      groupName: schema.members.groupName,
-      registrationStatus: schema.members.registrationStatus,
-      guardianPhone: schema.guardians.phone,
-      guardianEmail: schema.guardians.email,
-    })
-    .from(schema.members)
-    .leftJoin(schema.guardians, eq(schema.guardians.memberId, schema.members.id))
-    .where(eq(schema.members.season, season))
-    .orderBy(asc(schema.members.lastName), asc(schema.members.firstName));
+  const search = params.q?.trim() ?? "";
+  const group = groups.some((g) => g.key === params.groupe) ? params.groupe! : "";
+  const status = REGISTRATION_STATUSES.includes(params.statut as never)
+    ? params.statut!
+    : "";
+
+  const { members, season } = await listMembers({ search, group, status });
 
   return (
     <div className="space-y-6">
-      <div>
+      <header>
         <h1 className="text-2xl font-bold text-brand-dark">Adhérentes</h1>
         <p className="mt-1 text-brand-dark/70">
-          {rows.length} inscrite{rows.length > 1 ? "s" : ""} pour la saison {season}.
+          {members.length} résultat{members.length > 1 ? "s" : ""} — saison {season}
         </p>
-      </div>
+      </header>
 
-      {rows.length === 0 ? (
-        <p className="card text-brand-dark/70">Aucune inscription pour le moment.</p>
-      ) : (
-        <div className="overflow-x-auto rounded-2xl border border-brand-light/40 bg-white">
-          <table className="w-full min-w-[46rem] text-left text-sm">
-            <thead className="bg-brand-light/15 text-brand-dark">
-              <tr>
-                <Th>Numéro</Th>
-                <Th>Nom</Th>
-                <Th>Naissance</Th>
-                <Th>Classe</Th>
-                <Th>Groupe</Th>
-                <Th>Contact</Th>
-                <Th>Statut</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-brand-light/30 align-top">
-                  <Td className="font-mono text-xs">{row.memberNumber}</Td>
-                  <Td>
-                    <span className="font-medium text-brand-dark">
-                      {row.firstName} {row.lastName}
-                    </span>
-                    {row.schoolName && (
-                      <span className="block text-xs text-brand-dark/60">{row.schoolName}</span>
-                    )}
-                  </Td>
-                  <Td>{formatDate(row.birthDate)}</Td>
-                  <Td>
-                    {SCHOOL_LEVEL_LABELS[row.schoolLevel as keyof typeof SCHOOL_LEVEL_LABELS] ??
-                      row.schoolLevel}
-                  </Td>
-                  <Td>{groups.find((g) => g.key === row.groupName)?.day ?? row.groupName}</Td>
-                  <Td>
-                    <span className="block">{row.guardianPhone}</span>
-                    <span className="block text-xs text-brand-dark/60">{row.guardianEmail}</span>
-                  </Td>
-                  <Td>
-                    {REGISTRATION_STATUS_LABELS[
-                      row.registrationStatus as keyof typeof REGISTRATION_STATUS_LABELS
-                    ] ?? row.registrationStatus}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <form
+        method="get"
+        className="grid gap-3 rounded-2xl border border-brand-light/40 bg-white p-4 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end"
+      >
+        <div>
+          <label className="label" htmlFor="q">
+            Rechercher
+          </label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            defaultValue={search}
+            placeholder="Nom, prénom ou numéro"
+            className="field"
+          />
         </div>
+        <div>
+          <label className="label" htmlFor="groupe">
+            Créneau
+          </label>
+          <select id="groupe" name="groupe" defaultValue={group} className="field">
+            <option value="">Toutes</option>
+            {groups.map((item) => (
+              <option key={item.key} value={item.key}>
+                {item.day}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="statut">
+            Statut
+          </label>
+          <select id="statut" name="statut" defaultValue={status} className="field">
+            <option value="">Tous</option>
+            {REGISTRATION_STATUSES.map((value) => (
+              <option key={value} value={value}>
+                {REGISTRATION_STATUS_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn h-[46px] w-full sm:w-auto">
+          Filtrer
+        </button>
+      </form>
+
+      {members.length === 0 ? (
+        <EmptyState>Aucune adhérente ne correspond à cette recherche.</EmptyState>
+      ) : (
+        <ul className="space-y-3">
+          {members.map((member) => {
+            const group = groups.find((item) => item.key === member.groupName);
+            return (
+              <li key={member.id}>
+                <Link
+                  href={`/admin/adherentes/${member.id}`}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-light/40 bg-white p-4 transition hover:border-brand"
+                >
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-brand-dark">
+                      {member.firstName} {member.lastName.toUpperCase()}
+                    </span>
+                    <span className="mt-0.5 block text-sm text-brand-dark/60">
+                      {SCHOOL_LEVEL_LABELS[
+                        member.schoolLevel as keyof typeof SCHOOL_LEVEL_LABELS
+                      ] ?? member.schoolLevel}{" "}
+                      · {group?.day ?? member.groupName}
+                    </span>
+                    <span className="mt-0.5 block font-mono text-xs text-brand-dark/50">
+                      {member.memberNumber}
+                    </span>
+                  </span>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <RegistrationBadge status={member.registrationStatus} />
+                    <PaymentBadge status={member.paymentStatus} />
+                    {member.dueCents > 0 &&
+                      member.registrationStatus !== "CANCELLED" && (
+                        <span className="text-sm font-medium text-brand-dark/70">
+                          reste {formatEuros(member.dueCents)}
+                        </span>
+                      )}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return <th className="px-4 py-3 font-semibold">{children}</th>;
-}
-
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 ${className}`}>{children}</td>;
 }
