@@ -52,7 +52,7 @@ export const memberStepSchema = z.object({
     .min(1, "La date de naissance est obligatoire")
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date de naissance invalide"),
   schoolLevel: z.enum(SCHOOL_LEVELS, { error: "Merci de choisir une classe" }),
-  schoolName: requiredText("L'établissement scolaire", 160),
+  schoolName: requiredText("L’établissement scolaire", 160),
 });
 
 /** Étape 2 — le créneau. */
@@ -68,13 +68,53 @@ export const guardianStepSchema = z.object({
   guardianEmail: z.email("Adresse email invalide"),
 });
 
-/** Étape 4 — le contact d'urgence. */
-export const emergencyStepSchema = z.object({
-  emergencyFirstName: requiredText("Le prénom du contact d'urgence"),
-  emergencyLastName: requiredText("Le nom du contact d'urgence"),
+/**
+ * Étape 4 — le second numéro à joindre.
+ *
+ * Le club doit toujours disposer de DEUX numéros : celui du responsable légal
+ * (étape 3) et celui-ci. Dans le cas le plus courant c'est le même parent qui
+ * donne un second numéro, d'où la case à cocher — elle évite de resaisir une
+ * identité déjà connue, sans jamais faire l'économie du deuxième numéro.
+ */
+const emergencyStepShape = {
+  emergencySameAsGuardian: z.boolean(),
   emergencyPhone: phone,
-  emergencyRelationship: requiredText("Le lien avec l'adhérente", 80),
-});
+  // Obligatoires seulement si le contact est une autre personne.
+  emergencyFirstName: z.string().trim().max(120).optional(),
+  emergencyLastName: z.string().trim().max(120).optional(),
+  emergencyRelationship: z.string().trim().max(80).optional(),
+};
+
+type EmergencyValues = {
+  emergencySameAsGuardian: boolean;
+  emergencyFirstName?: string;
+  emergencyLastName?: string;
+  emergencyRelationship?: string;
+};
+
+function checkEmergencyContact(values: EmergencyValues, ctx: z.RefinementCtx) {
+  if (values.emergencySameAsGuardian) return;
+
+  const required: [keyof EmergencyValues, string][] = [
+    ["emergencyFirstName", "Le prénom du contact d’urgence"],
+    ["emergencyLastName", "Le nom du contact d’urgence"],
+    ["emergencyRelationship", "Le lien avec l’adhérente"],
+  ];
+
+  for (const [field, label] of required) {
+    if (!String(values[field] ?? "").trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: [field],
+        message: `${label} est obligatoire`,
+      });
+    }
+  }
+}
+
+export const emergencyStepSchema = z
+  .object(emergencyStepShape)
+  .superRefine(checkEmergencyContact);
 
 /** Étape 5 — la fiche sanitaire. Tout est facultatif. */
 export const medicalStepSchema = z.object({
@@ -96,7 +136,7 @@ export const consentsStepSchema = z.object({
     .refine((value) => value, "Le règlement intérieur doit être accepté"),
   acceptsParentalAuthorization: z
     .boolean()
-    .refine((value) => value, "L'autorisation parentale est obligatoire"),
+    .refine((value) => value, "L’autorisation parentale est obligatoire"),
   acceptsImageRights: z.boolean(),
   guardianFullName: requiredText("Le nom du parent signataire", 160),
   // Renseigné plus tard, quand la signature digitale et R2 seront en place.
@@ -115,11 +155,11 @@ export const registrationSchema = z.object({
   ...memberStepSchema.shape,
   ...groupStepSchema.shape,
   ...guardianStepSchema.shape,
-  ...emergencyStepSchema.shape,
+  ...emergencyStepShape,
   ...medicalStepSchema.shape,
   ...consentsStepSchema.shape,
   ...paymentStepSchema.shape,
-});
+}).superRefine(checkEmergencyContact);
 
 export type RegistrationInput = z.infer<typeof registrationSchema>;
 

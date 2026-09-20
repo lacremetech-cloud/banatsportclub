@@ -180,6 +180,38 @@ export function ChoiceCard({
   );
 }
 
+/** Case à cocher simple, pour les choix de parcours (pas les consentements). */
+export function CheckboxField({
+  name,
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  name: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  hint?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-brand-light/40 bg-white p-4">
+      <label className="flex cursor-pointer gap-3">
+        <input
+          id={name}
+          name={name}
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+          className="mt-0.5 h-6 w-6 shrink-0 accent-brand"
+        />
+        <span className="font-medium text-brand-dark">{label}</span>
+      </label>
+      {hint && <p className="mt-2 pl-9 text-sm text-brand-dark/60">{hint}</p>}
+    </div>
+  );
+}
+
 export function ConsentCheckbox({
   name,
   checked,

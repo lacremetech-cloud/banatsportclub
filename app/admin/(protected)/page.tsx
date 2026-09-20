@@ -1,90 +1,73 @@
-import { count, eq, sum } from "drizzle-orm";
 import Link from "next/link";
 
+import { StatCard } from "@/components/admin/ui";
 import { formatEuros } from "@/lib/constants";
-import { db, schema } from "@/lib/db";
-import { getSiteSettings } from "@/lib/settings";
+import { getDashboardStats } from "@/lib/crm";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const { season, annualFeeCents: feeCents, groups } = await getSiteSettings();
-
-  const [byStatus, byGroup, [collected]] = await Promise.all([
-    db
-      .select({ status: schema.members.registrationStatus, total: count() })
-      .from(schema.members)
-      .where(eq(schema.members.season, season))
-      .groupBy(schema.members.registrationStatus),
-    db
-      .select({ groupName: schema.members.groupName, total: count() })
-      .from(schema.members)
-      .where(eq(schema.members.season, season))
-      .groupBy(schema.members.groupName),
-    db
-      .select({ total: sum(schema.payments.amountCents) })
-      .from(schema.payments)
-      .where(eq(schema.payments.status, "paid")),
-  ]);
-
-  const totalMembers = byStatus.reduce((acc, row) => acc + row.total, 0);
-  const active = byStatus.find((row) => row.status === "ACTIVE")?.total ?? 0;
-  const pendingPayment =
-    byStatus.find((row) => row.status === "PENDING_PAYMENT")?.total ?? 0;
-  const collectedCents = Number(collected?.total ?? 0);
+  const stats = await getDashboardStats();
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-brand-dark">Saison {season}</h1>
-        <p className="mt-1 text-brand-dark/70">
-          Cotisation annuelle : {formatEuros(feeCents)}
+      <header>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">
+          Banat Sport Club
         </p>
-      </div>
+        <h1 className="mt-1 text-2xl font-bold text-brand-dark sm:text-3xl">
+          Saison {stats.season}
+        </h1>
+      </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Adhérentes" value={String(totalMembers)} />
-        <Stat label="Adhésions validées" value={String(active)} />
-        <Stat label="En attente de règlement" value={String(pendingPayment)} />
-        <Stat label="Encaissé" value={formatEuros(collectedCents)} />
-      </div>
-
-      <section className="card">
-        <h2 className="text-lg font-semibold text-brand-dark">Effectifs par groupe</h2>
-        <ul className="mt-4 space-y-3">
-          {groups.map((group) => (
-            <li key={group.key} className="flex items-baseline justify-between gap-4">
-              <span>
-                <strong className="text-brand-dark">{group.day}</strong>
-                <span className="ml-2 text-sm text-brand-dark/60">
-                  {group.time} — {group.place}
-                </span>
-              </span>
-              <span className="text-lg font-semibold text-brand">
-                {byGroup.find((row) => row.groupName === group.key)?.total ?? 0}
-              </span>
-            </li>
+      <section>
+        <h2 className="mb-3 text-lg font-bold text-brand-dark">Adhérentes</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard label="Total inscrites" value={String(stats.totalMembers)} accent />
+          {stats.groups.map((group) => (
+            <StatCard
+              key={group.key}
+              label={group.day}
+              value={String(stats.byGroup[group.key] ?? 0)}
+              hint={`${group.time} — ${group.place}`}
+            />
           ))}
-        </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-bold text-brand-dark">Paiements</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Cotisations attendues"
+            value={formatEuros(stats.expectedCents)}
+            hint={`${formatEuros(stats.annualFeeCents)} par adhérente non annulée`}
+          />
+          <StatCard label="Montant encaissé" value={formatEuros(stats.collectedCents)} />
+          <StatCard
+            label="Reste à encaisser"
+            value={formatEuros(stats.remainingCents)}
+            accent={stats.remainingCents > 0}
+          />
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <StatCard label="Adhésions validées" value={String(stats.activeCount)} />
+          <StatCard label="En attente de règlement" value={String(stats.pendingCount)} />
+          <StatCard label="Annulées" value={String(stats.cancelledCount)} />
+        </div>
       </section>
 
       <div className="flex flex-wrap gap-3">
         <Link href="/admin/adherentes" className="btn-ghost">
           Voir les adhérentes
         </Link>
+        <Link href="/admin/paiements?filtre=unpaid-open" className="btn-ghost">
+          Voir les impayés
+        </Link>
         <Link href="/admin/presences" className="btn-ghost">
           Saisir les présences
         </Link>
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="card">
-      <p className="text-sm text-brand-dark/60">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-brand-dark">{value}</p>
     </div>
   );
 }

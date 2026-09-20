@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
+import { saveAttendance } from "@/app/admin/(protected)/actions";
 import { ATTENDANCE_STATUSES, ATTENDANCE_STATUS_LABELS } from "@/lib/constants";
 
 type MemberRow = {
@@ -12,77 +13,82 @@ type MemberRow = {
   lastName: string;
 };
 
+const TONES: Record<string, string> = {
+  present: "bg-emerald-600 text-white border-emerald-600",
+  absent: "bg-brand text-white border-brand",
+  excused: "bg-amber-500 text-white border-amber-500",
+  late: "bg-brand-dark text-white border-brand-dark",
+};
+
+/**
+ * Feuille de présence pensée pour le téléphone : quatre gros boutons par
+ * adhérente, aucun menu déroulant, un compteur visible en permanence.
+ */
 export function AttendanceSheet({
-  groupName,
-  sessionDate,
+  sessionId,
   members,
   existing,
 }: {
-  groupName: string;
-  sessionDate: string;
+  sessionId: string;
   members: MemberRow[];
   existing: Record<string, string>;
 }) {
   const router = useRouter();
-  const [statuses, setStatuses] = useState<Record<string, string>>(() =>
-    Object.fromEntries(members.map((member) => [member.id, existing[member.id] ?? "present"])),
-  );
-  const [pending, setPending] = useState(false);
+  const [statuses, setStatuses] = useState<Record<string, string>>(() => ({ ...existing }));
   const [message, setMessage] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  async function save() {
-    setPending(true);
-    setMessage(null);
-
-    const response = await fetch("/api/attendance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        groupName,
-        sessionDate,
-        entries: members.map((member) => ({
-          memberId: member.id,
-          status: statuses[member.id],
-        })),
-      }),
-    });
-
-    setPending(false);
-    setMessage(response.ok ? "Feuille de présence enregistrée." : "Enregistrement impossible.");
-    if (response.ok) router.refresh();
-  }
+  const marked = members.filter((member) => statuses[member.id]).length;
+  const present = members.filter(
+    (member) => statuses[member.id] === "present" || statuses[member.id] === "late",
+  ).length;
 
   if (members.length === 0) {
-    return <p className="card text-brand-dark/70">Aucune adhérente dans ce groupe.</p>;
+    return (
+      <p className="rounded-2xl border border-brand-light/40 bg-white p-5 text-brand-dark/70">
+        Aucune adhérente avec une adhésion validée dans ce groupe. La feuille de
+        présence ne liste que les adhésions ACTIVE.
+      </p>
+    );
   }
 
   return (
     <div className="space-y-4">
-      <ul className="divide-y divide-brand-light/30 overflow-hidden rounded-2xl border border-brand-light/40 bg-white">
+      <p className="sticky top-0 z-10 rounded-2xl bg-brand-light/25 px-4 py-3 text-lg font-semibold text-brand-dark">
+        Présentes : {present} / {members.length}
+      </p>
+
+      <ul className="space-y-3">
         {members.map((member) => (
-          <li key={member.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <span>
-              <span className="font-medium text-brand-dark">
-                {member.lastName} {member.firstName}
-              </span>
-              <span className="block font-mono text-xs text-brand-dark/60">
-                {member.memberNumber}
-              </span>
-            </span>
-            <select
-              className="field w-auto min-w-40"
-              value={statuses[member.id]}
-              onChange={(event) =>
-                setStatuses((current) => ({ ...current, [member.id]: event.target.value }))
-              }
-              aria-label={`Présence de ${member.firstName} ${member.lastName}`}
-            >
-              {ATTENDANCE_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {ATTENDANCE_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
+          <li
+            key={member.id}
+            className="rounded-2xl border border-brand-light/40 bg-white p-4"
+          >
+            <p className="font-semibold text-brand-dark">
+              {member.firstName} {member.lastName.toUpperCase()}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {ATTENDANCE_STATUSES.map((status) => {
+                const active = statuses[member.id] === status;
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() =>
+                      setStatuses((current) => ({ ...current, [member.id]: status }))
+                    }
+                    className={`min-h-12 rounded-xl border-2 px-2 py-3 text-sm font-semibold transition ${
+                      active
+                        ? TONES[status]
+                        : "border-brand-light/50 bg-white text-brand-dark hover:border-brand"
+                    }`}
+                  >
+                    {ATTENDANCE_STATUS_LABELS[status]}
+                  </button>
+                );
+              })}
+            </div>
           </li>
         ))}
       </ul>
@@ -91,7 +97,26 @@ export function AttendanceSheet({
         <p className="rounded-xl bg-brand-light/25 px-4 py-3 text-brand-dark">{message}</p>
       )}
 
-      <button type="button" className="btn" onClick={save} disabled={pending}>
+      <button
+        type="button"
+        className="btn w-full"
+        disabled={pending || marked === 0}
+        onClick={() =>
+          startTransition(async () => {
+            setMessage(null);
+            const entries = members
+              .filter((member) => statuses[member.id])
+              .map((member) => ({ memberId: member.id, status: statuses[member.id] }));
+            const result = await saveAttendance(sessionId, entries);
+            setMessage(
+              result.ok
+                ? "Feuille de présence enregistrée."
+                : result.message,
+            );
+            if (result.ok) router.refresh();
+          })
+        }
+      >
         {pending ? "Enregistrement…" : "Enregistrer la feuille"}
       </button>
     </div>

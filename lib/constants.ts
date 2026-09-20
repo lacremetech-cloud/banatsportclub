@@ -138,6 +138,10 @@ export const CONSENT_TYPE_LABELS: Record<ConsentType, string> = {
   IMAGE_RIGHTS: "Droit à l'image",
 };
 
+/** Auteurs proposés pour les notes internes. Le champ reste libre. */
+export const NOTE_AUTHORS = ["Bureau BSC", "Rayyan", "Imen", "Dawssen"] as const;
+export const DEFAULT_NOTE_AUTHOR = "Bureau BSC";
+
 /** Contact public de l'association. */
 export const CLUB_EMAIL = "banatsportclub@gmail.com";
 
