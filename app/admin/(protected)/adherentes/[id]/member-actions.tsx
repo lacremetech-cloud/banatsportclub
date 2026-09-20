@@ -9,6 +9,8 @@ import {
   cancelMembership,
   deleteNote,
   deletePayment,
+  updateMemberFee,
+  updateMemberInstallments,
 } from "@/app/admin/(protected)/actions";
 import {
   DEFAULT_NOTE_AUTHOR,
@@ -17,6 +19,14 @@ import {
   PAYMENT_METHOD_LABELS,
   formatEuros,
 } from "@/lib/constants";
+import {
+  FEE_TYPES,
+  FEE_TYPE_LABELS,
+  INSTALLMENT_PLANS,
+  installmentLabel,
+  splitInstallments,
+  type FeeType,
+} from "@/lib/fees";
 
 /** Actions de la fiche adhérente. Confirmations natives, pas de modale maison. */
 
@@ -320,5 +330,190 @@ export function CancelMembershipButton({ memberId }: { memberId: string }) {
     >
       {pending ? "…" : "Annuler l’adhésion"}
     </button>
+  );
+}
+
+/**
+ * Changement du type de cotisation.
+ *
+ * Trois choix, un montant annoncé sous chacun, une confirmation, et c'est
+ * tout : ni motif obligatoire, ni catégorie de situation personnelle.
+ */
+export function ChangeFeeButton({
+  memberId,
+  currentFeeType,
+  scale,
+}: {
+  memberId: string;
+  currentFeeType: string;
+  scale: Record<FeeType, number>;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  if (!open) {
+    return (
+      <button type="button" className="btn-ghost" onClick={() => setOpen(true)}>
+        Modifier la cotisation
+      </button>
+    );
+  }
+
+  function apply(feeType: FeeType) {
+    if (
+      !confirm(
+        `Passer cette adhérente en cotisation ${FEE_TYPE_LABELS[feeType].toLowerCase()} ? Montant dû : ${formatEuros(scale[feeType])}.`,
+      )
+    )
+      return;
+
+    startTransition(async () => {
+      setError(null);
+      const formData = new FormData();
+      formData.set("memberId", memberId);
+      formData.set("feeType", feeType);
+      const result = await updateMemberFee(formData);
+      if (result.ok) {
+        setOpen(false);
+        router.refresh();
+      } else {
+        setError(result.message);
+      }
+    });
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl bg-brand-light/10 p-4">
+      <p className="font-semibold text-brand-dark">Type de cotisation</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {FEE_TYPES.map((feeType) => {
+          const active = currentFeeType === feeType;
+          return (
+            <button
+              key={feeType}
+              type="button"
+              disabled={pending}
+              aria-pressed={active}
+              onClick={() => apply(feeType)}
+              className={`min-h-14 rounded-xl border-2 px-3 py-3 text-left transition ${
+                active
+                  ? "border-brand bg-brand text-white"
+                  : "border-brand-light/50 bg-white text-brand-dark hover:border-brand"
+              }`}
+            >
+              <span className="block text-sm font-bold">{FEE_TYPE_LABELS[feeType]}</span>
+              <span className="block text-sm opacity-80">
+                {formatEuros(scale[feeType])}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <ErrorLine message={error} />
+      <button
+        type="button"
+        className="mt-3 text-sm font-semibold text-brand-dark/60 underline"
+        onClick={() => setOpen(false)}
+        disabled={pending}
+      >
+        Fermer
+      </button>
+    </div>
+  );
+}
+
+/** Échéancier. Le 3 fois n'apparaît qu'ici, jamais sur le site public. */
+export function ChangeInstallmentsButton({
+  memberId,
+  currentPlan,
+  feeAmountCents,
+}: {
+  memberId: string;
+  currentPlan: number;
+  feeAmountCents: number;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  if (!open) {
+    return (
+      <button type="button" className="btn-ghost" onClick={() => setOpen(true)}>
+        Modifier l’échéancier
+      </button>
+    );
+  }
+
+  function apply(plan: number) {
+    const parts = splitInstallments(feeAmountCents, plan);
+    if (
+      !confirm(
+        `Passer cette adhérente en ${installmentLabel(plan).toLowerCase()} ? Échéances : ${parts
+          .map((part) => formatEuros(part))
+          .join(" + ")}.`,
+      )
+    )
+      return;
+
+    startTransition(async () => {
+      setError(null);
+      const formData = new FormData();
+      formData.set("memberId", memberId);
+      formData.set("installments", String(plan));
+      const result = await updateMemberInstallments(formData);
+      if (result.ok) {
+        setOpen(false);
+        router.refresh();
+      } else {
+        setError(result.message);
+      }
+    });
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl bg-brand-light/10 p-4">
+      <p className="font-semibold text-brand-dark">Nombre d’échéances</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {INSTALLMENT_PLANS.map((plan) => {
+          const active = currentPlan === plan;
+          const parts = splitInstallments(feeAmountCents, plan);
+          return (
+            <button
+              key={plan}
+              type="button"
+              disabled={pending}
+              aria-pressed={active}
+              onClick={() => apply(plan)}
+              className={`min-h-14 rounded-xl border-2 px-3 py-3 text-left transition ${
+                active
+                  ? "border-brand bg-brand text-white"
+                  : "border-brand-light/50 bg-white text-brand-dark hover:border-brand"
+              }`}
+            >
+              <span className="block text-sm font-bold">
+                {plan === 1 ? "1 fois" : `${plan} fois`}
+              </span>
+              <span className="block text-sm opacity-80">
+                {plan === 1
+                  ? formatEuros(parts[0])
+                  : parts.map((part) => formatEuros(part)).join(" + ")}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <ErrorLine message={error} />
+      <button
+        type="button"
+        className="mt-3 text-sm font-semibold text-brand-dark/60 underline"
+        onClick={() => setOpen(false)}
+        disabled={pending}
+      >
+        Fermer
+      </button>
+    </div>
   );
 }

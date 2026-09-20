@@ -142,6 +142,7 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | `/admin/adherentes` | Liste des adhérentes de la saison |
 | `/admin/paiements` | Historique des paiements + saisie manuelle |
 | `/admin/presences` | Feuille de présence par groupe et par date |
+| `/admin/comptabilite` | Recettes, dépenses, solde et mouvements de la saison |
 
 ### API
 
@@ -165,6 +166,109 @@ valable 12 heures (`lib/auth.ts`, une centaine de lignes).
 Pour changer le mot de passe : modifier la variable d'environnement et
 redéployer. Toutes les sessions ouvertes restent valides jusqu'à expiration ;
 changer aussi `SESSION_SECRET` pour les invalider immédiatement.
+
+## Cotisations, échéanciers et SMS
+
+### Trois cotisations, un montant figé
+
+Le bureau dispose de trois types de cotisation, tous **administratifs** : ils ne
+sont jamais proposés sur le formulaire public.
+
+| Type | Montant | Réglage |
+| --- | --- | --- |
+| `STANDARD` | 200 € | `settings.annual_fee_cents` |
+| `SOLIDARITY` | 100 € | `settings.solidarity_fee_cents` |
+| `FREE` | 0 € | — |
+
+Le montant dû est **figé sur l'adhérente** (`members.fee_amount_cents`) au
+moment de l'inscription, puis réécrit uniquement quand le bureau change son
+type de cotisation. Réviser le tarif général ne modifie donc pas ce qu'une
+adhérente devait pour sa saison : l'historique reste juste.
+
+Toutes les lectures financières — tableau de bord, cotisations attendues, reste
+à encaisser, statut de paiement, impayés, fiche, `recomputeMemberStatus()`,
+Mollie, emails, comptabilité — partent de ce montant. 20 standards + 5
+solidaires + 2 offertes font donc **4 500 €** attendus, et non 27 × 200 €.
+
+Une cotisation offerte vaut 0 : l'adhérente n'apparaît dans aucun impayé et
+devient `ACTIVE` d'elle-même, **sans aucune ligne de paiement de 0 €**. Une
+adhésion annulée, elle, reste annulée quoi qu'il arrive.
+
+Le changement se fait depuis la fiche, bouton *Modifier la cotisation*, avec
+confirmation. Aucune raison n'est demandée et aucune catégorie de situation
+personnelle n'est enregistrée : le bureau ajoute une note interne s'il le
+souhaite.
+
+### Échéanciers
+
+Le public choisit **1 ou 2 fois**, le 1 fois étant mis en avant. Le **3 fois**
+existe uniquement dans le CRM, accordé au cas par cas.
+
+Les montants se répartissent en centimes entiers, les premières échéances
+absorbant le reste : 200 € en 3 fois donnent 66,67 € + 66,67 € + 66,66 €, et
+jamais un total de 200,01 €.
+
+Un échéancier accepté n'est pas un impayé. La fiche et la liste distinguent
+visuellement **« Paiement en cours — échéancier »** de **« Impayé »**. En
+revanche `registration_status` reste `PENDING_PAYMENT` tant que la totalité du
+montant dû n'est pas encaissée — sauf cotisation offerte.
+
+### Mollie et les échéances
+
+Le paiement en ligne ne propose jamais plus que l'échéance en cours :
+
+| Situation | Prochain paiement carte |
+| --- | --- |
+| 2 fois, rien de payé | 100 € |
+| 2 fois, 100 € payés | 100 € |
+| 2 fois, 50 € déjà encaissés à la main | 50 € |
+| 2 fois, 200 € payés | aucun paiement possible |
+| Cotisation offerte | aucun paiement possible |
+
+Tout est calculé côté serveur : la route ne lit que `memberId`, et un montant
+envoyé par le navigateur reste sans effet.
+
+### SMS
+
+Aucun fournisseur externe, aucun abonnement, aucun envoi automatique. Les
+boutons SMS ouvrent l'application Messages du téléphone avec le numéro et le
+texte déjà remplis (`lib/sms.ts`) ; c'est toujours une personne du bureau qui
+appuie sur « Envoyer ».
+
+| Où | Quand | Message |
+| --- | --- | --- |
+| Feuille de présence | statut *Absente* | information d'absence, demande de confirmation |
+| Feuille de présence | statut *En retard* | information de retard, ton neutre |
+| Fiche et page Paiements | reste à régler > 0 | relance avec le montant restant calculé |
+
+Le bouton de relance disparaît dès que le reste est nul.
+
+## Comptabilité
+
+`/admin/comptabilite` est un suivi de trésorerie, pas un logiciel comptable :
+pas de partie double, pas de TVA, pas de plan comptable.
+
+La page agrège deux sources :
+
+- **A.** les lignes `payments` réellement encaissées — cotisations Mollie et
+  saisies manuelles confondues ;
+- **B.** la table `accounting_entries`, qui ne contient **que** les mouvements
+  manuels : dons, subventions, achats, reversements.
+
+Une cotisation n'est donc jamais saisie deux fois, et n'est **pas supprimable
+depuis la Comptabilité** : sa correction reste dans le module Paiements, là où
+elle a été créée. Les saisies manuelles, elles, se suppriment avec
+confirmation.
+
+### Reversement au club partenaire
+
+Un encadré affiche le reversement à prévoir pour le groupe du dimanche :
+nombre d'adhérentes non annulées × `settings.partner_club_fee_cents` (50 €).
+
+C'est une **provision, pas une dépense**. Rien n'est écrit en base et aucune
+dépense n'est créée automatiquement. « À prévoir : 1 500 € » et « déjà reversé :
+500 € » sont deux chiffres distincts, et le second ne bouge que lorsque le
+bureau saisit un reversement réel.
 
 ## Paiement en ligne et emails
 
@@ -220,11 +324,12 @@ lever la protection de déploiement sur cette URL, ou tester sur la Production.
 
 ## Base de données
 
-Onze tables, décrites dans `lib/db/schema.ts` :
+Douze tables, décrites dans `lib/db/schema.ts` :
 
 `members`, `guardians`, `emergency_contacts`, `medical_info`, `consents`,
 `payments`, `sessions` (séances d'entraînement), `attendance`, `notes`,
-`documents`, `settings`.
+`documents`, `accounting_entries` (mouvements de trésorerie manuels),
+`settings`.
 
 Une inscription crée en une transaction : 1 `members`, 1 `guardians`,
 1 `emergency_contacts`, 1 `medical_info` et exactement 3 `consents`
@@ -232,7 +337,7 @@ Une inscription crée en une transaction : 1 `members`, 1 `guardians`,
 même en cas de refus, avec `accepted = false`). L'adhérente démarre en
 `registration_status = PENDING_PAYMENT`.
 
-Quatre conventions à connaître :
+Cinq conventions à connaître :
 
 - **Les montants sont en centimes** (`payments.amount_cents`, `settings.annual_fee_cents`),
   pour éviter tout arrondi. `formatEuros()` dans `lib/constants.ts` les affiche.
@@ -246,6 +351,9 @@ Quatre conventions à connaître :
   `CASH`) est le mode de règlement *souhaité*, choisi à l'inscription. Il ne
   crée aucune ligne dans `payments` : cette table ne contient que des
   encaissements réellement constatés par le bureau.
+- **`members.fee_amount_cents`** est le montant dû par CETTE adhérente, figé à
+  l'inscription. C'est lui, et jamais `settings.annual_fee_cents`, que lisent
+  les calculs financiers.
 
 Pour modifier le schéma : éditer `lib/db/schema.ts`, puis
 
@@ -311,12 +419,14 @@ app/
       adherentes/
       paiements/
       presences/
+      comptabilite/         Trésorerie : recettes, dépenses, solde
   api/
     registration/route.ts
     payments/route.ts
     payments/mollie/route.ts   Ouverture d'un paiement carte
     attendance/route.ts
     webhooks/mollie/route.ts   Notification Mollie (source de vérité : Mollie)
+components/admin/sms-button.tsx  Lien sms: prérempli (aucun envoi automatique)
 components/site-header.tsx  En-tête public (menu mobile)
 components/site-footer.tsx  Pied de page public
 lib/
@@ -331,6 +441,9 @@ lib/
   notifications.ts          Contenu des emails transactionnels
   app-url.ts                URL publique (retour et webhook)
   crm.ts                    Lectures du CRM et statuts calculés
+  fees.ts                   Types de cotisation et découpage en échéances
+  accounting.ts             Agrégation trésorerie (paiements + saisies)
+  sms.ts                    Messages préremplis pour les liens sms:
   db/index.ts               Client Drizzle + Neon
   db/schema.ts              Schéma des tables
 drizzle/                    Migrations SQL générées
@@ -343,6 +456,7 @@ Non implémenté pour l'instant, volontairement :
 
 - **Relances** — email automatique aux inscriptions restées impayées.
 - **Qonto** — rapprochement des virements reçus avec les paiements attendus.
+- Export comptable (CSV) des mouvements de la saison.
 - **Cloudflare R2** — certificats médicaux, autorisations parentales et
   signatures. La table `documents` (`file_key`) est déjà prévue.
 - Export CSV de la liste des adhérentes.

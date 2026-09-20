@@ -13,6 +13,7 @@ import {
   formatEuros,
   type PreferredPaymentMethod,
 } from "@/lib/constants";
+import { PUBLIC_INSTALLMENT_PLANS, splitInstallments } from "@/lib/fees";
 import type { GroupInfo } from "@/lib/settings";
 import { REGISTRATION_STEP_SCHEMAS, formatZodErrors } from "@/lib/validation";
 
@@ -55,6 +56,7 @@ type Values = {
   acceptsImageRights: boolean;
   guardianFullName: string;
   preferredPaymentMethod: string;
+  paymentInstallments: number;
 };
 
 const STEP_TITLES = [
@@ -64,7 +66,7 @@ const STEP_TITLES = [
   "Un second numéro à joindre",
   "Quelques informations utiles",
   "Autorisations",
-  "Comment souhaitez-vous régler ?",
+  "Le règlement de la cotisation",
   "Tout est bon ?",
 ];
 
@@ -95,6 +97,7 @@ const FIELD_STEPS: Record<string, number> = {
   acceptsImageRights: 5,
   guardianFullName: 5,
   preferredPaymentMethod: 6,
+  paymentInstallments: 6,
 };
 
 function emptyValues(defaultGroup: string): Values {
@@ -122,6 +125,7 @@ function emptyValues(defaultGroup: string): Values {
     acceptsImageRights: false,
     guardianFullName: "",
     preferredPaymentMethod: "",
+    paymentInstallments: 1,
   };
 }
 
@@ -555,20 +559,52 @@ export function RegistrationWizard({
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {PREFERRED_PAYMENT_METHODS.map((method) => (
-                <ChoiceCard
-                  key={method}
-                  name="preferredPaymentMethod"
-                  value={method}
-                  checked={values.preferredPaymentMethod === method}
-                  onSelect={(value) => set("preferredPaymentMethod", value)}
-                  title={PREFERRED_PAYMENT_METHOD_LABELS[method]}
-                  lines={[PREFERRED_PAYMENT_METHOD_HINTS[method]]}
-                />
-              ))}
+            <div>
+              <h3 className="font-bold text-brand-dark">En une ou deux fois ?</h3>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                {PUBLIC_INSTALLMENT_PLANS.map((plan) => {
+                  const parts = splitInstallments(annualFeeCents, plan);
+                  return (
+                    <ChoiceCard
+                      key={plan}
+                      name="paymentInstallments"
+                      value={String(plan)}
+                      checked={values.paymentInstallments === plan}
+                      onSelect={(value) => set("paymentInstallments", Number(value))}
+                      title={plan === 1 ? "En 1 fois" : "En 2 fois"}
+                      badge={plan === 1 ? "Le plus simple" : undefined}
+                      lines={[
+                        plan === 1
+                          ? formatEuros(annualFeeCents)
+                          : `2 × ${formatEuros(parts[0])}`,
+                        plan === 1
+                          ? "Tout est réglé en une seule fois."
+                          : "La seconde échéance est réglée plus tard.",
+                      ]}
+                    />
+                  );
+                })}
+              </div>
+              <FieldError message={errors.paymentInstallments} />
             </div>
-            <FieldError message={errors.preferredPaymentMethod} />
+
+            <div>
+              <h3 className="font-bold text-brand-dark">Comment souhaitez-vous régler ?</h3>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                {PREFERRED_PAYMENT_METHODS.map((method) => (
+                  <ChoiceCard
+                    key={method}
+                    name="preferredPaymentMethod"
+                    value={method}
+                    checked={values.preferredPaymentMethod === method}
+                    onSelect={(value) => set("preferredPaymentMethod", value)}
+                    title={PREFERRED_PAYMENT_METHOD_LABELS[method]}
+                    lines={[PREFERRED_PAYMENT_METHOD_HINTS[method]]}
+                  />
+                ))}
+              </div>
+              <FieldError message={errors.preferredPaymentMethod} />
+            </div>
             <p className="text-sm text-brand-dark/60">
               Vous indiquez seulement le mode de règlement souhaité. Aucun
               paiement n’est encaissé à cette étape.
@@ -667,6 +703,14 @@ export function RegistrationWizard({
                   PREFERRED_PAYMENT_METHOD_LABELS[
                     values.preferredPaymentMethod as PreferredPaymentMethod
                   ] ?? "—"
+                }
+              />
+              <SummaryLine
+                label="Rythme"
+                value={
+                  values.paymentInstallments === 2
+                    ? `En 2 fois — 2 × ${formatEuros(splitInstallments(annualFeeCents, 2)[0])}`
+                    : "En 1 fois"
                 }
               />
               <SummaryLine label="Cotisation" value={formatEuros(annualFeeCents)} />

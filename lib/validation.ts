@@ -9,6 +9,7 @@ import {
   PREFERRED_PAYMENT_METHODS,
   SCHOOL_LEVELS,
 } from "./constants";
+import { INSTALLMENT_PLANS, PUBLIC_INSTALLMENT_PLANS } from "./fees";
 
 const isoDate = z
   .string()
@@ -143,12 +144,33 @@ export const consentsStepSchema = z.object({
   signatureFileKey: optionalText(300),
 });
 
-/** Étape 7 — le mode de règlement souhaité (aucun encaissement à ce stade). */
+/**
+ * Étape 7 — le mode de règlement souhaité (aucun encaissement à ce stade).
+ *
+ * L'échéancier public se limite à 1 ou 2 fois. Le 3 fois existe en base et
+ * dans le CRM, mais il est accordé au cas par cas par le bureau : l'accepter
+ * ici reviendrait à le proposer à tout le monde.
+ */
 export const paymentStepSchema = z.object({
   preferredPaymentMethod: z.enum(PREFERRED_PAYMENT_METHODS, {
     error: "Merci de choisir un mode de règlement",
   }),
+  paymentInstallments: z.coerce
+    .number()
+    .refine(
+      (value) => PUBLIC_INSTALLMENT_PLANS.includes(value as 1 | 2),
+      "Merci de choisir un rythme de paiement",
+    )
+    .default(1),
 });
+
+/** Échéancier modifiable par le bureau : 1, 2 ou 3 fois. */
+export const adminInstallmentsSchema = z.coerce
+  .number()
+  .refine(
+    (value) => INSTALLMENT_PLANS.includes(value as 1 | 2 | 3),
+    "Échéancier invalide",
+  );
 
 /** Schéma complet envoyé à POST /api/registration. */
 export const registrationSchema = z.object({

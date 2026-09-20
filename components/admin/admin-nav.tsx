@@ -8,11 +8,12 @@ const LINKS = [
   { href: "/admin/adherentes", label: "Adhérentes" },
   { href: "/admin/paiements", label: "Paiements" },
   { href: "/admin/presences", label: "Présences" },
+  { href: "/admin/comptabilite", label: "Comptabilité" },
 ];
 
 /**
  * Navigation du bureau. Sur mobile elle défile horizontalement plutôt que de
- * se replier dans un menu : quatre entrées, autant les garder visibles.
+ * se replier dans un menu : cinq entrées, autant les garder visibles.
  */
 export function AdminNav() {
   const pathname = usePathname();

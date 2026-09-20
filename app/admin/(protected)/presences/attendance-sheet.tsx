@@ -4,13 +4,17 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { saveAttendance } from "@/app/admin/(protected)/actions";
+import { SmsButton } from "@/components/admin/sms-button";
 import { ATTENDANCE_STATUSES, ATTENDANCE_STATUS_LABELS } from "@/lib/constants";
+import { absenceSms, latenessSms } from "@/lib/sms";
 
 type MemberRow = {
   id: string;
   memberNumber: string;
   firstName: string;
   lastName: string;
+  /** Numéro du responsable légal, pour le SMS d'information. */
+  guardianPhone: string | null;
 };
 
 const TONES: Record<string, string> = {
@@ -64,9 +68,27 @@ export function AttendanceSheet({
             key={member.id}
             className="rounded-2xl border border-brand-light/40 bg-white p-4"
           >
-            <p className="font-semibold text-brand-dark">
-              {member.firstName} {member.lastName.toUpperCase()}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold text-brand-dark">
+                {member.firstName} {member.lastName.toUpperCase()}
+              </p>
+              {/* Le bouton n'apparaît que là où il a un sens : une absence ou
+                  un retard qui vient d'être saisi. */}
+              {statuses[member.id] === "absent" && (
+                <SmsButton
+                  phone={member.guardianPhone}
+                  message={absenceSms(member.firstName)}
+                  title={`Prévenir de l’absence de ${member.firstName}`}
+                />
+              )}
+              {statuses[member.id] === "late" && (
+                <SmsButton
+                  phone={member.guardianPhone}
+                  message={latenessSms(member.firstName)}
+                  title={`Informer du retard de ${member.firstName}`}
+                />
+              )}
+            </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {ATTENDANCE_STATUSES.map((status) => {
                 const active = statuses[member.id] === status;

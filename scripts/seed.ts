@@ -6,6 +6,10 @@ import {
   DEFAULT_SEASON,
   GROUP_NAMES,
 } from "../lib/constants";
+import {
+  DEFAULT_PARTNER_CLUB_FEE_CENTS,
+  DEFAULT_SOLIDARITY_FEE_CENTS,
+} from "../lib/fees";
 import { db, schema } from "../lib/db";
 
 /**
@@ -15,6 +19,10 @@ import { db, schema } from "../lib/db";
 const SETTINGS: Record<string, string> = {
   season: DEFAULT_SEASON,
   annual_fee_cents: String(DEFAULT_ANNUAL_FEE_CENTS),
+  // Tarif solidaire accordé au cas par cas par le bureau.
+  solidarity_fee_cents: String(DEFAULT_SOLIDARITY_FEE_CENTS),
+  // Reversement prévu par adhérente du dimanche (provision, pas une dépense).
+  partner_club_fee_cents: String(DEFAULT_PARTNER_CLUB_FEE_CENTS),
   ...Object.fromEntries(
     GROUP_NAMES.flatMap((key) => [
       [`group_${key}_day`, DEFAULT_GROUP_DISPLAY[key].day],

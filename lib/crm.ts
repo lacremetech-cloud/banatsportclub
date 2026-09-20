@@ -5,6 +5,7 @@ import {
   type GroupName,
 } from "./constants";
 import { db, schema } from "./db";
+import { installmentsSettled, type FeeType } from "./fees";
 import { getSiteSettings, type GroupInfo } from "./settings";
 
 /**
@@ -14,8 +15,10 @@ import { getSiteSettings, type GroupInfo } from "./settings";
  *
  * 1. Le statut de paiement n'est JAMAIS stocké. Il se déduit à chaque lecture
  *    de la somme des lignes `payments` réellement encaissées, comparée à la
- *    cotisation de la saison. `preferred_payment_method` est une intention de
- *    la famille, jamais un montant.
+ *    cotisation DE L'ADHÉRENTE (`members.fee_amount_cents`), et non au tarif
+ *    général. Une cotisation solidaire ou offerte est donc prise en compte
+ *    partout sans cas particulier. `preferred_payment_method` est une
+ *    intention de la famille, jamais un montant.
  *
  * 2. Les séances comptabilisées pour une adhérente sont celles pour lesquelles
  *    une présence a été saisie la concernant. Une adhérente inscrite en cours
@@ -26,18 +29,60 @@ import { getSiteSettings, type GroupInfo } from "./settings";
 /** Un paiement n'est compté que s'il a effectivement été encaissé. */
 const PAID = "paid";
 
-export type PaymentStatus = "UNPAID" | "PARTIAL" | "PAID";
+export type PaymentStatus = "UNPAID" | "PARTIAL" | "ON_SCHEDULE" | "PAID" | "EXEMPT";
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  UNPAID: "Non payé",
+  UNPAID: "Impayé",
   PARTIAL: "Partiel",
+  ON_SCHEDULE: "Paiement en cours — échéancier",
   PAID: "Payé",
+  EXEMPT: "Cotisation offerte",
 };
 
-export function computePaymentStatus(paidCents: number, feeCents: number): PaymentStatus {
+/** Version courte, pour les pastilles où la place manque. */
+export const PAYMENT_STATUS_SHORT_LABELS: Record<PaymentStatus, string> = {
+  UNPAID: "Impayé",
+  PARTIAL: "Partiel",
+  ON_SCHEDULE: "Échéancier",
+  PAID: "Payé",
+  EXEMPT: "Offerte",
+};
+
+/**
+ * Statut de paiement d'une adhérente.
+ *
+ * `installments` permet de distinguer deux situations que le bureau ne doit
+ * surtout pas confondre : une adhérente qui n'a rien réglé (« Impayé ») et
+ * une adhérente qui suit l'échéancier accepté à l'inscription
+ * (« Paiement en cours — échéancier »). Une cotisation offerte n'est ni l'une
+ * ni l'autre : elle est soldée d'office, sans aucune ligne de paiement.
+ */
+export function computePaymentStatus(
+  paidCents: number,
+  feeCents: number,
+  installments = 1,
+): PaymentStatus {
+  if (feeCents <= 0) return "EXEMPT";
+  if (paidCents >= feeCents) return "PAID";
   if (paidCents <= 0) return "UNPAID";
-  if (paidCents < feeCents) return "PARTIAL";
-  return "PAID";
+  return installments > 1 ? "ON_SCHEDULE" : "PARTIAL";
+}
+
+/** Récapitulatif d'échéancier affiché sur la fiche : « 1 / 2 ». */
+export type InstallmentProgress = {
+  plan: number;
+  settled: number;
+};
+
+export function installmentProgress(
+  feeCents: number,
+  installments: number,
+  paidCents: number,
+): InstallmentProgress {
+  return {
+    plan: installments,
+    settled: installmentsSettled(feeCents, installments, paidCents),
+  };
 }
 
 export type MemberRow = {
@@ -48,10 +93,37 @@ export type MemberRow = {
   schoolLevel: string;
   groupName: string;
   registrationStatus: string;
+  feeType: string;
+  feeAmountCents: number;
+  paymentInstallments: number;
   paidCents: number;
   dueCents: number;
   paymentStatus: PaymentStatus;
 };
+
+/** Colonnes de cotisation, sélectionnées partout de la même façon. */
+const FEE_COLUMNS = {
+  feeType: schema.members.feeType,
+  feeAmountCents: schema.members.feeAmountCents,
+  paymentInstallments: schema.members.paymentInstallments,
+} as const;
+
+/** Assemble les chiffres d'une adhérente à partir de SA cotisation. */
+function withFees<T extends { feeAmountCents: number; paymentInstallments: number }>(
+  row: T,
+  paidCents: number,
+) {
+  return {
+    ...row,
+    paidCents,
+    dueCents: Math.max(row.feeAmountCents - paidCents, 0),
+    paymentStatus: computePaymentStatus(
+      paidCents,
+      row.feeAmountCents,
+      row.paymentInstallments,
+    ),
+  };
+}
 
 /** Totaux encaissés par adhérente, en une requête. */
 async function paidTotalsByMember(): Promise<Map<string, number>> {
@@ -108,6 +180,7 @@ export async function listMembers(filters: MemberFilters = {}) {
         schoolLevel: schema.members.schoolLevel,
         groupName: schema.members.groupName,
         registrationStatus: schema.members.registrationStatus,
+        ...FEE_COLUMNS,
       })
       .from(schema.members)
       .where(and(...conditions))
@@ -115,15 +188,9 @@ export async function listMembers(filters: MemberFilters = {}) {
     paidTotalsByMember(),
   ]);
 
-  const members: MemberRow[] = rows.map((row) => {
-    const paidCents = paidTotals.get(row.id) ?? 0;
-    return {
-      ...row,
-      paidCents,
-      dueCents: Math.max(annualFeeCents - paidCents, 0),
-      paymentStatus: computePaymentStatus(paidCents, annualFeeCents),
-    };
-  });
+  const members: MemberRow[] = rows.map((row) =>
+    withFees(row, paidTotals.get(row.id) ?? 0),
+  );
 
   return { members, season, annualFeeCents };
 }
@@ -134,6 +201,7 @@ export type DashboardStats = {
   groups: GroupInfo[];
   totalMembers: number;
   byGroup: Record<string, number>;
+  byFeeType: Record<string, number>;
   activeCount: number;
   pendingCount: number;
   cancelledCount: number;
@@ -151,6 +219,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         id: schema.members.id,
         groupName: schema.members.groupName,
         registrationStatus: schema.members.registrationStatus,
+        ...FEE_COLUMNS,
       })
       .from(schema.members)
       .where(eq(schema.members.season, season)),
@@ -161,22 +230,27 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   let activeCount = 0;
   let pendingCount = 0;
   let cancelledCount = 0;
-  let billableMembers = 0;
+  let expectedCents = 0;
+  const byFeeType: Record<string, number> = { STANDARD: 0, SOLIDARITY: 0, FREE: 0 };
 
   for (const row of rows) {
     byGroup[row.groupName] = (byGroup[row.groupName] ?? 0) + 1;
     if (row.registrationStatus === "ACTIVE") activeCount += 1;
     if (row.registrationStatus === "PENDING_PAYMENT") pendingCount += 1;
     if (row.registrationStatus === "CANCELLED") cancelledCount += 1;
-    // Une adhésion annulée ne génère aucune attente de cotisation.
-    if (row.registrationStatus !== "CANCELLED") billableMembers += 1;
+    // Une adhésion annulée ne génère aucune attente de cotisation. Les autres
+    // comptent pour LEUR montant : 20 standards + 5 solidaires + 2 offertes
+    // font 4 500 €, pas 27 × 200 €.
+    if (row.registrationStatus !== "CANCELLED") {
+      expectedCents += row.feeAmountCents;
+      byFeeType[row.feeType] = (byFeeType[row.feeType] ?? 0) + 1;
+    }
   }
 
   const collectedCents = rows.reduce(
     (total, row) => total + (paidTotals.get(row.id) ?? 0),
     0,
   );
-  const expectedCents = billableMembers * annualFeeCents;
 
   return {
     season,
@@ -184,6 +258,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     groups,
     totalMembers: rows.length,
     byGroup,
+    byFeeType,
     activeCount,
     pendingCount,
     cancelledCount,
@@ -277,8 +352,17 @@ export async function getMemberDetail(memberId: string) {
     attendance,
     attendanceStats: stats,
     paidCents,
-    dueCents: Math.max(annualFeeCents - paidCents, 0),
-    paymentStatus: computePaymentStatus(paidCents, annualFeeCents),
+    dueCents: Math.max(member.feeAmountCents - paidCents, 0),
+    paymentStatus: computePaymentStatus(
+      paidCents,
+      member.feeAmountCents,
+      member.paymentInstallments,
+    ),
+    installments: installmentProgress(
+      member.feeAmountCents,
+      member.paymentInstallments,
+      paidCents,
+    ),
     season,
     annualFeeCents,
     group: groups.find((item) => item.key === member.groupName),
@@ -286,7 +370,7 @@ export async function getMemberDetail(memberId: string) {
   };
 }
 
-export type PaymentFilter = "all" | "PAID" | "PARTIAL" | "UNPAID" | "unpaid-open";
+export type PaymentFilter = "all" | "unpaid-open" | PaymentStatus;
 
 export type PaymentRow = MemberRow & {
   guardianPhone: string | null;
@@ -307,6 +391,7 @@ export async function getPaymentOverview(filter: PaymentFilter = "all") {
         schoolLevel: schema.members.schoolLevel,
         groupName: schema.members.groupName,
         registrationStatus: schema.members.registrationStatus,
+        ...FEE_COLUMNS,
         guardianPhone: schema.guardians.phone,
         guardianEmail: schema.guardians.email,
       })
@@ -317,27 +402,28 @@ export async function getPaymentOverview(filter: PaymentFilter = "all") {
     paidTotalsByMember(),
   ]);
 
-  const all: PaymentRow[] = rows.map((row) => {
-    const paidCents = paidTotals.get(row.id) ?? 0;
-    return {
-      ...row,
-      paidCents,
-      dueCents: Math.max(annualFeeCents - paidCents, 0),
-      paymentStatus: computePaymentStatus(paidCents, annualFeeCents),
-    };
-  });
+  const all: PaymentRow[] = rows.map((row) =>
+    withFees(row, paidTotals.get(row.id) ?? 0),
+  );
 
   const members = all.filter((row) => {
     if (filter === "all") return true;
-    // « Impayés » : il reste quelque chose à encaisser, hors adhésions annulées.
+    // « Impayés » : il reste quelque chose à encaisser, hors adhésions
+    // annulées. Une cotisation offerte n'y figure jamais, puisqu'elle ne doit
+    // rien.
     if (filter === "unpaid-open") {
-      return row.paymentStatus !== "PAID" && row.registrationStatus !== "CANCELLED";
+      return (
+        row.dueCents > 0 &&
+        row.paymentStatus !== "EXEMPT" &&
+        row.registrationStatus !== "CANCELLED"
+      );
     }
     return row.paymentStatus === filter;
   });
 
-  const billable = all.filter((row) => row.registrationStatus !== "CANCELLED");
-  const expectedCents = billable.length * annualFeeCents;
+  const expectedCents = all
+    .filter((row) => row.registrationStatus !== "CANCELLED")
+    .reduce((total, row) => total + row.feeAmountCents, 0);
   const collectedCents = all.reduce((total, row) => total + row.paidCents, 0);
 
   return {
@@ -350,7 +436,12 @@ export async function getPaymentOverview(filter: PaymentFilter = "all") {
   };
 }
 
-/** Adhérentes ACTIVE d'un groupe, pour la feuille de présence. */
+/**
+ * Adhérentes ACTIVE d'un groupe, pour la feuille de présence.
+ *
+ * Le téléphone du responsable légal est joint : il alimente le SMS
+ * d'information en cas d'absence ou de retard, sans second aller-retour.
+ */
 export async function listActiveMembersForGroup(groupName: GroupName | string) {
   const { season } = await getSiteSettings();
   return db
@@ -359,8 +450,10 @@ export async function listActiveMembersForGroup(groupName: GroupName | string) {
       memberNumber: schema.members.memberNumber,
       firstName: schema.members.firstName,
       lastName: schema.members.lastName,
+      guardianPhone: schema.guardians.phone,
     })
     .from(schema.members)
+    .leftJoin(schema.guardians, eq(schema.guardians.memberId, schema.members.id))
     .where(
       and(
         eq(schema.members.season, season),
@@ -395,14 +488,20 @@ export async function getAttendanceForSession(sessionId: string) {
 /**
  * Aligne `registration_status` sur les encaissements.
  *
+ * La référence est la cotisation de l'adhérente, pas le tarif général. Le
+ * statut reste PENDING_PAYMENT tant que la TOTALITÉ du montant dû n'est pas
+ * encaissée, même quand un échéancier a été accepté : l'échéancier change ce
+ * qu'on affiche au bureau, pas ce qui a été réellement encaissé.
+ *
  * Une adhésion annulée ne repasse jamais ACTIVE automatiquement : seule une
  * action explicite du bureau peut la réactiver.
  */
 export async function recomputeMemberStatus(memberId: string): Promise<RegistrationStatus | null> {
-  const { annualFeeCents } = await getSiteSettings();
-
   const [member] = await db
-    .select({ status: schema.members.registrationStatus })
+    .select({
+      status: schema.members.registrationStatus,
+      feeAmountCents: schema.members.feeAmountCents,
+    })
     .from(schema.members)
     .where(eq(schema.members.id, memberId));
 
@@ -416,8 +515,12 @@ export async function recomputeMemberStatus(memberId: string): Promise<Registrat
     .from(schema.payments)
     .where(and(eq(schema.payments.memberId, memberId), eq(schema.payments.status, PAID)));
 
+  // Une cotisation offerte vaut 0 : la condition « tout est réglé » est
+  // vraie d'emblée, et l'adhésion devient ACTIVE sans qu'aucune ligne de faux
+  // paiement de 0 € n'ait besoin d'exister.
   const paidCents = Number(row?.total ?? 0);
-  const next: RegistrationStatus = paidCents >= annualFeeCents ? "ACTIVE" : "PENDING_PAYMENT";
+  const next: RegistrationStatus =
+    paidCents >= member.feeAmountCents ? "ACTIVE" : "PENDING_PAYMENT";
 
   if (next !== member.status) {
     await db

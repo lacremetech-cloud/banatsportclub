@@ -3,6 +3,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { getAppUrl } from "./app-url";
 import { recomputeMemberStatus } from "./crm";
 import { db, schema } from "./db";
+import { nextInstallmentCents } from "./fees";
 import { createMollieCheckout, fetchMolliePayment } from "./mollie";
 import { sendPaymentReceivedEmail } from "./notifications";
 import { getSiteSettings } from "./settings";
@@ -13,8 +14,10 @@ import { getSiteSettings } from "./settings";
  * Deux principes gouvernent ce fichier :
  *
  * 1. Le montant n'est JAMAIS accepté depuis le client. Il est recalculé côté
- *    serveur à partir de la cotisation en base et des encaissements déjà
- *    constatés, y compris les saisies manuelles du bureau.
+ *    serveur à partir de la cotisation DE L'ADHÉRENTE, de son échéancier et
+ *    des encaissements déjà constatés, y compris les saisies manuelles du
+ *    bureau. Un échéancier en 2 fois ne laisse donc jamais payer la totalité
+ *    d'un coup, et rien ne permet de payer plus que ce qui est dû.
  *
  * 2. Le webhook est idempotent. Mollie peut l'appeler plusieurs fois : les
  *    transitions passent par des UPDATE conditionnels, si bien qu'un second
@@ -30,17 +33,20 @@ export type PaymentSummary = {
   lastName: string;
   registrationStatus: string;
   guardianEmail: string | null;
-  annualFeeCents: number;
+  /** Cotisation réellement due par cette adhérente. */
+  feeAmountCents: number;
+  feeType: string;
+  installments: number;
   paidCents: number;
   remainingCents: number;
+  /** Montant du prochain paiement en ligne : l'échéance en cours, pas plus. */
+  nextPaymentCents: number;
 };
 
 /** Cotisation, encaissé et reste dû, lus côté serveur. */
 export async function getPaymentSummary(
   memberId: string,
 ): Promise<PaymentSummary | null> {
-  const { annualFeeCents } = await getSiteSettings();
-
   const [member] = await db
     .select({
       id: schema.members.id,
@@ -48,6 +54,9 @@ export async function getPaymentSummary(
       firstName: schema.members.firstName,
       lastName: schema.members.lastName,
       registrationStatus: schema.members.registrationStatus,
+      feeType: schema.members.feeType,
+      feeAmountCents: schema.members.feeAmountCents,
+      installments: schema.members.paymentInstallments,
       guardianEmail: schema.guardians.email,
     })
     .from(schema.members)
@@ -70,9 +79,16 @@ export async function getPaymentSummary(
     lastName: member.lastName,
     registrationStatus: member.registrationStatus,
     guardianEmail: member.guardianEmail,
-    annualFeeCents,
+    feeType: member.feeType,
+    feeAmountCents: member.feeAmountCents,
+    installments: member.installments,
     paidCents,
-    remainingCents: Math.max(annualFeeCents - paidCents, 0),
+    remainingCents: Math.max(member.feeAmountCents - paidCents, 0),
+    nextPaymentCents: nextInstallmentCents(
+      member.feeAmountCents,
+      member.installments,
+      paidCents,
+    ),
   };
 }
 
@@ -90,21 +106,27 @@ export async function startMolliePayment(memberId: string): Promise<CheckoutResu
     return { ok: false, reason: "member-not-found", message: "Adhérente introuvable." };
   }
 
-  // Jamais de surpaiement : si tout est réglé, aucun paiement n'est créé.
-  if (summary.remainingCents <= 0) {
+  // Jamais de surpaiement : si tout est réglé — ou si la cotisation est
+  // offerte, donc nulle — aucun paiement n'est créé.
+  if (summary.nextPaymentCents <= 0) {
     return {
       ok: false,
       reason: "nothing-due",
-      message: "La cotisation est déjà intégralement réglée.",
+      message:
+        summary.feeAmountCents <= 0
+          ? "Cette adhésion ne donne lieu à aucun règlement."
+          : "La cotisation est déjà intégralement réglée.",
     };
   }
+
+  const amountCents = summary.nextPaymentCents;
 
   const { season } = await getSiteSettings();
   const appUrl = getAppUrl();
 
   try {
     const mollie = await createMollieCheckout({
-      amountCents: summary.remainingCents,
+      amountCents,
       description: `Cotisation Banat Sport Club — ${summary.memberNumber}`,
       redirectUrl: `${appUrl}/inscription/paiement?adherente=${summary.memberId}`,
       webhookUrl: `${appUrl}/api/webhooks/mollie`,
@@ -122,14 +144,14 @@ export async function startMolliePayment(memberId: string): Promise<CheckoutResu
 
     await db.insert(schema.payments).values({
       memberId: summary.memberId,
-      amountCents: summary.remainingCents,
+      amountCents,
       method: "card",
       status: "pending",
       provider: "mollie",
       providerPaymentId: mollie.id,
     });
 
-    return { ok: true, checkoutUrl, amountCents: summary.remainingCents };
+    return { ok: true, checkoutUrl, amountCents };
   } catch (error) {
     console.error("[mollie] création de paiement impossible :", error);
     return {

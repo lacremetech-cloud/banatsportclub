@@ -1,18 +1,23 @@
 import Link from "next/link";
 
+import { SmsButton } from "@/components/admin/sms-button";
 import { EmptyState, PaymentBadge, StatCard } from "@/components/admin/ui";
 import { formatEuros } from "@/lib/constants";
 import { getPaymentOverview, type PaymentFilter } from "@/lib/crm";
+import { FEE_TYPE_LABELS, installmentLabel, type FeeType } from "@/lib/fees";
 import { getSiteSettings } from "@/lib/settings";
+import { paymentReminderSms } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
 const FILTERS: { value: PaymentFilter; label: string }[] = [
   { value: "all", label: "Tous" },
-  { value: "PAID", label: "Payés" },
+  { value: "unpaid-open", label: "Reste à encaisser" },
+  { value: "UNPAID", label: "Impayés" },
+  { value: "ON_SCHEDULE", label: "Échéanciers" },
   { value: "PARTIAL", label: "Partiels" },
-  { value: "UNPAID", label: "Non payés" },
-  { value: "unpaid-open", label: "Impayés" },
+  { value: "PAID", label: "Payés" },
+  { value: "EXEMPT", label: "Offertes" },
 ];
 
 export default async function PaiementsPage({
@@ -41,7 +46,7 @@ export default async function PaiementsPage({
         <StatCard
           label="Cotisations attendues"
           value={formatEuros(overview.expectedCents)}
-          hint={`${formatEuros(overview.annualFeeCents)} par adhérente non annulée`}
+          hint="Somme des cotisations réelles, hors adhésions annulées"
         />
         <StatCard label="Encaissé" value={formatEuros(overview.collectedCents)} />
         <StatCard
@@ -102,9 +107,14 @@ export default async function PaiementsPage({
 
                 <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
                   <div className="flex gap-2">
-                    <dt className="text-brand-dark/60">Dû</dt>
+                    <dt className="text-brand-dark/60">Cotisation</dt>
                     <dd className="font-medium text-brand-dark">
-                      {formatEuros(overview.annualFeeCents)}
+                      {formatEuros(member.feeAmountCents)}
+                      {member.feeType !== "STANDARD" && (
+                        <span className="ml-1 text-brand-dark/60">
+                          ({FEE_TYPE_LABELS[member.feeType as FeeType] ?? member.feeType})
+                        </span>
+                      )}
                     </dd>
                   </div>
                   <div className="flex gap-2">
@@ -121,11 +131,22 @@ export default async function PaiementsPage({
                   </div>
                 </dl>
 
+                {member.paymentInstallments > 1 && (
+                  <p className="mt-2 text-sm text-brand-dark/70">
+                    {installmentLabel(member.paymentInstallments)}
+                  </p>
+                )}
+
                 {owes && (
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-brand-light/30 pt-3 text-sm">
                     <span className="font-medium text-brand-dark">
                       Reste à régler : {formatEuros(member.dueCents)}
                     </span>
+                    <SmsButton
+                      phone={member.guardianPhone}
+                      message={paymentReminderSms(member.firstName, member.dueCents)}
+                      title={`Rappeler qu’il reste ${formatEuros(member.dueCents)} à régler`}
+                    />
                     {member.guardianPhone && (
                       <a
                         href={`tel:${member.guardianPhone}`}

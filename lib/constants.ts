@@ -129,6 +129,30 @@ export const CONSENT_TYPE_LABELS: Record<ConsentType, string> = {
   IMAGE_RIGHTS: "Droit à l'image",
 };
 
+/**
+ * Catégories de trésorerie.
+ *
+ * Volontairement courtes et parlantes : ce n'est pas un plan comptable, juste
+ * de quoi ranger un mouvement en un coup d'œil.
+ */
+export const INCOME_CATEGORIES = [
+  "Don",
+  "Subvention",
+  "Participation événement",
+  "Autre",
+] as const;
+
+export const EXPENSE_CATEGORIES = [
+  "Matériel",
+  "Salle / équipement",
+  "Assurance",
+  "Transport",
+  "Communication",
+  "Prestataire",
+  "Reversement club partenaire",
+  "Autre",
+] as const;
+
 /** Auteurs proposés pour les notes internes. Le champ reste libre. */
 export const NOTE_AUTHORS = ["Bureau BSC", "Rayyan", "Imen", "Dawssen"] as const;
 export const DEFAULT_NOTE_AUTHOR = "Bureau BSC";
