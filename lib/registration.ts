@@ -106,10 +106,18 @@ export async function createRegistration(
     }),
     db.insert(schema.emergencyContacts).values({
       memberId,
-      firstName: input.emergencyFirstName,
-      lastName: input.emergencyLastName,
+      // Quand la famille a coché « c'est moi », on reprend l'identité du
+      // responsable légal et on ne stocke que le second numéro fourni.
+      firstName: input.emergencySameAsGuardian
+        ? input.guardianFirstName
+        : (input.emergencyFirstName ?? ""),
+      lastName: input.emergencySameAsGuardian
+        ? input.guardianLastName
+        : (input.emergencyLastName ?? ""),
       phone: input.emergencyPhone,
-      relationship: input.emergencyRelationship,
+      relationship: input.emergencySameAsGuardian
+        ? "Responsable légal"
+        : input.emergencyRelationship,
     }),
     db.insert(schema.medicalInfo).values({
       memberId,

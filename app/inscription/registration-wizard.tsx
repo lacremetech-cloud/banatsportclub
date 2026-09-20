@@ -18,6 +18,7 @@ import { REGISTRATION_STEP_SCHEMAS, formatZodErrors } from "@/lib/validation";
 
 import { ConfirmationScreen, type RegistrationResult } from "./confirmation";
 import {
+  CheckboxField,
   ChoiceCard,
   ConsentCheckbox,
   FieldError,
@@ -37,9 +38,10 @@ type Values = {
   guardianLastName: string;
   guardianPhone: string;
   guardianEmail: string;
+  emergencySameAsGuardian: boolean;
+  emergencyPhone: string;
   emergencyFirstName: string;
   emergencyLastName: string;
-  emergencyPhone: string;
   emergencyRelationship: string;
   allergies: string;
   currentTreatments: string;
@@ -55,7 +57,7 @@ const STEP_TITLES = [
   "Parlons d’elle",
   "Quel créneau lui convient ?",
   "Vos coordonnées",
-  "En cas d’urgence",
+  "Un second numéro à joindre",
   "Quelques informations utiles",
   "Autorisations",
   "Comment souhaitez-vous régler ?",
@@ -76,6 +78,7 @@ const FIELD_STEPS: Record<string, number> = {
   guardianLastName: 2,
   guardianPhone: 2,
   guardianEmail: 2,
+  emergencySameAsGuardian: 3,
   emergencyFirstName: 3,
   emergencyLastName: 3,
   emergencyPhone: 3,
@@ -102,9 +105,10 @@ function emptyValues(defaultGroup: string): Values {
     guardianLastName: "",
     guardianPhone: "",
     guardianEmail: "",
+    emergencySameAsGuardian: true,
+    emergencyPhone: "",
     emergencyFirstName: "",
     emergencyLastName: "",
-    emergencyPhone: "",
     emergencyRelationship: "",
     allergies: "",
     currentTreatments: "",
@@ -230,6 +234,12 @@ export function RegistrationWizard({
   }
 
   const group = groups.find((item) => item.key === values.groupName);
+
+  // Avertissement volontairement non bloquant : on signale, on n'interdit pas.
+  const samePhoneWarning =
+    values.emergencyPhone.trim().length > 0 &&
+    values.emergencyPhone.replace(/\s/g, "") ===
+      values.guardianPhone.replace(/\s/g, "");
 
   return (
     <div ref={topRef} className="scroll-mt-24">
@@ -373,22 +383,25 @@ export function RegistrationWizard({
 
         {step === 3 && (
           <>
-            <TextField
-              label="Prénom"
-              name="emergencyFirstName"
-              value={values.emergencyFirstName}
-              onChange={(value) => set("emergencyFirstName", value)}
-              error={errors.emergencyFirstName}
+            <p className="text-brand-dark/75">
+              Le club a besoin de deux numéros pour être sûr de joindre
+              quelqu’un pendant les séances.
+            </p>
+
+            <CheckboxField
+              name="emergencySameAsGuardian"
+              checked={values.emergencySameAsGuardian}
+              onChange={(checked) => set("emergencySameAsGuardian", checked)}
+              label="C’est moi qu’il faut joindre en priorité"
+              hint="Décochez si une autre personne doit être appelée en cas d’urgence."
             />
+
             <TextField
-              label="Nom"
-              name="emergencyLastName"
-              value={values.emergencyLastName}
-              onChange={(value) => set("emergencyLastName", value)}
-              error={errors.emergencyLastName}
-            />
-            <TextField
-              label="Téléphone"
+              label={
+                values.emergencySameAsGuardian
+                  ? "Un autre numéro où vous joindre"
+                  : "Téléphone du contact d’urgence"
+              }
               name="emergencyPhone"
               type="tel"
               value={values.emergencyPhone}
@@ -396,13 +409,39 @@ export function RegistrationWizard({
               error={errors.emergencyPhone}
               autoComplete="tel"
             />
-            <TextField
-              label="Lien avec l’adhérente"
-              name="emergencyRelationship"
-              value={values.emergencyRelationship}
-              onChange={(value) => set("emergencyRelationship", value)}
-              error={errors.emergencyRelationship}
-            />
+
+            {samePhoneWarning && (
+              <p className="rounded-xl bg-brand-light/25 px-4 py-3 text-sm text-brand-dark">
+                Ce numéro est identique à celui de l’étape précédente. Si vous
+                n’êtes pas joignable, le club n’aura aucun autre contact.
+              </p>
+            )}
+
+            {!values.emergencySameAsGuardian && (
+              <>
+                <TextField
+                  label="Prénom"
+                  name="emergencyFirstName"
+                  value={values.emergencyFirstName}
+                  onChange={(value) => set("emergencyFirstName", value)}
+                  error={errors.emergencyFirstName}
+                />
+                <TextField
+                  label="Nom"
+                  name="emergencyLastName"
+                  value={values.emergencyLastName}
+                  onChange={(value) => set("emergencyLastName", value)}
+                  error={errors.emergencyLastName}
+                />
+                <TextField
+                  label="Lien avec l’adhérente"
+                  name="emergencyRelationship"
+                  value={values.emergencyRelationship}
+                  onChange={(value) => set("emergencyRelationship", value)}
+                  error={errors.emergencyRelationship}
+                />
+              </>
+            )}
           </>
         )}
 
@@ -567,13 +606,24 @@ export function RegistrationWizard({
               <SummaryLine label="Email" value={values.guardianEmail} />
             </SummaryBlock>
 
-            <SummaryBlock title="Contact d’urgence" onEdit={() => goTo(3)}>
+            <SummaryBlock title="Second numéro" onEdit={() => goTo(3)}>
               <SummaryLine
                 label="Nom"
-                value={`${values.emergencyFirstName} ${values.emergencyLastName}`}
+                value={
+                  values.emergencySameAsGuardian
+                    ? `${values.guardianFirstName} ${values.guardianLastName}`
+                    : `${values.emergencyFirstName} ${values.emergencyLastName}`
+                }
               />
               <SummaryLine label="Téléphone" value={values.emergencyPhone} />
-              <SummaryLine label="Lien" value={values.emergencyRelationship} />
+              <SummaryLine
+                label="Lien"
+                value={
+                  values.emergencySameAsGuardian
+                    ? "Responsable légal"
+                    : values.emergencyRelationship
+                }
+              />
             </SummaryBlock>
 
             <SummaryBlock title="Informations de santé" onEdit={() => goTo(4)}>
