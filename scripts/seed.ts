@@ -1,7 +1,5 @@
-import { config } from "dotenv";
-
-config({ path: ".env.local" });
-
+// L'environnement est chargé par le flag --env-file du script npm :
+// les imports ESM sont hissés, un dotenv appelé ici s'exécuterait trop tard.
 import { GROUPS, DEFAULT_ANNUAL_FEE_CENTS, DEFAULT_SEASON } from "../lib/constants";
 import { db, schema } from "../lib/db";
 
