@@ -17,10 +17,16 @@ let instance: NeonHttpDatabase<typeof schema> | null = null;
 function connect(): NeonHttpDatabase<typeof schema> {
   if (instance) return instance;
 
-  const url = process.env.DATABASE_URL;
+  // Un .trim() volontaire : un retour à la ligne collé par mégarde dans le
+  // champ Vercel donnerait sinon une erreur de connexion bien plus obscure.
+  const url = process.env.DATABASE_URL?.trim();
   if (!url) {
+    // Absent et vide sont deux problèmes distincts, avec deux causes
+    // distinctes : le message doit les distinguer.
     throw new Error(
-      "DATABASE_URL est manquant. En local : copier .env.example vers .env.local. Sur Vercel : Settings > Environment Variables.",
+      process.env.DATABASE_URL === undefined
+        ? "DATABASE_URL n'est pas défini dans cet environnement. En local : copier .env.example vers .env.local. Sur Vercel : Settings > Environment Variables, en cochant l'environnement concerné."
+        : "DATABASE_URL est bien défini mais sa valeur est vide. Ressaisir la chaîne de connexion Neon, sans guillemets autour.",
     );
   }
 
