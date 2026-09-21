@@ -12,6 +12,7 @@ import {
   GROUP_NAMES,
   GROUPS,
   INCOME_CATEGORIES,
+  INSURANCE_STATUSES,
   PAYMENT_METHODS,
   SCHOOL_LEVELS,
   type GroupName,
@@ -330,6 +331,10 @@ const memberUpdateSchema = z.object({
   allergies: text(2000).optional(),
   currentTreatments: text(2000).optional(),
   healthNotes: text(2000).optional(),
+  // Une case décochée n'est pas envoyée du tout : sa seule présence vaut oui.
+  carriesEmergencyTreatment: text(10).optional(),
+
+  insuranceStatus: z.enum(INSURANCE_STATUSES),
 });
 
 /**
@@ -356,6 +361,7 @@ export async function updateMember(formData: FormData): Promise<ActionResult> {
         schoolLevel: v.schoolLevel,
         schoolName: v.schoolName || null,
         groupName: v.groupName,
+        insuranceStatus: v.insuranceStatus,
         updatedAt: new Date(),
       })
       .where(eq(schema.members.id, v.memberId)),
@@ -411,9 +417,18 @@ export async function updateMember(formData: FormData): Promise<ActionResult> {
     db
       .update(schema.medicalInfo)
       .set({
+        // La déclaration se déduit du contenu réel plutôt que d'être saisie
+        // une seconde fois : trois champs vides veulent dire « rien à
+        // signaler », et trois champs remplis disent le contraire. Aucun
+        // moyen d'obtenir une fiche qui affiche « rien » avec une allergie
+        // écrite juste en dessous.
+        hasHealthIssue: Boolean(
+          v.allergies || v.currentTreatments || v.healthNotes,
+        ),
         allergies: v.allergies || null,
         currentTreatments: v.currentTreatments || null,
         healthNotes: v.healthNotes || null,
+        carriesEmergencyTreatment: Boolean(v.carriesEmergencyTreatment),
       })
       .where(eq(schema.medicalInfo.memberId, v.memberId)),
   ]);

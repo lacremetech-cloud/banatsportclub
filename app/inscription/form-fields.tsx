@@ -105,12 +105,14 @@ export function TextAreaField({
   value,
   onChange,
   hint,
+  error,
 }: {
   label: string;
   name: string;
   value: string;
   onChange: (value: string) => void;
   hint?: string;
+  error?: string;
 }) {
   return (
     <div>
@@ -123,9 +125,11 @@ export function TextAreaField({
         rows={3}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        aria-invalid={error ? true : undefined}
         className="field"
       />
       {hint && <p className="mt-1.5 text-sm text-brand-dark/60">{hint}</p>}
+      <FieldError message={error} />
     </div>
   );
 }
@@ -218,6 +222,65 @@ export function ChoiceCard({
       ))}
       {footer}
     </label>
+  );
+}
+
+/**
+ * Choix court en ligne : deux ou trois réponses, une seule ligne.
+ *
+ * `ChoiceCard` existe déjà, mais c'est une grande carte faite pour un choix
+ * structurant — un créneau, un mode de règlement. Une question fermée
+ * (« oui / non ») dans ce format occuperait tout l'écran et donnerait à une
+ * formalité le poids d'une décision.
+ */
+export function RadioRow({
+  name,
+  value,
+  onSelect,
+  label,
+  options,
+  hint,
+  error,
+}: {
+  name: string;
+  value: string;
+  onSelect: (value: string) => void;
+  label: string;
+  options: { value: string; label: string }[];
+  hint?: React.ReactNode;
+  error?: string;
+}) {
+  return (
+    <fieldset>
+      <legend className="font-semibold text-brand-dark">{label}</legend>
+      {hint && <div className="mt-1 text-sm text-brand-dark/65">{hint}</div>}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {options.map((option) => {
+          const checked = value === option.value;
+          return (
+            <label
+              key={option.value}
+              className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border-2 px-4 py-2 font-semibold transition ${
+                checked
+                  ? "border-brand bg-brand-light/15 text-brand-dark"
+                  : "border-brand-light/40 bg-white text-brand-dark/70 hover:border-brand-light"
+              }`}
+            >
+              <input
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={checked}
+                onChange={() => onSelect(option.value)}
+                className="h-5 w-5 accent-brand"
+              />
+              {option.label}
+            </label>
+          );
+        })}
+      </div>
+      <FieldError message={error} />
+    </fieldset>
   );
 }
 

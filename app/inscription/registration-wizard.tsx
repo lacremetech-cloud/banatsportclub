@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 
 import {
+  INSURANCE_STATUSES,
+  INSURANCE_STATUS_LABELS,
+  type InsuranceStatus,
   RELATIONSHIP_SUGGESTIONS,
   PREFERRED_PAYMENT_METHODS,
   PREFERRED_PAYMENT_METHOD_HINTS,
@@ -29,6 +32,7 @@ import {
   ChoiceCard,
   ConsentCheckbox,
   FieldError,
+  RadioRow,
   SelectField,
   TextAreaField,
   TextField,
@@ -53,11 +57,15 @@ type Values = {
   secondFirstName: string;
   secondPhone: string;
   secondRelationship: string;
+  hasHealthIssue: boolean | null;
   allergies: string;
   currentTreatments: string;
   healthNotes: string;
+  carriesEmergencyTreatment: boolean;
+  insuranceStatus: string;
   acceptsInternalRules: boolean;
   acceptsParentalAuthorization: boolean;
+  acceptsEmergencyMedical: boolean;
   acceptsImageRights: boolean;
   guardianFullName: string;
   preferredPaymentMethod: string;
@@ -69,7 +77,7 @@ const STEP_TITLES = [
   "Quel créneau lui convient ?",
   "Vos coordonnées",
   "Qui joindre en cas d’urgence",
-  "Quelques informations utiles",
+  "Sa santé, son assurance",
   "Autorisations",
   "Le règlement de la cotisation",
   "Tout est bon ?",
@@ -97,11 +105,15 @@ const FIELD_STEPS: Record<string, number> = {
   secondFirstName: 3,
   secondPhone: 3,
   secondRelationship: 3,
+  hasHealthIssue: 4,
   allergies: 4,
   currentTreatments: 4,
   healthNotes: 4,
+  carriesEmergencyTreatment: 4,
+  insuranceStatus: 4,
   acceptsInternalRules: 5,
   acceptsParentalAuthorization: 5,
+  acceptsEmergencyMedical: 5,
   acceptsImageRights: 5,
   guardianFullName: 5,
   preferredPaymentMethod: 6,
@@ -128,11 +140,17 @@ function emptyValues(defaultGroup: string): Values {
     secondFirstName: "",
     secondPhone: "",
     secondRelationship: "",
+    // `null` et non `false` : tant que la famille n'a pas répondu, on ne
+    // suppose pas qu'il n'y a rien à signaler.
+    hasHealthIssue: null,
     allergies: "",
     currentTreatments: "",
     healthNotes: "",
+    carriesEmergencyTreatment: false,
+    insuranceStatus: "",
     acceptsInternalRules: false,
     acceptsParentalAuthorization: false,
+    acceptsEmergencyMedical: false,
     acceptsImageRights: false,
     guardianFullName: "",
     preferredPaymentMethod: "",
@@ -599,27 +617,83 @@ export function RegistrationWizard({
         {step === 4 && (
           <>
             <p className="text-brand-dark/75">
-              Ces informations nous permettent de mieux accompagner l’adhérente
-              pendant les activités.
+              Aucun certificat médical n’est demandé. Nous avons seulement
+              besoin de savoir ce qu’il faut connaître avant de la faire
+              courir.
             </p>
-            <TextAreaField
-              label="Allergies"
-              name="allergies"
-              value={values.allergies}
-              onChange={(value) => set("allergies", value)}
+
+            <RadioRow
+              name="hasHealthIssue"
+              label="Y a-t-il un problème de santé, une allergie ou un traitement à signaler ?"
+              value={values.hasHealthIssue === null ? "" : values.hasHealthIssue ? "yes" : "no"}
+              onSelect={(value) => set("hasHealthIssue", value === "yes")}
+              options={[
+                { value: "no", label: "Non, rien à signaler" },
+                { value: "yes", label: "Oui" },
+              ]}
+              error={errors.hasHealthIssue}
             />
-            <TextAreaField
-              label="Traitement en cours"
-              name="currentTreatments"
-              value={values.currentTreatments}
-              onChange={(value) => set("currentTreatments", value)}
-            />
-            <TextAreaField
-              label="Autres informations utiles"
-              name="healthNotes"
-              value={values.healthNotes}
-              onChange={(value) => set("healthNotes", value)}
-              hint="Tous ces champs sont facultatifs, laissez-les vides si rien à signaler."
+
+            {/* Les champs n'apparaissent qu'après un « oui » : demander trois
+                fois « rien » à une famille qui vient de répondre « rien à
+                signaler » ne sert personne. */}
+            {values.hasHealthIssue && (
+              <>
+                <TextAreaField
+                  label="Allergies"
+                  name="allergies"
+                  value={values.allergies}
+                  onChange={(value) => set("allergies", value)}
+                  error={errors.allergies}
+                />
+                <TextAreaField
+                  label="Traitement en cours"
+                  name="currentTreatments"
+                  value={values.currentTreatments}
+                  onChange={(value) => set("currentTreatments", value)}
+                />
+                <TextAreaField
+                  label="Autres informations utiles"
+                  name="healthNotes"
+                  value={values.healthNotes}
+                  onChange={(value) => set("healthNotes", value)}
+                  hint="Asthme, épilepsie, blessure en cours, suivi particulier… Un seul de ces trois champs suffit."
+                />
+                <CheckboxField
+                  name="carriesEmergencyTreatment"
+                  checked={values.carriesEmergencyTreatment}
+                  onChange={(checked) => set("carriesEmergencyTreatment", checked)}
+                  label="Elle a un traitement d’urgence sur elle"
+                  hint="Ventoline, stylo auto-injecteur, autre. L’encadrante saura qu’il existe et où le chercher."
+                />
+              </>
+            )}
+
+            <hr className="border-brand-light/40" />
+
+            <RadioRow
+              name="insuranceStatus"
+              label="Assurance individuelle accident"
+              value={values.insuranceStatus}
+              onSelect={(value) => set("insuranceStatus", value)}
+              options={INSURANCE_STATUSES.map((status) => ({
+                value: status,
+                label: INSURANCE_STATUS_LABELS[status],
+              }))}
+              hint={
+                <>
+                  L’association est couverte par une assurance responsabilité
+                  civile. Il reste recommandé de souscrire une assurance
+                  individuelle accident pour votre fille — souvent incluse dans
+                  l’assurance scolaire / extrascolaire ou dans votre contrat
+                  habitation.
+                  <span className="mt-2 block">
+                    Aucune attestation ne vous est demandée, et aucune réponse
+                    ne bloque l’inscription.
+                  </span>
+                </>
+              }
+              error={errors.insuranceStatus}
             />
           </>
         )}
@@ -651,6 +725,24 @@ export function RegistrationWizard({
             >
               J’autorise ma fille / l’adhérente dont je suis responsable légal à
               participer aux activités de Banat Sport Club.
+            </ConsentCheckbox>
+
+            <ConsentCheckbox
+              name="acceptsEmergencyMedical"
+              checked={values.acceptsEmergencyMedical}
+              onChange={(checked) => set("acceptsEmergencyMedical", checked)}
+              error={errors.acceptsEmergencyMedical}
+            >
+              En cas d’accident ou d’urgence, j’autorise les responsables de
+              Banat Sport Club à faire appel aux secours, à faire transporter
+              l’adhérente vers un établissement de soins, et à autoriser toute
+              intervention médicale ou chirurgicale jugée nécessaire par le
+              corps médical.
+              <span className="mt-2 block text-sm text-brand-dark/60">
+                Le club vous prévient immédiatement. Cette autorisation ne sert
+                qu’à éviter une perte de temps si vous n’êtes pas joignable
+                dans l’instant.
+              </span>
             </ConsentCheckbox>
 
             <ConsentCheckbox
@@ -841,15 +933,36 @@ export function RegistrationWizard({
               <SummaryLine label="Lien" value={values.secondRelationship} />
             </SummaryBlock>
 
-            <SummaryBlock title="Informations de santé" onEdit={() => goTo(4)}>
-              <SummaryLine label="Allergies" value={values.allergies || "Aucune indiquée"} />
+            <SummaryBlock title="Santé et assurance" onEdit={() => goTo(4)}>
+              {values.hasHealthIssue ? (
+                <>
+                  <SummaryLine
+                    label="Allergies"
+                    value={values.allergies || "Aucune indiquée"}
+                  />
+                  <SummaryLine
+                    label="Traitement"
+                    value={values.currentTreatments || "Aucun indiqué"}
+                  />
+                  <SummaryLine
+                    label="Autres"
+                    value={values.healthNotes || "Rien d’autre"}
+                  />
+                  <SummaryLine
+                    label="Traitement d’urgence sur elle"
+                    value={values.carriesEmergencyTreatment ? "Oui" : "Non"}
+                  />
+                </>
+              ) : (
+                <SummaryLine label="Santé" value="Rien à signaler" />
+              )}
               <SummaryLine
-                label="Traitement"
-                value={values.currentTreatments || "Aucun indiqué"}
-              />
-              <SummaryLine
-                label="Autres"
-                value={values.healthNotes || "Rien à signaler"}
+                label="Assurance individuelle"
+                value={
+                  INSURANCE_STATUS_LABELS[
+                    values.insuranceStatus as InsuranceStatus
+                  ] ?? "—"
+                }
               />
             </SummaryBlock>
 
@@ -861,6 +974,10 @@ export function RegistrationWizard({
               <SummaryLine
                 label="Autorisation parentale"
                 value={values.acceptsParentalAuthorization ? "Accordée" : "Non accordée"}
+              />
+              <SummaryLine
+                label="Intervention d’urgence"
+                value={values.acceptsEmergencyMedical ? "Accordée" : "Non accordée"}
               />
               <SummaryLine
                 label="Droit à l’image"

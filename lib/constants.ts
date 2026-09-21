@@ -133,6 +133,7 @@ export const SESSION_STATUSES = ["planned", "done", "cancelled"] as const;
 export const CONSENT_TYPES = [
   "INTERNAL_RULES",
   "PARENTAL_AUTHORIZATION",
+  "EMERGENCY_MEDICAL",
   "IMAGE_RIGHTS",
 ] as const;
 
@@ -141,7 +142,43 @@ export type ConsentType = (typeof CONSENT_TYPES)[number];
 export const CONSENT_TYPE_LABELS: Record<ConsentType, string> = {
   INTERNAL_RULES: "Règlement intérieur",
   PARENTAL_AUTHORIZATION: "Autorisation parentale",
+  EMERGENCY_MEDICAL: "Intervention médicale d’urgence",
   IMAGE_RIGHTS: "Droit à l'image",
+};
+
+/**
+ * Le droit à l'image est le seul consentement refusable : une famille a le
+ * droit de dire non, et ce refus n'est pas un dossier incomplet. Les autres
+ * sont obligatoires pour que l'adhérente puisse pratiquer.
+ */
+export const OPTIONAL_CONSENT_TYPES: ConsentType[] = ["IMAGE_RIGHTS"];
+
+/**
+ * Assurance individuelle accident de l'adhérente.
+ *
+ * L'association porte sa propre responsabilité civile (article L321-1 du code
+ * du sport) ; la garantie individuelle accident, elle, couvre les blessures
+ * que l'adhérente subit elle-même et relève de la famille. La question est
+ * posée à l'inscription pour deux raisons : garder la trace de l'information
+ * donnée (article L321-4) et permettre au bureau de relancer les familles non
+ * couvertes. Aucune réponse ne bloque l'inscription, « Je ne sais pas »
+ * comprise — c'est une réponse honnête et fréquente.
+ */
+export const INSURANCE_STATUSES = ["YES", "NO", "UNKNOWN"] as const;
+
+export type InsuranceStatus = (typeof INSURANCE_STATUSES)[number];
+
+export const INSURANCE_STATUS_LABELS: Record<InsuranceStatus, string> = {
+  YES: "Oui, elle est couverte",
+  NO: "Non",
+  UNKNOWN: "Je ne sais pas",
+};
+
+/** Libellé court pour le CRM et les exports. */
+export const INSURANCE_STATUS_SHORT_LABELS: Record<InsuranceStatus, string> = {
+  YES: "Couverte",
+  NO: "Non couverte",
+  UNKNOWN: "Non renseignée",
 };
 
 /**
