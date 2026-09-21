@@ -88,6 +88,17 @@ export const guardians = pgTable(
   (t) => [index("guardians_member_idx").on(t.memberId)],
 );
 
+/**
+ * Personnes à joindre en cas d'urgence.
+ *
+ * Deux lignes par adhérente, distinguées par `priority` : 1 pour le contact
+ * principal, 2 pour le second numéro. Deux lignes plutôt que deux séries de
+ * colonnes, pour qu'un troisième contact ne demande aucune migration.
+ *
+ * `last_name` est nullable : le second contact n'est identifié que par son
+ * prénom, sa relation et son numéro — c'est ce dont le bureau a besoin au
+ * bord du terrain.
+ */
 export const emergencyContacts = pgTable(
   "emergency_contacts",
   {
@@ -95,12 +106,16 @@ export const emergencyContacts = pgTable(
     memberId: uuid("member_id")
       .notNull()
       .references(() => members.id, { onDelete: "cascade" }),
+    priority: integer("priority").notNull().default(1),
     firstName: text("first_name").notNull(),
-    lastName: text("last_name").notNull(),
+    lastName: text("last_name"),
     phone: text("phone").notNull(),
     relationship: text("relationship"),
   },
-  (t) => [index("emergency_contacts_member_idx").on(t.memberId)],
+  (t) => [
+    index("emergency_contacts_member_idx").on(t.memberId),
+    uniqueIndex("emergency_contacts_member_priority_unique").on(t.memberId, t.priority),
+  ],
 );
 
 export const medicalInfo = pgTable(

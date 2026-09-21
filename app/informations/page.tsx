@@ -55,8 +55,17 @@ export default async function InformationsPage() {
                 <p className="text-lg font-extrabold uppercase tracking-tight text-brand-dark">
                   {group.day}
                 </p>
+                <p className="mt-1 font-semibold text-brand-dark/80">{group.levels}</p>
                 <p className="mt-2 font-semibold text-brand">{group.time}</p>
-                <p className="mt-1 text-brand-dark/70">{group.place}</p>
+                <p className="mt-2 text-brand-dark/70">{group.place}</p>
+                <a
+                  href={group.mapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block text-sm text-brand underline"
+                >
+                  {group.address}
+                </a>
               </div>
             ))}
           </div>

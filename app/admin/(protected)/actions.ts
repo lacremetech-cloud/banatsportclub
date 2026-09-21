@@ -319,9 +319,13 @@ const memberUpdateSchema = z.object({
   guardianEmail: z.email("Adresse email invalide"),
 
   emergencyFirstName: requiredText("Le prénom du contact d’urgence"),
-  emergencyLastName: requiredText("Le nom du contact d’urgence"),
-  emergencyPhone: requiredText("Le second numéro", 20),
+  emergencyLastName: text(120).optional(),
+  emergencyPhone: requiredText("Le téléphone du contact d’urgence", 20),
   emergencyRelationship: text(80).optional(),
+
+  secondFirstName: requiredText("Le prénom du deuxième contact"),
+  secondPhone: requiredText("Le téléphone du deuxième contact", 20),
+  secondRelationship: text(80).optional(),
 
   allergies: text(2000).optional(),
   currentTreatments: text(2000).optional(),
@@ -364,15 +368,46 @@ export async function updateMember(formData: FormData): Promise<ActionResult> {
         email: v.guardianEmail,
       })
       .where(eq(schema.guardians.memberId, v.memberId)),
+    // Un upsert par contact : une adhérente inscrite avant l'ajout du
+    // deuxième contact n'a qu'une ligne, et la saisie du bureau la complète
+    // au lieu d'échouer.
     db
-      .update(schema.emergencyContacts)
-      .set({
+      .insert(schema.emergencyContacts)
+      .values({
+        memberId: v.memberId,
+        priority: 1,
         firstName: v.emergencyFirstName,
-        lastName: v.emergencyLastName,
+        lastName: v.emergencyLastName || null,
         phone: v.emergencyPhone,
         relationship: v.emergencyRelationship || null,
       })
-      .where(eq(schema.emergencyContacts.memberId, v.memberId)),
+      .onConflictDoUpdate({
+        target: [schema.emergencyContacts.memberId, schema.emergencyContacts.priority],
+        set: {
+          firstName: v.emergencyFirstName,
+          lastName: v.emergencyLastName || null,
+          phone: v.emergencyPhone,
+          relationship: v.emergencyRelationship || null,
+        },
+      }),
+    db
+      .insert(schema.emergencyContacts)
+      .values({
+        memberId: v.memberId,
+        priority: 2,
+        firstName: v.secondFirstName,
+        lastName: null,
+        phone: v.secondPhone,
+        relationship: v.secondRelationship || null,
+      })
+      .onConflictDoUpdate({
+        target: [schema.emergencyContacts.memberId, schema.emergencyContacts.priority],
+        set: {
+          firstName: v.secondFirstName,
+          phone: v.secondPhone,
+          relationship: v.secondRelationship || null,
+        },
+      }),
     db
       .update(schema.medicalInfo)
       .set({

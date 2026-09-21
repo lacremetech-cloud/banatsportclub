@@ -36,6 +36,13 @@
       "when": 1789949896309,
       "tag": "0004_equipment_and_active_on_first_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789981232269,
+      "tag": "0005_two_emergency_contacts",
+      "breakpoints": true
     }
   ]
 }

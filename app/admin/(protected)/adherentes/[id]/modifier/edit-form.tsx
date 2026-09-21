@@ -151,12 +151,25 @@ export function EditMemberForm({
       </fieldset>
 
       <fieldset className="rounded-2xl border border-brand-light/40 bg-white p-5">
-        <legend className="px-2 font-bold text-brand-dark">Second numéro</legend>
+        <legend className="px-2 font-bold text-brand-dark">
+          Contact d’urgence principal
+        </legend>
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <Field label="Prénom" name="emergencyFirstName" defaultValue={initial.emergencyFirstName} required />
-          <Field label="Nom" name="emergencyLastName" defaultValue={initial.emergencyLastName} required />
+          <Field label="Nom" name="emergencyLastName" defaultValue={initial.emergencyLastName} />
           <Field label="Téléphone" name="emergencyPhone" type="tel" defaultValue={initial.emergencyPhone} required />
           <Field label="Lien de parenté" name="emergencyRelationship" defaultValue={initial.emergencyRelationship} />
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded-2xl border border-brand-light/40 bg-white p-5">
+        <legend className="px-2 font-bold text-brand-dark">
+          Deuxième contact d’urgence
+        </legend>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field label="Prénom" name="secondFirstName" defaultValue={initial.secondFirstName} required />
+          <Field label="Téléphone" name="secondPhone" type="tel" defaultValue={initial.secondPhone} required />
+          <Field label="Lien de parenté" name="secondRelationship" defaultValue={initial.secondRelationship} />
         </div>
       </fieldset>
 

@@ -4,6 +4,7 @@ import {
   DEFAULT_SEASON,
   GROUPS,
   GROUP_NAMES,
+  mapsUrl,
   type GroupName,
 } from "./constants";
 import { db, schema } from "./db";
@@ -16,12 +17,18 @@ import {
 /** Un créneau tel qu'il est affiché partout sur le site. */
 export type GroupInfo = {
   key: GroupName;
-  /** "Jeudi" */
+  /** "Jeudi soir" */
   day: string;
+  /** "6e à 3e" — indicatif, ne verrouille aucune inscription. */
+  levels: string;
   /** "18h00 – 19h30" */
   time: string;
-  /** "Dojo Montpellier" */
+  /** "Complexe sportif des Garrigues — Haut de Massane" */
   place: string;
+  /** "297 Av. du Comté de Nice, 34080 Montpellier" */
+  address: string;
+  /** Lien Google Maps, dérivé du lieu et de l'adresse. */
+  mapsUrl: string;
   /** Heures SQL de la séance, utilisées par la feuille de présence. */
   startTime: string;
   endTime: string;
@@ -44,15 +51,23 @@ export async function getSettings(): Promise<Record<string, string>> {
 }
 
 function buildGroups(settings: Record<string, string>): GroupInfo[] {
-  return GROUP_NAMES.map((key) => ({
-    key,
-    day: settings[`group_${key}_day`] ?? DEFAULT_GROUP_DISPLAY[key].day,
-    time: settings[`group_${key}_time`] ?? DEFAULT_GROUP_DISPLAY[key].time,
-    place: settings[`group_${key}_place`] ?? DEFAULT_GROUP_DISPLAY[key].place,
-    startTime: GROUPS[key].startTime,
-    endTime: GROUPS[key].endTime,
-    weekday: GROUPS[key].weekday,
-  }));
+  return GROUP_NAMES.map((key) => {
+    const fallback = DEFAULT_GROUP_DISPLAY[key];
+    const place = settings[`group_${key}_place`] ?? fallback.place;
+    const address = settings[`group_${key}_address`] ?? fallback.address;
+    return {
+      key,
+      day: settings[`group_${key}_day`] ?? fallback.day,
+      levels: settings[`group_${key}_levels`] ?? fallback.levels,
+      time: settings[`group_${key}_time`] ?? fallback.time,
+      place,
+      address,
+      mapsUrl: mapsUrl(place, address),
+      startTime: GROUPS[key].startTime,
+      endTime: GROUPS[key].endTime,
+      weekday: GROUPS[key].weekday,
+    };
+  });
 }
 
 function readFeeCents(settings: Record<string, string>): number {

@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Banat Sport Club — Montpellier",
   description:
-    "Association sportive féminine à Montpellier. Entraînements le jeudi au Dojo de Montpellier et le dimanche au Stade de Grabels.",
+    "Association sportive féminine à Montpellier. Entraînements le jeudi soir au Complexe sportif des Garrigues et le dimanche matin au Stade Serge Oltra à Grabels.",
 };
 
 export const viewport: Viewport = {

@@ -18,6 +18,8 @@ export function TextField({
   type = "text",
   autoComplete,
   required = true,
+  list,
+  hint,
 }: {
   label: string;
   name: string;
@@ -27,6 +29,9 @@ export function TextField({
   type?: string;
   autoComplete?: string;
   required?: boolean;
+  /** Identifiant d'un <datalist> : des suggestions, pas une contrainte. */
+  list?: string;
+  hint?: string;
 }) {
   return (
     <div>
@@ -40,10 +45,12 @@ export function TextField({
         type={type}
         value={value}
         autoComplete={autoComplete}
+        list={list}
         aria-invalid={error ? true : undefined}
         onChange={(event) => onChange(event.target.value)}
         className="field"
       />
+      {hint && <p className="mt-1 text-sm text-brand-dark/60">{hint}</p>}
       <FieldError message={error} />
     </div>
   );
@@ -132,6 +139,7 @@ export function ChoiceCard({
   title,
   lines,
   badge,
+  footer,
 }: {
   name: string;
   value: string;
@@ -141,6 +149,8 @@ export function ChoiceCard({
   lines: string[];
   /** Petite étiquette, pour signaler le choix le plus courant. */
   badge?: string;
+  /** Contenu libre sous les lignes : un lien, une précision. */
+  footer?: React.ReactNode;
 }) {
   return (
     <label
@@ -184,6 +194,7 @@ export function ChoiceCard({
           {line}
         </span>
       ))}
+      {footer}
     </label>
   );
 }

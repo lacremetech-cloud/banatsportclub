@@ -234,10 +234,21 @@ export default async function HomePage() {
                   <p className="text-2xl font-extrabold uppercase tracking-tight text-brand-dark">
                     {group.day}
                   </p>
+                  <p className="mt-1 font-semibold text-brand-dark/80">
+                    {group.levels}
+                  </p>
                   <p className="mt-3 text-xl font-semibold text-brand">
                     {group.time}
                   </p>
-                  <p className="mt-1 text-brand-dark/70">{group.place}</p>
+                  <p className="mt-2 text-brand-dark/70">{group.place}</p>
+                  <a
+                    href={group.mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 text-sm text-brand underline"
+                  >
+                    {group.address}
+                  </a>
                   <Link
                     href={`/inscription?creneau=${group.key}`}
                     className="btn mt-6 w-full"

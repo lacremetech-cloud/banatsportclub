@@ -26,8 +26,10 @@ const SETTINGS: Record<string, string> = {
   ...Object.fromEntries(
     GROUP_NAMES.flatMap((key) => [
       [`group_${key}_day`, DEFAULT_GROUP_DISPLAY[key].day],
+      [`group_${key}_levels`, DEFAULT_GROUP_DISPLAY[key].levels],
       [`group_${key}_time`, DEFAULT_GROUP_DISPLAY[key].time],
       [`group_${key}_place`, DEFAULT_GROUP_DISPLAY[key].place],
+      [`group_${key}_address`, DEFAULT_GROUP_DISPLAY[key].address],
     ]),
   ),
 };

@@ -56,6 +56,7 @@ export default async function MemberPage({
     member,
     guardian,
     emergency,
+    secondContact,
     medical,
     consents,
     payments,
@@ -122,7 +123,21 @@ export default async function MemberPage({
           </DataLine>
           <DataLine label="Établissement">{orDash(member.schoolName)}</DataLine>
           <DataLine label="Créneau">
-            {group ? `${group.day} ${group.time} — ${group.place}` : member.groupName}
+            {group ? (
+              <>
+                {group.day} {group.time} — {group.place}
+                <a
+                  href={group.mapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-2 text-sm text-brand underline"
+                >
+                  {group.address}
+                </a>
+              </>
+            ) : (
+              member.groupName
+            )}
           </DataLine>
         </dl>
       </Section>
@@ -148,20 +163,44 @@ export default async function MemberPage({
         )}
       </Section>
 
-      <Section title="Second numéro / contact d’urgence">
+      <Section title="Contact d’urgence principal">
         {emergency ? (
           <dl>
             <DataLine label="Prénom">{emergency.firstName}</DataLine>
-            <DataLine label="Nom">{emergency.lastName}</DataLine>
+            {emergency.lastName && <DataLine label="Nom">{emergency.lastName}</DataLine>}
+            <DataLine label="Lien de parenté">{orDash(emergency.relationship)}</DataLine>
             <DataLine label="Téléphone">
               <a href={`tel:${emergency.phone}`} className="text-brand underline">
                 {emergency.phone}
               </a>
             </DataLine>
-            <DataLine label="Lien de parenté">{orDash(emergency.relationship)}</DataLine>
           </dl>
         ) : (
           <EmptyState>Aucun renseignement</EmptyState>
+        )}
+      </Section>
+
+      <Section title="Deuxième contact d’urgence">
+        {secondContact ? (
+          <dl>
+            <DataLine label="Prénom">{secondContact.firstName}</DataLine>
+            {secondContact.lastName && (
+              <DataLine label="Nom">{secondContact.lastName}</DataLine>
+            )}
+            <DataLine label="Lien de parenté">
+              {orDash(secondContact.relationship)}
+            </DataLine>
+            <DataLine label="Téléphone">
+              <a href={`tel:${secondContact.phone}`} className="text-brand underline">
+                {secondContact.phone}
+              </a>
+            </DataLine>
+          </dl>
+        ) : (
+          <EmptyState>
+            Aucun deuxième contact enregistré. Les inscriptions antérieures au
+            21 septembre 2026 n’en comportaient pas.
+          </EmptyState>
         )}
       </Section>
 

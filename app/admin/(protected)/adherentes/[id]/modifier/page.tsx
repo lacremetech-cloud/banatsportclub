@@ -16,7 +16,7 @@ export default async function EditMemberPage({
   const detail = await getMemberDetail(id);
   if (!detail) notFound();
 
-  const { member, guardian, emergency, medical, groups } = detail;
+  const { member, guardian, emergency, secondContact, medical, groups } = detail;
 
   return (
     <div className="space-y-6">
@@ -47,6 +47,9 @@ export default async function EditMemberPage({
           emergencyLastName: emergency?.lastName ?? "",
           emergencyPhone: emergency?.phone ?? "",
           emergencyRelationship: emergency?.relationship ?? "",
+          secondFirstName: secondContact?.firstName ?? "",
+          secondPhone: secondContact?.phone ?? "",
+          secondRelationship: secondContact?.relationship ?? "",
           allergies: medical?.allergies ?? "",
           currentTreatments: medical?.currentTreatments ?? "",
           healthNotes: medical?.healthNotes ?? "",
