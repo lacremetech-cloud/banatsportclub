@@ -49,9 +49,20 @@ export default async function ComptabilitePage({
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-brand-dark">Comptabilité</h1>
-        <p className="mt-1 text-brand-dark/70">Saison {overview.season}</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-dark">Comptabilité</h1>
+          <p className="mt-1 text-brand-dark/70">Saison {overview.season}</p>
+        </div>
+        {/* L'export reprend les filtres affichés : le fichier correspond à
+            ce que le bureau a sous les yeux. */}
+        <a
+          href={`/api/admin/export/comptabilite?periode=${period}&type=${kind}`}
+          className="btn-ghost"
+          download
+        >
+          Exporter CSV
+        </a>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-3">

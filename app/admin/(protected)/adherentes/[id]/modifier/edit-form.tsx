@@ -132,7 +132,7 @@ export function EditMemberForm({
             >
               {groups.map((group) => (
                 <option key={group.key} value={group.key}>
-                  {group.day} {group.time} — {group.place}
+                  {group.shortLabel} {group.time}
                 </option>
               ))}
             </select>

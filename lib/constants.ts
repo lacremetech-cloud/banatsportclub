@@ -162,9 +162,16 @@ export const EXPENSE_CATEGORIES = [
 export const NOTE_AUTHORS = ["Bureau BSC", "Rayyan", "Imen", "Dawssen"] as const;
 export const DEFAULT_NOTE_AUTHOR = "Bureau BSC";
 
-/** Contacts publics de l'association. */
-export const CLUB_EMAIL = "banatsportclub@gmail.com";
-export const CLUB_PHONE = "06 25 77 35 92";
+/**
+ * Identité et contacts publics de l'association.
+ *
+ * Ce ne sont que des valeurs par défaut : l'affichage passe par `settings`
+ * (voir lib/settings.ts), modifiable depuis /admin/parametres. Elles servent
+ * de filet si une clé manque en base.
+ */
+export const DEFAULT_CLUB_NAME = "Banat Sport Club";
+export const DEFAULT_CLUB_EMAIL = "banatsportclub@gmail.com";
+export const DEFAULT_CLUB_PHONE = "06 25 77 35 92";
 
 /**
  * Exemples de lien de parenté proposés pour les contacts d'urgence.
@@ -197,7 +204,14 @@ export const DEFAULT_ANNUAL_FEE_CENTS = 20000;
  */
 export const DEFAULT_GROUP_DISPLAY: Record<
   GroupName,
-  { day: string; levels: string; time: string; place: string; address: string }
+  {
+    day: string;
+    levels: string;
+    time: string;
+    place: string;
+    address: string;
+    shortLabel: string;
+  }
 > = {
   jeudi: {
     day: "Jeudi soir",
@@ -205,6 +219,7 @@ export const DEFAULT_GROUP_DISPLAY: Record<
     time: "18h00 – 19h30",
     place: "Complexe sportif des Garrigues — Haut de Massane",
     address: "297 Av. du Comté de Nice, 34080 Montpellier",
+    shortLabel: "Jeudi soir — Dojo",
   },
   dimanche: {
     day: "Dimanche matin",
@@ -212,8 +227,18 @@ export const DEFAULT_GROUP_DISPLAY: Record<
     time: "10h30 – 12h30",
     place: "Stade Serge Oltra — Grabels",
     address: "Rue du Mas d'Armand, 34790 Grabels",
+    shortLabel: "Dimanche matin — Stade Grabels",
   },
 };
+
+/**
+ * Deux écritures d'un même créneau, et c'est volontaire :
+ *
+ * - `place` + `address` servent au parcours public, où un parent doit pouvoir
+ *   trouver le gymnase sans connaître le club ;
+ * - `shortLabel` sert au CRM, où le bureau sait déjà où ont lieu les séances
+ *   et où une adresse complète répétée sur chaque ligne encombre l'écran.
+ */
 
 /** Lien Google Maps vers un lieu, à partir de son nom et de son adresse. */
 export function mapsUrl(place: string, address: string): string {

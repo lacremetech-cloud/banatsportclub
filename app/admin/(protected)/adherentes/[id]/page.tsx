@@ -5,12 +5,15 @@ import { SmsButton } from "@/components/admin/sms-button";
 import {
   BackLink,
   DataLine,
+  DossierBadge,
   EmptyState,
   PaymentBadge,
   RegistrationBadge,
   Section,
   StatCard,
+  SummaryItem,
 } from "@/components/admin/ui";
+import { CopyButton } from "@/components/copy-button";
 import {
   ATTENDANCE_STATUS_LABELS,
   CONSENT_TYPE_LABELS,
@@ -38,6 +41,10 @@ import {
 } from "./member-actions";
 
 export const dynamic = "force-dynamic";
+
+/** Même gabarit que SmsButton et CopyButton : une rangée d'actions homogène. */
+const QUICK_ACTION =
+  "inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-brand-light/60 bg-white px-3 py-2 text-sm font-semibold text-brand-dark transition hover:border-brand hover:text-brand";
 
 function orDash(value: string | null | undefined) {
   return value?.trim() ? value : "Aucun renseignement";
@@ -67,6 +74,7 @@ export default async function MemberPage({
     dueCents,
     paymentStatus,
     installments,
+    dossier,
     group,
   } = detail;
 
@@ -88,18 +96,33 @@ export default async function MemberPage({
               {SCHOOL_LEVEL_LABELS[
                 member.schoolLevel as keyof typeof SCHOOL_LEVEL_LABELS
               ] ?? member.schoolLevel}{" "}
-              · {group ? `${group.day} ${group.time} — ${group.place}` : member.groupName}
+              · {group ? `${group.shortLabel} ${group.time}` : member.groupName}
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <p className="flex flex-wrap items-center gap-2 text-sm text-brand-dark/60">
-              Adhésion <RegistrationBadge status={member.registrationStatus} />
-            </p>
-            <p className="flex flex-wrap items-center gap-2 text-sm text-brand-dark/60">
-              Paiement <PaymentBadge status={paymentStatus} full />
-            </p>
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            <RegistrationBadge status={member.registrationStatus} />
+            <PaymentBadge status={paymentStatus} full />
+            <DossierBadge complete={dossier.complete} missing={dossier.missing} />
           </div>
         </div>
+
+        {/* Résumé : toute la situation en une ligne, sans descendre dans la
+            page. Les chiffres détaillés restent dans la section Paiement. */}
+        <dl className="mt-4 flex flex-wrap items-baseline gap-x-5 gap-y-2 border-t border-brand-light/30 pt-4">
+          <SummaryItem label="Cotisation">{formatEuros(member.feeAmountCents)}</SummaryItem>
+          <SummaryItem label="Payé">{formatEuros(paidCents)}</SummaryItem>
+          <SummaryItem label="Reste">{formatEuros(dueCents)}</SummaryItem>
+          <SummaryItem label="Plan">{installments.plan}×</SummaryItem>
+          <SummaryItem label="Kit">
+            {member.equipmentDelivered ? "remis" : "à remettre"}
+          </SummaryItem>
+        </dl>
+
+        {!dossier.complete && (
+          <p className="mt-3 text-sm text-brand-dark/70">
+            À compléter : {dossier.missing.join(", ")}.
+          </p>
+        )}
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Link href={`/admin/adherentes/${member.id}/modifier`} className="btn-ghost">
@@ -125,14 +148,16 @@ export default async function MemberPage({
           <DataLine label="Créneau">
             {group ? (
               <>
-                {group.day} {group.time} — {group.place}
+                {group.shortLabel} {group.time}
+                {/* Le nom exact et l'adresse restent dans le parcours public ;
+                    ici le bureau n'a besoin que de l'itinéraire, au cas où. */}
                 <a
                   href={group.mapsUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="ml-2 text-sm text-brand underline"
                 >
-                  {group.address}
+                  Itinéraire
                 </a>
               </>
             ) : (
@@ -160,6 +185,22 @@ export default async function MemberPage({
           </dl>
         ) : (
           <EmptyState>Aucun renseignement</EmptyState>
+        )}
+
+        {/* Les quatre gestes du bord du terrain, sans passer par le répertoire
+            du téléphone. Aucun service externe : ce sont des liens `tel:`,
+            `sms:` et `mailto:` que l'appareil ouvre lui-même. */}
+        {guardian && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a href={`tel:${guardian.phone}`} className={QUICK_ACTION}>
+              <span aria-hidden>☎</span> Appeler
+            </a>
+            <SmsButton phone={guardian.phone} message="" title="Ouvrir un SMS" />
+            <CopyButton value={guardian.phone} label="Copier le numéro" />
+            <a href={`mailto:${guardian.email}`} className={QUICK_ACTION}>
+              <span aria-hidden>✉</span> Email
+            </a>
+          </div>
         )}
       </Section>
 

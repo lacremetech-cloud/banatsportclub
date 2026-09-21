@@ -147,6 +147,7 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | `/admin/paiements` | Historique des paiements + saisie manuelle |
 | `/admin/presences` | Feuille de présence par groupe et par date |
 | `/admin/comptabilite` | Recettes, dépenses, solde et mouvements de la saison |
+| `/admin/parametres` | Saison, tarifs, coordonnées bancaires, identité du club |
 
 ### API
 
@@ -157,6 +158,67 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | `/api/attendance` | `GET`, `POST` | Bureau — lit et enregistre les présences |
 | `/api/payments/mollie` | `POST` | Public — ouvre un paiement carte pour une adhérente |
 | `/api/webhooks/mollie` | `POST` | Mollie — notification de changement de statut |
+| `/api/admin/export/adherentes` | `GET` | Bureau — export CSV des adhérentes |
+| `/api/admin/export/comptabilite` | `GET` | Bureau — export CSV de la trésorerie |
+
+## Réglages de l'association
+
+Tout ce qui change d'une saison à l'autre vit dans la table `settings` et se
+modifie depuis `/admin/parametres`, sans redéploiement : saison active, tarif
+standard, tarif solidaire, reversement au club partenaire, coordonnées
+bancaires, nom du club, email du bureau, téléphone du club.
+
+Trois garanties, tenues par le code :
+
+- **Rien n'est réécrit rétroactivement.** Changer le tarif standard ne touche
+  pas `members.fee_amount_cents` ; changer la saison ne retouche ni les
+  adhésions ni les écritures comptables déjà rattachées à une saison. Le
+  passage à 2027-2028 se fait donc en changeant un champ, et l'historique
+  reste juste.
+- **L'IBAN est vérifié par sa clé de contrôle** (modulo 97) avant d'être
+  enregistré : un chiffre inversé est refusé plutôt que d'envoyer une famille
+  virer dans le vide.
+- **Aucun secret technique n'y figure.** `DATABASE_URL`, `SESSION_SECRET`,
+  `ADMIN_PASSWORD`, `MOLLIE_API_KEY` et `RESEND_API_KEY` vivent chez
+  l'hébergeur ; cette page ne les lit pas et ne les affiche pas.
+
+### Deux écritures d'un même créneau
+
+Le parcours public affiche le nom exact du gymnase et son adresse — un parent
+doit pouvoir trouver la salle. Le CRM affiche un libellé court
+(`group_<clé>_short_label` : « Jeudi soir — Dojo », « Dimanche matin — Stade
+Grabels »), parce que le bureau sait déjà où ont lieu les séances et qu'une
+adresse répétée sur chaque ligne encombre l'écran.
+
+## Exports CSV
+
+Deux exports, séparateur point-virgule et BOM UTF-8, pour s'ouvrir directement
+dans un tableur francophone.
+
+- **Adhérentes** (`/admin/adherentes`) : identité, responsable légal, **les
+  deux contacts d'urgence**, cotisation, règlement, équipement, droit à
+  l'image, saison. **Aucune donnée médicale n'y figure** — un export général
+  circule par email et s'ouvre n'importe où ; allergies, traitements et
+  remarques de santé restent sur la fiche, derrière la connexion.
+- **Trésorerie** (`/admin/comptabilite`) : cotisations encaissées et saisies
+  manuelles dans le même fichier, triées de la plus ancienne à la plus
+  récente, avec une colonne `Source` (`Mollie`, `Cotisation manuelle`,
+  `Recette manuelle`, `Dépense manuelle`). Aucune cotisation n'est recopiée
+  dans `accounting_entries` pour produire ce fichier : les deux sources sont
+  simplement lues ensemble.
+
+## Dossier complet
+
+La fiche indique **Dossier complet** ou **Dossier à vérifier**, et le tableau
+de bord en donne le compte. Ne sont vérifiés que les éléments réellement
+collectés par le formulaire : date de naissance, classe, créneau, responsable
+légal complet, les deux contacts d'urgence, règlement intérieur et
+autorisation parentale acceptés.
+
+Aucun document n'est inventé : tant que le certificat médical n'est demandé
+nulle part, son absence ne rend aucun dossier incomplet. **Un droit à l'image
+refusé ne rend jamais un dossier incomplet** : c'est une réponse, pas un
+manque.
 
 ## Authentification
 

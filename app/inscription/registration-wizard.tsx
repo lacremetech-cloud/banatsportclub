@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 
 import {
-  CLUB_PHONE,
   RELATIONSHIP_SUGGESTIONS,
   PREFERRED_PAYMENT_METHODS,
   PREFERRED_PAYMENT_METHOD_HINTS,
@@ -146,12 +145,14 @@ export function RegistrationWizard({
   annualFeeCents,
   defaultGroup,
   bank,
+  clubPhone,
 }: {
   groups: GroupInfo[];
   season: string;
   annualFeeCents: number;
   defaultGroup: string;
   bank: BankDetails;
+  clubPhone: string;
 }) {
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Values>(() => emptyValues(defaultGroup));
@@ -381,8 +382,11 @@ export function RegistrationWizard({
             <p className="rounded-2xl bg-brand-light/15 px-5 py-4 text-brand-dark/85">
               Pour toute demande particulière, contrainte d’emploi du temps ou
               question sur le groupe le plus adapté, contactez-nous au{" "}
-              <a href={`tel:${CLUB_PHONE.replace(/\s/g, "")}`} className="font-semibold text-brand underline">
-                {CLUB_PHONE}
+              <a
+                href={`tel:${clubPhone.replace(/\s/g, "")}`}
+                className="font-semibold text-brand underline"
+              >
+                {clubPhone}
               </a>{" "}
               afin de voir ce qui est possible.
             </p>

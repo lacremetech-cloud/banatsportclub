@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { BankTransferDetails } from "@/components/bank-transfer";
 import {
   PREFERRED_PAYMENT_METHOD_LABELS,
   formatEuros,
   type PreferredPaymentMethod,
 } from "@/lib/constants";
 import { installmentLabel, splitInstallments } from "@/lib/fees";
-import type { GroupInfo } from "@/lib/settings";
+import type { BankDetails, GroupInfo } from "@/lib/settings";
 
 export type RegistrationResult = {
   id: string;
@@ -23,11 +24,7 @@ export type RegistrationResult = {
   season: string;
 };
 
-export type BankDetails = {
-  holder: string | null;
-  iban: string | null;
-  bic: string | null;
-};
+export type { BankDetails };
 
 /** Bouton de paiement carte : le montant est calculé côté serveur. */
 function PayByCard({
@@ -78,74 +75,6 @@ function PayByCard({
         {installments > 1
           ? `Paiement sécurisé. Vous réglez la première des ${installments} échéances ; la suivante pourra être payée plus tard.`
           : "Paiement sécurisé. Vous pouvez aussi régler plus tard : le bureau vous recontactera."}
-      </p>
-    </div>
-  );
-}
-
-function BankTransfer({
-  memberNumber,
-  amountCents,
-  totalCents,
-  installments,
-  bank,
-}: {
-  memberNumber: string;
-  amountCents: number;
-  totalCents: number;
-  installments: number;
-  bank: BankDetails;
-}) {
-  return (
-    <div className="rounded-2xl border-2 border-brand-light/50 bg-white p-5">
-      <h3 className="font-bold text-brand-dark">Paiement par virement</h3>
-      <p className="mt-2 text-brand-dark/80">
-        Montant à virer : <strong>{formatEuros(amountCents)}</strong>
-        {installments > 1 && (
-          <span className="block text-sm text-brand-dark/60">
-            Première des {installments} échéances, sur {formatEuros(totalCents)}{" "}
-            au total.
-          </span>
-        )}
-      </p>
-
-      <div className="mt-4 rounded-xl bg-brand-light/20 px-4 py-3">
-        <p className="text-sm text-brand-dark/70">
-          Référence à indiquer obligatoirement dans le libellé
-        </p>
-        <p className="mt-1 font-mono text-lg font-bold text-brand-dark">
-          {memberNumber}
-        </p>
-      </div>
-
-      {bank.iban ? (
-        <dl className="mt-4 space-y-2 text-sm">
-          {bank.holder && (
-            <div className="flex flex-wrap gap-2">
-              <dt className="text-brand-dark/60">Bénéficiaire</dt>
-              <dd className="font-medium text-brand-dark">{bank.holder}</dd>
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <dt className="text-brand-dark/60">IBAN</dt>
-            <dd className="font-mono font-medium text-brand-dark">{bank.iban}</dd>
-          </div>
-          {bank.bic && (
-            <div className="flex flex-wrap gap-2">
-              <dt className="text-brand-dark/60">BIC</dt>
-              <dd className="font-mono font-medium text-brand-dark">{bank.bic}</dd>
-            </div>
-          )}
-        </dl>
-      ) : (
-        <p className="mt-4 text-brand-dark/70">
-          Les coordonnées bancaires vous seront communiquées par le bureau.
-        </p>
-      )}
-
-      <p className="mt-4 text-sm text-brand-dark/60">
-        Sans cette référence, le bureau ne peut pas rattacher votre virement à
-        l’inscription.
       </p>
     </div>
   );
@@ -211,10 +140,12 @@ export function ConfirmationScreen({
         )}
 
         {method === "BANK_TRANSFER" && (
-          <BankTransfer
+          /* À cet instant rien n'a encore été encaissé : le reste dû est la
+             cotisation entière, et le montant à virer la première échéance. */
+          <BankTransferDetails
             memberNumber={result.memberNumber}
             amountCents={firstDueCents}
-            totalCents={result.feeAmountCents}
+            remainingCents={result.feeAmountCents}
             installments={installments}
             bank={bank}
           />

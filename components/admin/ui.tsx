@@ -131,3 +131,50 @@ export function BackLink({ href, children }: { href: string; children: React.Rea
     </Link>
   );
 }
+
+/**
+ * Une donnée du résumé de fiche : un libellé court, une valeur en gras.
+ *
+ * Le résumé doit se lire en quelques secondes : les libellés restent donc
+ * très courts, et rien n'y est répété de ce que disent déjà les pastilles.
+ */
+export function SummaryItem({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="text-xs uppercase tracking-wide text-brand-dark/50">{label}</span>
+      <span className="text-sm font-semibold text-brand-dark">{children}</span>
+    </div>
+  );
+}
+
+/**
+ * État du dossier d'inscription.
+ *
+ * « À vérifier » ne veut pas dire « refusé » : il manque un élément que le
+ * formulaire collecte normalement, et le bureau peut le compléter depuis
+ * Modifier.
+ */
+export function DossierBadge({
+  complete,
+  missing,
+}: {
+  complete: boolean;
+  missing: string[];
+}) {
+  return (
+    <span
+      title={complete ? undefined : `Manque : ${missing.join(", ")}`}
+      className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+        complete ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"
+      }`}
+    >
+      {complete ? "Dossier complet" : "Dossier à vérifier"}
+    </span>
+  );
+}

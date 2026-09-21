@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { BankTransferDetails } from "@/components/bank-transfer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { formatEuros } from "@/lib/constants";
 import { installmentLabel } from "@/lib/fees";
 import { getPaymentSummary } from "@/lib/payments";
+import { getBankDetails } from "@/lib/settings";
 
 import { RetryPaymentButton } from "./retry-payment-button";
 
@@ -24,7 +26,10 @@ export default async function PaiementPage({
   searchParams: Promise<{ adherente?: string }>;
 }) {
   const { adherente } = await searchParams;
-  const summary = adherente ? await getPaymentSummary(adherente) : null;
+  const [summary, bank] = await Promise.all([
+    adherente ? getPaymentSummary(adherente) : null,
+    getBankDetails(),
+  ]);
 
   if (!summary) {
     return (
@@ -99,6 +104,22 @@ export default async function PaiementPage({
             <Line label="Échéancier" value={installmentLabel(summary.installments)} />
           )}
         </dl>
+
+        {/* La famille qui a choisi le virement retrouve ici les mêmes
+            informations qu'après l'inscription, avec le montant recalculé :
+            ce qui a déjà été encaissé n'est plus demandé. */}
+        {summary.preferredPaymentMethod === "BANK_TRANSFER" &&
+          summary.nextPaymentCents > 0 && (
+            <div className="mt-6">
+              <BankTransferDetails
+                memberNumber={summary.memberNumber}
+                amountCents={summary.nextPaymentCents}
+                remainingCents={summary.remainingCents}
+                installments={summary.installments}
+                bank={bank}
+              />
+            </div>
+          )}
 
         {summary.nextPaymentCents > 0 && (
           <div className="mt-6">

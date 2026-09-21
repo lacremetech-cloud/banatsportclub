@@ -4,7 +4,6 @@ import { StatCard } from "@/components/admin/ui";
 import { getTreasurySummary } from "@/lib/accounting";
 import { formatEuros } from "@/lib/constants";
 import { getDashboardStats } from "@/lib/crm";
-import { FEE_TYPE_LABELS } from "@/lib/fees";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +13,24 @@ export default async function AdminDashboard() {
     getTreasurySummary(),
   ]);
 
-  // Une ligne n'apparaît que si elle concerne quelqu'un : tant que toutes les
-  // adhérentes sont au tarif standard, rien ne vient encombrer l'écran.
-  const specialFees = (["SOLIDARITY", "FREE"] as const).filter(
-    (feeType) => (stats.byFeeType[feeType] ?? 0) > 0,
-  );
+  /**
+   * Points d'attention.
+   *
+   * Chaque ligne n'apparaît que si elle concerne réellement quelqu'un : tant
+   * que tous les dossiers sont complets et que toutes les adhérentes sont au
+   * tarif standard, cette rangée disparaît entièrement et le tableau de bord
+   * reste aussi léger qu'avant.
+   */
+  const attention = [
+    {
+      label: "Dossiers à vérifier",
+      value: stats.dossiersToCheck,
+      href: "/admin/adherentes",
+    },
+    { label: "Équipements à remettre", value: stats.equipmentPending, href: "/admin/adherentes" },
+    { label: "Cotisations solidaires", value: stats.byFeeType.SOLIDARITY ?? 0, href: null },
+    { label: "Cotisations offertes", value: stats.byFeeType.FREE ?? 0, href: null },
+  ].filter((item) => item.value > 0);
 
   return (
     <div className="space-y-8">
@@ -36,11 +48,13 @@ export default async function AdminDashboard() {
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard label="Total inscrites" value={String(stats.totalMembers)} accent />
           {stats.groups.map((group) => (
+            /* Libellé court : le bureau sait où ont lieu les séances, une
+               adresse complète n'apporterait rien ici. */
             <StatCard
               key={group.key}
-              label={group.day}
+              label={group.shortLabel}
               value={String(stats.byGroup[group.key] ?? 0)}
-              hint={`${group.time} — ${group.place}`}
+              hint={group.time}
             />
           ))}
         </div>
@@ -52,16 +66,7 @@ export default async function AdminDashboard() {
           <StatCard
             label="Cotisations attendues"
             value={formatEuros(stats.expectedCents)}
-            hint={
-              specialFees.length > 0
-                ? specialFees
-                    .map(
-                      (feeType) =>
-                        `${stats.byFeeType[feeType]} ${FEE_TYPE_LABELS[feeType].toLowerCase()}${stats.byFeeType[feeType] > 1 ? "s" : ""}`,
-                    )
-                    .join(" · ")
-                : `${formatEuros(stats.annualFeeCents)} par adhérente non annulée`
-            }
+            hint="Somme des cotisations réellement dues, hors adhésions annulées"
           />
           <StatCard label="Montant encaissé" value={formatEuros(stats.collectedCents)} />
           <StatCard
@@ -81,11 +86,27 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      {stats.equipmentPending > 0 && (
-        <p className="rounded-2xl border border-brand-light/50 bg-brand-light/10 px-5 py-4 text-brand-dark">
-          Équipements à remettre :{" "}
-          <strong className="text-brand-dark">{stats.equipmentPending}</strong>
-        </p>
+      {attention.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-bold text-brand-dark">À suivre</h2>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {attention.map((item) => (
+              <li
+                key={item.label}
+                className="rounded-2xl border border-brand-light/50 bg-brand-light/10 px-4 py-3"
+              >
+                <p className="text-2xl font-bold text-brand-dark">{item.value}</p>
+                {item.href ? (
+                  <Link href={item.href} className="text-sm text-brand underline">
+                    {item.label}
+                  </Link>
+                ) : (
+                  <p className="text-sm text-brand-dark/70">{item.label}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <section>

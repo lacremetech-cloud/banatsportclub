@@ -43,6 +43,13 @@
       "when": 1789981232269,
       "tag": "0005_two_emergency_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790000000000,
+      "tag": "0006_parametres_association",
+      "breakpoints": true
     }
   ]
 }
