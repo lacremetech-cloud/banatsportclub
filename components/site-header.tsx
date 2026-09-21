@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -18,10 +19,20 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
         <Link
           href="/"
-          className="text-base font-extrabold uppercase tracking-tight text-brand-dark sm:text-lg"
+          className="flex items-center gap-2.5"
           onClick={() => setOpen(false)}
         >
-          Banat Sport Club
+          <Image
+            src="/logo-bsc.png"
+            alt=""
+            width={512}
+            height={512}
+            priority
+            className="h-10 w-10 shrink-0 sm:h-11 sm:w-11"
+          />
+          <span className="text-base font-extrabold uppercase tracking-tight text-brand-dark sm:text-lg">
+            Banat Sport Club
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

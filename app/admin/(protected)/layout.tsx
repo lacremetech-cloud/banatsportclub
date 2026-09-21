@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { logout } from "@/app/admin/login/actions";
@@ -14,11 +15,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="border-b border-brand-light/40 bg-white">
         <div className="mx-auto max-w-5xl px-5 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Link
-              href="/admin"
-              className="text-base font-extrabold uppercase tracking-tight text-brand-dark"
-            >
-              Banat Sport Club · Bureau
+            <Link href="/admin" className="flex items-center gap-2.5">
+              <Image
+                src="/logo-bsc.png"
+                alt=""
+                width={512}
+                height={512}
+                className="h-9 w-9 shrink-0"
+              />
+              <span className="text-base font-extrabold uppercase tracking-tight text-brand-dark">
+                Banat Sport Club · Bureau
+              </span>
             </Link>
             <form action={logout} className="flex items-center gap-3">
               <span className="hidden text-sm text-brand-dark/60 sm:inline">
