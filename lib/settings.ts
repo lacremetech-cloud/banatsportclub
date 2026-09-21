@@ -9,6 +9,7 @@ import {
   GROUP_NAMES,
   mapsUrl,
   type GroupName,
+  type SchoolLevel,
 } from "./constants";
 import { db, schema } from "./db";
 import {
@@ -24,6 +25,8 @@ export type GroupInfo = {
   day: string;
   /** "6e à 3e" — indicatif, ne verrouille aucune inscription. */
   levels: string;
+  /** Les classes visées, une par une : sert à conseiller un créneau. */
+  levelKeys: readonly SchoolLevel[];
   /** "18h00 – 19h30" */
   time: string;
   /** "Complexe sportif des Garrigues — Haut de Massane" */
@@ -71,6 +74,7 @@ function buildGroups(settings: Record<string, string>): GroupInfo[] {
       day: settings[`group_${key}_day`] ?? fallback.day,
       levels: settings[`group_${key}_levels`] ?? fallback.levels,
       time: settings[`group_${key}_time`] ?? fallback.time,
+      levelKeys: GROUPS[key].levels,
       place,
       address,
       shortLabel: settings[`group_${key}_short_label`] ?? fallback.shortLabel,
