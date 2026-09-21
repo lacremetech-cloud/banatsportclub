@@ -739,3 +739,91 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+// --- Archives et corbeille ------------------------------------------------
+
+/**
+ * Range une fiche sans jamais la supprimer.
+ *
+ * Trois gestes, deux colonnes de dates, aucune ligne effacée : ni la fiche,
+ * ni ses paiements, ni ses présences, ni ses notes, ni ses consentements, ni
+ * ses contacts d'urgence. Une adhérente rangée sort des vues du jour ; son
+ * historique financier, lui, reste intégralement dans la comptabilité.
+ *
+ * `registration_status` n'est jamais touché : une adhérente archivée reste
+ * ACTIVE ou en attente selon ce que disent ses règlements. CANCELLED garde
+ * son sens propre — une adhésion annulée — et ne sert pas à ranger.
+ */
+const memberIdSchema = z.object({ memberId: z.uuid() });
+
+function readMemberId(formData: FormData): string | null {
+  const parsed = memberIdSchema.safeParse({ memberId: formData.get("memberId") });
+  return parsed.success ? parsed.data.memberId : null;
+}
+
+export async function archiveMember(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const memberId = readMemberId(formData);
+  if (!memberId) return fail("Adhérente introuvable.");
+
+  await db
+    .update(schema.members)
+    .set({ archivedAt: new Date(), updatedAt: new Date() })
+    .where(eq(schema.members.id, memberId));
+
+  refreshMember(memberId);
+  return { ok: true };
+}
+
+/**
+ * Met à la corbeille.
+ *
+ * `archived_at` est conservé tel quel : c'est ce qui permet à la restauration
+ * de ramener la fiche là où elle était, dans les archives ou dans les listes
+ * courantes.
+ */
+export async function trashMember(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const memberId = readMemberId(formData);
+  if (!memberId) return fail("Adhérente introuvable.");
+
+  await db
+    .update(schema.members)
+    .set({ trashedAt: new Date(), updatedAt: new Date() })
+    .where(eq(schema.members.id, memberId));
+
+  refreshMember(memberId);
+  return { ok: true };
+}
+
+/**
+ * Restaure, d'un cran.
+ *
+ * Depuis la corbeille, la fiche retrouve son état précédent : les archives si
+ * elle y était, les listes courantes sinon. Depuis les archives, elle revient
+ * dans les listes courantes.
+ */
+export async function restoreMember(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const memberId = readMemberId(formData);
+  if (!memberId) return fail("Adhérente introuvable.");
+
+  const [member] = await db
+    .select({ trashedAt: schema.members.trashedAt })
+    .from(schema.members)
+    .where(eq(schema.members.id, memberId));
+
+  if (!member) return fail("Adhérente introuvable.");
+
+  await db
+    .update(schema.members)
+    .set(
+      member.trashedAt
+        ? { trashedAt: null, updatedAt: new Date() }
+        : { archivedAt: null, updatedAt: new Date() },
+    )
+    .where(eq(schema.members.id, memberId));
+
+  refreshMember(memberId);
+  return { ok: true };
+}

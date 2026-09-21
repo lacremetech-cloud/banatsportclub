@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, isNull, or, sql } from "drizzle-orm";
 
 import {
   type RegistrationStatus,
@@ -141,16 +141,68 @@ async function paidTotalsByMember(): Promise<Map<string, number>> {
   return new Map(rows.map((row) => [row.memberId, Number(row.total)]));
 }
 
+/**
+ * Rangement CRM d'une fiche, distinct de son statut d'adhésion.
+ *
+ * `current` : ce que le bureau gère au quotidien.
+ * `archived` : retirée des listes du jour, tout est conservé.
+ * `trashed` : mise de côté, invisible partout, restaurable.
+ *
+ * L'ordre compte : la corbeille l'emporte sur les archives, si bien qu'une
+ * fiche archivée puis mise à la corbeille retrouve les archives quand on la
+ * restaure.
+ */
+export const MEMBER_VIEWS = ["current", "archived", "trashed"] as const;
+export type MemberView = (typeof MEMBER_VIEWS)[number];
+
+export const MEMBER_VIEW_LABELS: Record<MemberView, string> = {
+  current: "Adhérentes",
+  archived: "Archives",
+  trashed: "Corbeille",
+};
+
+/** Condition SQL correspondant à une vue. */
+function viewCondition(view: MemberView) {
+  if (view === "trashed") return isNotNull(schema.members.trashedAt);
+  if (view === "archived") {
+    return and(isNull(schema.members.trashedAt), isNotNull(schema.members.archivedAt));
+  }
+  return and(isNull(schema.members.trashedAt), isNull(schema.members.archivedAt));
+}
+
+/**
+ * Filtre des vues opérationnelles : ni archivée, ni à la corbeille.
+ *
+ * Utilisé partout où le bureau travaille sur la saison en cours — listes,
+ * présences, paiements, tableau de bord. La comptabilité, elle, ne l'utilise
+ * PAS : un encaissement passé reste un encaissement passé.
+ */
+export const operationalMembers = () =>
+  and(isNull(schema.members.trashedAt), isNull(schema.members.archivedAt));
+
+export function memberView(member: {
+  archivedAt: Date | null;
+  trashedAt: Date | null;
+}): MemberView {
+  if (member.trashedAt) return "trashed";
+  if (member.archivedAt) return "archived";
+  return "current";
+}
+
 export type MemberFilters = {
   search?: string;
   group?: string;
   status?: string;
+  view?: MemberView;
 };
 
 export async function listMembers(filters: MemberFilters = {}) {
   const { season, annualFeeCents } = await getSiteSettings();
 
-  const conditions = [eq(schema.members.season, season)];
+  const conditions = [
+    eq(schema.members.season, season),
+    viewCondition(filters.view ?? "current"),
+  ];
 
   if (filters.group) {
     conditions.push(eq(schema.members.groupName, filters.group));
@@ -230,7 +282,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         ...FEE_COLUMNS,
       })
       .from(schema.members)
-      .where(eq(schema.members.season, season)),
+      // Compteurs opérationnels : les fiches rangées n'y figurent pas.
+      .where(and(eq(schema.members.season, season), operationalMembers())),
     paidTotalsByMember(),
     loadDossierParts(season),
   ]);
@@ -397,6 +450,7 @@ export async function getMemberDetail(memberId: string) {
       member.paymentInstallments,
       paidCents,
     ),
+    view: memberView(member),
     dossier: checkDossier({
       birthDate: member.birthDate,
       schoolLevel: member.schoolLevel,
@@ -440,7 +494,7 @@ export async function getPaymentOverview(filter: PaymentFilter = "all") {
       })
       .from(schema.members)
       .leftJoin(schema.guardians, eq(schema.guardians.memberId, schema.members.id))
-      .where(eq(schema.members.season, season))
+      .where(and(eq(schema.members.season, season), operationalMembers()))
       .orderBy(asc(schema.members.lastName), asc(schema.members.firstName)),
     paidTotalsByMember(),
   ]);
@@ -502,6 +556,8 @@ export async function listActiveMembersForGroup(groupName: GroupName | string) {
         eq(schema.members.season, season),
         eq(schema.members.groupName, groupName),
         eq(schema.members.registrationStatus, "ACTIVE"),
+        // Une fiche archivée ou à la corbeille ne se présente plus en séance.
+        operationalMembers(),
       ),
     )
     .orderBy(asc(schema.members.lastName), asc(schema.members.firstName));
@@ -751,7 +807,9 @@ export type MemberExportRow = {
  * rien à y faire. Elles restent consultables sur la fiche, derrière la
  * connexion du bureau.
  */
-export async function listMembersForExport(): Promise<MemberExportRow[]> {
+export async function listMembersForExport(
+  view: MemberView = "current",
+): Promise<MemberExportRow[]> {
   const { season } = await getSiteSettings();
 
   const [rows, paidTotals, parts] = await Promise.all([
@@ -771,7 +829,7 @@ export async function listMembersForExport(): Promise<MemberExportRow[]> {
         ...FEE_COLUMNS,
       })
       .from(schema.members)
-      .where(eq(schema.members.season, season))
+      .where(and(eq(schema.members.season, season), viewCondition(view)))
       .orderBy(asc(schema.members.lastName), asc(schema.members.firstName)),
     paidTotalsByMember(),
     loadDossierParts(season),

@@ -336,6 +336,43 @@ dépense n'est créée automatiquement. « À prévoir : 1 500 € » et « déj
 500 € » sont deux chiffres distincts, et le second ne bouge que lorsque le
 bureau saisit un reversement réel.
 
+## Archives et corbeille
+
+Le bureau peut retirer une fiche de ses listes du jour **sans rien perdre**.
+Deux dates nullables sur `members` suffisent, et aucune suppression physique
+n'est possible depuis l'application :
+
+| Colonne | Sens |
+| --- | --- |
+| `archived_at` | Retirée des listes courantes, tout est conservé |
+| `trashed_at` | Mise de côté, invisible partout, restaurable |
+
+La corbeille l'emporte sur les archives. Mettre à la corbeille une fiche
+archivée **conserve** `archived_at` : la restaurer la ramène donc dans les
+archives, puis un second « Restaurer » la remet dans les listes courantes.
+
+`registration_status` n'est jamais touché. Le statut d'adhésion
+(`PENDING_PAYMENT`, `ACTIVE`, `CANCELLED`) dit où en est l'adhésion ;
+l'état CRM dit si le bureau veut encore voir la fiche. **`CANCELLED` ne sert
+jamais à ranger une fiche.**
+
+### Ce qui filtre, et ce qui ne filtre pas
+
+| Vue | Archives et corbeille |
+| --- | --- |
+| Liste des adhérentes, présences, paiements, tableau de bord | **exclues** |
+| Export CSV des adhérentes | suit la vue affichée |
+| Fiche adhérente | **consultable**, avec un bandeau d'état |
+| Comptabilité et son export | **conservent tout** |
+
+Ce dernier point est volontaire : un encaissement passé reste un encaissement
+passé. Ranger une fiche ne doit pas faire bouger les comptes de l'association.
+
+Les trois vues tiennent dans `/admin/adherentes` (`?vue=archived`,
+`?vue=trashed`), en onglets : pas d'entrée supplémentaire dans la navigation.
+
+**Aucun bouton de suppression définitive** n'existe, volontairement.
+
 ## Règlement intérieur : un seul fichier
 
 `public/Reglement_Interieur_BSC_2026-2027.pdf` est la **source de vérité

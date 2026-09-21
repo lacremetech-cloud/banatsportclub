@@ -32,6 +32,7 @@ import { paymentReminderSms } from "@/lib/sms";
 
 import {
   AddPaymentForm,
+  ArchiveActions,
   CancelMembershipButton,
   ChangeFeeButton,
   ChangeInstallmentsButton,
@@ -75,6 +76,7 @@ export default async function MemberPage({
     paymentStatus,
     installments,
     dossier,
+    view,
     group,
   } = detail;
 
@@ -83,7 +85,23 @@ export default async function MemberPage({
 
   return (
     <div className="space-y-6">
-      <BackLink href="/admin/adherentes">Retour à la liste</BackLink>
+      <BackLink
+        href={view === "current" ? "/admin/adherentes" : `/admin/adherentes?vue=${view}`}
+      >
+        {view === "archived"
+          ? "Retour aux archives"
+          : view === "trashed"
+            ? "Retour à la corbeille"
+            : "Retour à la liste"}
+      </BackLink>
+
+      {view !== "current" && (
+        <p className="rounded-2xl border border-brand-light/50 bg-brand-light/10 px-5 py-3 text-brand-dark">
+          {view === "archived"
+            ? "Cette adhérente est archivée : elle n’apparaît plus dans les listes courantes, les présences ni le tableau de bord. Tout son historique est conservé."
+            : "Cette adhérente est à la corbeille : elle n’apparaît plus nulle part, mais rien n’a été supprimé."}
+        </p>
+      )}
 
       <header className="rounded-2xl border border-brand-light/40 bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -128,9 +146,13 @@ export default async function MemberPage({
           <Link href={`/admin/adherentes/${member.id}/modifier`} className="btn-ghost">
             Modifier
           </Link>
-          {member.registrationStatus !== "CANCELLED" && (
+          {view === "current" && member.registrationStatus !== "CANCELLED" && (
             <CancelMembershipButton memberId={member.id} />
           )}
+        </div>
+
+        <div className="mt-4 border-t border-brand-light/30 pt-4">
+          <ArchiveActions memberId={member.id} view={view} />
         </div>
       </header>
 

@@ -69,6 +69,13 @@ export const members = pgTable(
     registrationEmailSentAt: timestamp("registration_email_sent_at", {
       withTimezone: true,
     }),
+    // État CRM, distinct du statut d'adhésion. Une adhérente peut être
+    // ACTIVE et archivée : le premier dit où en est son adhésion, le second
+    // dit si le bureau veut encore la voir dans ses listes du jour.
+    // Aucune suppression physique : ces deux dates suffisent à sortir une
+    // fiche des vues courantes sans rien perdre.
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    trashedAt: timestamp("trashed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
