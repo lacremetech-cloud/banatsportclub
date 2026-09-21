@@ -624,6 +624,10 @@ export function RegistrationWizard({
               </span>
             </ConsentCheckbox>
 
+            {/* Pas de signature dessinée à l'écran ni de prestataire de
+                signature électronique : c'est la saisie du nom, associée aux
+                cases cochées et à l'horodatage enregistré dans `consents`,
+                qui vaut engagement. */}
             <TextField
               label="Nom et prénom du parent / représentant légal signataire"
               name="guardianFullName"
@@ -631,16 +635,8 @@ export function RegistrationWizard({
               onChange={(value) => set("guardianFullName", value)}
               error={errors.guardianFullName}
               autoComplete="name"
+              hint="En validant cette inscription, je certifie être le responsable légal de l’adhérente et confirme les autorisations sélectionnées ci-dessus."
             />
-
-            <div className="rounded-2xl border-2 border-dashed border-brand-light/60 bg-white p-6 text-center">
-              <p className="text-sm font-semibold text-brand-dark/60">
-                Signature
-              </p>
-              <p className="mt-1 text-sm text-brand-dark/50">
-                La signature digitale sera disponible prochainement.
-              </p>
-            </div>
           </>
         )}
 
