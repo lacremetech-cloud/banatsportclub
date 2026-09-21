@@ -1,6 +1,7 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { GROUP_NAMES, type GroupName } from "@/lib/constants";
+import { isMollieConfigured } from "@/lib/mollie";
 import { getAssociation, getBankDetails, getSiteSettings } from "@/lib/settings";
 
 import { RegistrationWizard } from "./registration-wizard";
@@ -38,6 +39,7 @@ export default async function InscriptionPage({
           defaultGroup={defaultGroup}
           bank={bank}
           clubPhone={association.phone}
+          cardEnabled={isMollieConfigured()}
         />
       </main>
 
