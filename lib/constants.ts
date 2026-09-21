@@ -56,9 +56,14 @@ export const REGISTRATION_STATUSES = ["PENDING_PAYMENT", "ACTIVE", "CANCELLED"] 
 export type RegistrationStatus = (typeof REGISTRATION_STATUSES)[number];
 export const DEFAULT_REGISTRATION_STATUS: RegistrationStatus = "PENDING_PAYMENT";
 
+/**
+ * Libellés du statut d'ADHÉSION — à ne pas confondre avec le statut de
+ * paiement (voir lib/crm.ts). Une adhérente « Validée » peut parfaitement
+ * avoir un reste à régler : c'est le principe de l'échéancier.
+ */
 export const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
-  PENDING_PAYMENT: "En attente de règlement",
-  ACTIVE: "Adhésion validée",
+  PENDING_PAYMENT: "En attente",
+  ACTIVE: "Validée",
   CANCELLED: "Annulée",
 };
 
