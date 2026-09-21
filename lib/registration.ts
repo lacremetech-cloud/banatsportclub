@@ -43,7 +43,7 @@ async function nextMemberNumber(season: string): Promise<string> {
   return `BSC-${shortYear}-${String(sequence).padStart(4, "0")}`;
 }
 
-/** Les 3 lignes de consentement, créées systématiquement. */
+/** Une ligne par consentement, créées systématiquement. */
 function buildConsents(
   memberId: string,
   input: RegistrationInput,
@@ -52,6 +52,7 @@ function buildConsents(
   const accepted: Record<ConsentType, boolean> = {
     INTERNAL_RULES: input.acceptsInternalRules,
     PARENTAL_AUTHORIZATION: input.acceptsParentalAuthorization,
+    EMERGENCY_MEDICAL: input.acceptsEmergencyMedical,
     // Un refus est enregistré tel quel : la ligne existe avec accepted = false.
     IMAGE_RIGHTS: input.acceptsImageRights,
   };
@@ -105,6 +106,7 @@ export async function createRegistration(
       season,
       registrationStatus: DEFAULT_REGISTRATION_STATUS,
       preferredPaymentMethod: input.preferredPaymentMethod,
+      insuranceStatus: input.insuranceStatus,
       feeType: DEFAULT_FEE_TYPE,
       feeAmountCents: annualFeeCents,
       paymentInstallments: input.paymentInstallments ?? DEFAULT_INSTALLMENTS,
@@ -148,9 +150,15 @@ export async function createRegistration(
     ]),
     db.insert(schema.medicalInfo).values({
       memberId,
-      allergies: input.allergies,
-      currentTreatments: input.currentTreatments,
-      healthNotes: input.healthNotes,
+      hasHealthIssue: input.hasHealthIssue,
+      // Répondre « non » efface ce qui aurait pu être saisi puis abandonné :
+      // la déclaration du responsable légal fait foi, pas un reste de frappe.
+      allergies: input.hasHealthIssue ? input.allergies : null,
+      currentTreatments: input.hasHealthIssue ? input.currentTreatments : null,
+      healthNotes: input.hasHealthIssue ? input.healthNotes : null,
+      carriesEmergencyTreatment: input.hasHealthIssue
+        ? input.carriesEmergencyTreatment
+        : false,
     }),
     db.insert(schema.consents).values(consents),
   ]);

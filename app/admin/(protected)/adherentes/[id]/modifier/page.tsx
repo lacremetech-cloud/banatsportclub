@@ -53,6 +53,10 @@ export default async function EditMemberPage({
           allergies: medical?.allergies ?? "",
           currentTreatments: medical?.currentTreatments ?? "",
           healthNotes: medical?.healthNotes ?? "",
+          // `Initial` ne transporte que des chaînes : la case se relit donc
+          // sur « 1 », et la chaîne vide vaut décochée.
+          carriesEmergencyTreatment: medical?.carriesEmergencyTreatment ? "1" : "",
+          insuranceStatus: member.insuranceStatus,
         }}
       />
     </div>

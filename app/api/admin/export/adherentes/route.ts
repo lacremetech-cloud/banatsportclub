@@ -1,7 +1,9 @@
 import { getSession } from "@/lib/auth";
 import {
+  INSURANCE_STATUS_SHORT_LABELS,
   REGISTRATION_STATUS_LABELS,
   SCHOOL_LEVEL_LABELS,
+  type InsuranceStatus,
   type RegistrationStatus,
   type SchoolLevel,
 } from "@/lib/constants";
@@ -51,6 +53,8 @@ const HEADERS = [
   "Équipement remis",
   "Date remise équipement",
   "Droit à l’image",
+  "Autorisation d’urgence",
+  "Assurance individuelle",
   "Saison",
 ];
 
@@ -60,7 +64,10 @@ const HEADERS = [
  * Aucune donnée médicale n'y figure — c'est délibéré et ce fichier n'est pas
  * le bon support pour ça : il s'envoie par email et s'ouvre n'importe où.
  * Allergies, traitements et remarques de santé restent sur la fiche, derrière
- * la connexion.
+ * la connexion. Les deux colonnes ajoutées en septembre 2026 ne font pas
+ * exception : une autorisation d'urgence est un consentement, et l'assurance
+ * individuelle est une réponse déclarative — ni l'une ni l'autre ne dit quoi
+ * que ce soit de l'état de santé de l'adhérente.
  *
  * Cette route n'est pas rendue par le layout de l'espace bureau : elle
  * revérifie donc la session elle-même.
@@ -113,6 +120,9 @@ export async function GET(request: Request) {
     csvYesNo(member.equipmentDelivered),
     csvDate(member.equipmentDeliveredAt),
     csvYesNo(member.imageRights),
+    csvYesNo(member.emergencyMedical),
+    INSURANCE_STATUS_SHORT_LABELS[member.insuranceStatus as InsuranceStatus] ??
+      member.insuranceStatus,
     member.season,
   ]);
 

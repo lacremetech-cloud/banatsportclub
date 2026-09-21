@@ -706,6 +706,12 @@ export function checkDossier(input: DossierInput): DossierCheck {
   );
   if (!accepted.has("INTERNAL_RULES")) missing.push("Règlement intérieur");
   if (!accepted.has("PARENTAL_AUTHORIZATION")) missing.push("Autorisation parentale");
+  // Obligatoire dans le formulaire depuis le 21 septembre 2026, au même titre
+  // que le deuxième contact : c'est la seule autorisation qui permet de faire
+  // soigner une mineure sans attendre d'avoir joint ses parents.
+  if (!accepted.has("EMERGENCY_MEDICAL")) {
+    missing.push("Autorisation d’intervention d’urgence");
+  }
 
   return { complete: missing.length === 0, missing };
 }
@@ -795,6 +801,10 @@ export type MemberExportRow = {
   equipmentDelivered: boolean;
   equipmentDeliveredAt: Date | null;
   imageRights: boolean;
+  /** Autorisation d'intervention d'urgence : un consentement, pas une donnée de santé. */
+  emergencyMedical: boolean;
+  /** Déclaratif — voir INSURANCE_STATUSES. Ne dit rien de l'état de santé. */
+  insuranceStatus: string;
   season: string;
 };
 
@@ -825,6 +835,7 @@ export async function listMembersForExport(
         groupName: schema.members.groupName,
         registrationStatus: schema.members.registrationStatus,
         equipmentDeliveredAt: schema.members.equipmentDeliveredAt,
+        insuranceStatus: schema.members.insuranceStatus,
         season: schema.members.season,
         ...FEE_COLUMNS,
       })
@@ -877,6 +888,10 @@ export async function listMembersForExport(
       imageRights: consents.some(
         (consent) => consent.type === "IMAGE_RIGHTS" && consent.accepted,
       ),
+      emergencyMedical: consents.some(
+        (consent) => consent.type === "EMERGENCY_MEDICAL" && consent.accepted,
+      ),
+      insuranceStatus: row.insuranceStatus,
       season: row.season,
     };
   });

@@ -16,11 +16,13 @@ import {
 import { CopyButton } from "@/components/copy-button";
 import {
   ATTENDANCE_STATUS_LABELS,
+  CONSENT_TYPES,
   CONSENT_TYPE_LABELS,
+  INSURANCE_STATUS_SHORT_LABELS,
   PAYMENT_METHOD_LABELS,
   PREFERRED_PAYMENT_METHOD_LABELS,
   SCHOOL_LEVEL_LABELS,
-  type ConsentType,
+  type InsuranceStatus,
   type PreferredPaymentMethod,
   formatDate,
   formatEuros,
@@ -268,16 +270,59 @@ export default async function MemberPage({
       </Section>
 
       <Section title="Santé">
+        {medical?.hasHealthIssue ? (
+          <dl>
+            <DataLine label="Allergies">{orDash(medical.allergies)}</DataLine>
+            <DataLine label="Traitements">{orDash(medical.currentTreatments)}</DataLine>
+            <DataLine label="Remarques">{orDash(medical.healthNotes)}</DataLine>
+            <DataLine label="Traitement d’urgence sur elle">
+              {medical.carriesEmergencyTreatment ? (
+                <span className="font-semibold text-brand">
+                  Oui — à repérer avant la séance
+                </span>
+              ) : (
+                "Non"
+              )}
+            </DataLine>
+          </dl>
+        ) : (
+          // Une déclaration explicite, pas trois champs vides : le bureau sait
+          // que la question a été posée et que la réponse était « rien ».
+          <dl>
+            <DataLine label="Déclaration du responsable légal">
+              Rien à signaler
+            </DataLine>
+          </dl>
+        )}
+      </Section>
+
+      <Section title="Assurance">
         <dl>
-          <DataLine label="Allergies">{orDash(medical?.allergies)}</DataLine>
-          <DataLine label="Traitements">{orDash(medical?.currentTreatments)}</DataLine>
-          <DataLine label="Remarques">{orDash(medical?.healthNotes)}</DataLine>
+          <DataLine label="Assurance individuelle accident">
+            <span
+              className={
+                member.insuranceStatus === "YES" ? "text-brand-dark" : "text-brand"
+              }
+            >
+              {INSURANCE_STATUS_SHORT_LABELS[
+                member.insuranceStatus as InsuranceStatus
+              ] ?? member.insuranceStatus}
+            </span>
+          </DataLine>
         </dl>
+        <p className="mt-3 text-sm text-brand-dark/60">
+          Déclaratif, aucune attestation n’est demandée. La responsabilité
+          civile du club couvre les dommages causés à autrui ; l’individuelle
+          accident couvre les blessures que l’adhérente subit elle-même et
+          relève de la famille.
+        </p>
       </Section>
 
       <Section title="Autorisations">
         <dl>
-          {(["INTERNAL_RULES", "PARENTAL_AUTHORIZATION", "IMAGE_RIGHTS"] as ConsentType[]).map(
+          {/* CONSENT_TYPES plutôt qu'une liste recopiée : un consentement
+              ajouté au formulaire apparaît ici sans qu'on y pense. */}
+          {CONSENT_TYPES.map(
             (type) => {
               const consent = consentByType.get(type);
               const accepted = consent?.accepted ?? false;

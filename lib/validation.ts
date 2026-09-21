@@ -4,6 +4,7 @@ import {
   ATTENDANCE_STATUSES,
   CONSENT_TYPES,
   GROUP_NAMES,
+  INSURANCE_STATUSES,
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
   PREFERRED_PAYMENT_METHODS,
@@ -133,19 +134,72 @@ export const emergencyStepSchema = z
   .object(emergencyStepShape)
   .superRefine(checkEmergencyContact);
 
-/** Étape 5 — la fiche sanitaire. Tout est facultatif. */
-export const medicalStepSchema = z.object({
+/**
+ * Étape 5 — la fiche sanitaire et l'assurance.
+ *
+ * Une seule réponse est obligatoire : « y a-t-il quelque chose à signaler ? ».
+ * C'est elle qui donne un sens aux champs libres — trois cases vides ne
+ * disent pas si la famille n'a rien à déclarer ou n'a rien lu.
+ *
+ * Répondre « oui » engage à préciser quoi : sinon le bureau reçoit une alerte
+ * sans contenu, ce qui est pire que pas d'alerte du tout.
+ *
+ * L'assurance, elle, ne bloque jamais : les trois réponses sont valides,
+ * « Je ne sais pas » comprise.
+ */
+export const medicalStepShape = {
+  hasHealthIssue: z.boolean({
+    error: "Merci de répondre : y a-t-il quelque chose à signaler ?",
+  }),
   allergies: optionalText(),
   currentTreatments: optionalText(),
   healthNotes: optionalText(),
-});
+  carriesEmergencyTreatment: z.boolean().default(false),
+  insuranceStatus: z.enum(INSURANCE_STATUSES, {
+    error: "Merci de répondre à la question sur l’assurance",
+  }),
+};
+
+function checkHealthDeclaration(
+  value: {
+    hasHealthIssue?: boolean;
+    allergies?: string;
+    currentTreatments?: string;
+    healthNotes?: string;
+  },
+  ctx: z.RefinementCtx,
+) {
+  if (!value.hasHealthIssue) return;
+
+  const described =
+    Boolean(value.allergies) ||
+    Boolean(value.currentTreatments) ||
+    Boolean(value.healthNotes);
+
+  if (!described) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["allergies"],
+      message:
+        "Merci de préciser ce qu’il faut signaler : allergie, traitement ou autre",
+    });
+  }
+}
+
+export const medicalStepSchema = z
+  .object(medicalStepShape)
+  .superRefine(checkHealthDeclaration);
 
 /**
  * Étape 6 — les autorisations.
  *
- * Règlement intérieur et autorisation parentale sont obligatoires. Le droit à
- * l'image est un choix libre : un refus est une réponse valide et ne bloque
- * jamais l'inscription.
+ * Règlement intérieur, autorisation parentale et autorisation d'intervention
+ * médicale d'urgence sont obligatoires. Le droit à l'image est un choix
+ * libre : un refus est une réponse valide et ne bloque jamais l'inscription.
+ *
+ * L'autorisation d'urgence est la plus importante des quatre. Sans elle,
+ * personne n'est habilité à faire transporter et soigner une mineure blessée
+ * au bord du terrain, un dimanche matin, en l'absence de ses parents.
  */
 export const consentsStepSchema = z.object({
   acceptsInternalRules: z
@@ -154,6 +208,12 @@ export const consentsStepSchema = z.object({
   acceptsParentalAuthorization: z
     .boolean()
     .refine((value) => value, "L’autorisation parentale est obligatoire"),
+  acceptsEmergencyMedical: z
+    .boolean()
+    .refine(
+      (value) => value,
+      "L’autorisation d’intervention en cas d’urgence est obligatoire",
+    ),
   acceptsImageRights: z.boolean(),
   guardianFullName: requiredText("Le nom du parent signataire", 160),
   // Réservé au futur dépôt d'un document signé sur papier (bucket R2). Le
@@ -196,10 +256,12 @@ export const registrationSchema = z.object({
   ...groupStepSchema.shape,
   ...guardianStepSchema.shape,
   ...emergencyStepShape,
-  ...medicalStepSchema.shape,
+  ...medicalStepShape,
   ...consentsStepSchema.shape,
   ...paymentStepSchema.shape,
-}).superRefine(checkEmergencyContact);
+})
+  .superRefine(checkEmergencyContact)
+  .superRefine(checkHealthDeclaration);
 
 export type RegistrationInput = z.infer<typeof registrationSchema>;
 

@@ -212,13 +212,50 @@ dans un tableur francophone.
 La fiche indique **Dossier complet** ou **Dossier à vérifier**, et le tableau
 de bord en donne le compte. Ne sont vérifiés que les éléments réellement
 collectés par le formulaire : date de naissance, classe, créneau, responsable
-légal complet, les deux contacts d'urgence, règlement intérieur et
-autorisation parentale acceptés.
+légal complet, les deux contacts d'urgence, règlement intérieur, autorisation
+parentale et autorisation d'intervention d'urgence acceptés.
 
 Aucun document n'est inventé : tant que le certificat médical n'est demandé
 nulle part, son absence ne rend aucun dossier incomplet. **Un droit à l'image
 refusé ne rend jamais un dossier incomplet** : c'est une réponse, pas un
-manque.
+manque. Il en va de même pour l'assurance : « non » et « je ne sais pas »
+sont des réponses valides et ne bloquent rien.
+
+## Santé et assurance
+
+Le formulaire ne demande **ni certificat médical, ni attestation d'assurance,
+ni photo**, et rien n'est téléversé ni stocké.
+
+- **Certificat médical** — plus exigible pour une mineure depuis le décret
+  n° 2021-1105 et la loi du 2 mars 2022, sauf disciplines à contraintes
+  particulières, dont le multisport loisir ne fait pas partie.
+- **Assurance** — l'obligation pèse sur l'association (responsabilité civile,
+  article L321-1 du code du sport), pas sur les familles. L'article L321-4
+  impose seulement d'informer de l'intérêt d'une garantie individuelle
+  accident : c'est ce que fait la question posée à l'inscription, dont la
+  réponse (`members.insurance_status` : `YES` / `NO` / `UNKNOWN`) est purement
+  déclarative.
+- **Photo** — aucune obligation ; le club ne délivre pas de licence.
+
+À la place, trois éléments que le formulaire collecte vraiment :
+
+1. **Une déclaration obligatoire** (`medical_info.has_health_issue`) : « y
+   a-t-il un problème de santé, une allergie ou un traitement à signaler ? ».
+   Sans elle, trois champs vides sont ambigus — « rien à signaler » ne se
+   distingue pas d'un formulaire traversé sans être lu. Répondre « oui »
+   oblige à préciser au moins un des trois champs.
+2. **L'autorisation d'intervention d'urgence** (consentement
+   `EMERGENCY_MEDICAL`), obligatoire : appel des secours, transport et
+   intervention jugée nécessaire par le corps médical. C'est elle qui permet
+   de faire soigner une mineure sans attendre d'avoir joint ses parents.
+3. **Le traitement d'urgence porté sur elle**
+   (`medical_info.carries_emergency_treatment`) — Ventoline, stylo
+   auto-injecteur : la seule information exploitable en trente secondes au
+   bord du terrain.
+
+Depuis le CRM, la déclaration n'est pas ressaisie : elle se déduit du contenu
+réel des trois champs, pour qu'une fiche ne puisse jamais afficher « rien à
+signaler » au-dessus d'une allergie écrite juste en dessous.
 
 ## Authentification
 
@@ -628,6 +665,8 @@ Non implémenté pour l'instant, volontairement :
 - **Relances** — email automatique aux inscriptions restées impayées.
 - **Qonto** — rapprochement des virements reçus avec les paiements attendus.
 - Export comptable (CSV) des mouvements de la saison.
-- **Cloudflare R2** — certificats médicaux, autorisations parentales et
-  signatures. La table `documents` (`file_key`) est déjà prévue.
+- **Cloudflare R2** — dépôt de pièces jointes. La table `documents`
+  (`file_key`) est déjà prévue, mais rien n'en a besoin aujourd'hui : ni
+  certificat médical, ni attestation d'assurance, ni photo ne sont demandés
+  (voir « Santé et assurance »).
 - Export CSV de la liste des adhérentes.

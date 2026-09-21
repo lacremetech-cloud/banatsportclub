@@ -64,6 +64,11 @@ export const members = pgTable(
     // bureau — remis ou pas — et la date garde la trace du quand.
     equipmentDelivered: boolean("equipment_delivered").notNull().default(false),
     equipmentDeliveredAt: timestamp("equipment_delivered_at", { withTimezone: true }),
+    // Assurance individuelle accident de la famille : YES / NO / UNKNOWN.
+    // Purement déclaratif — aucune attestation n'est demandée ni stockée.
+    // La valeur par défaut est UNKNOWN, qui est aussi l'état des fiches
+    // créées avant que la question existe : « non renseignée », pas « non ».
+    insuranceStatus: text("insurance_status").notNull().default("UNKNOWN"),
     // Horodatage de l'email de confirmation. Sert de verrou : un seul envoi,
     // même si la route est rejouée. Même patron que payments.paid_email_sent_at.
     registrationEmailSentAt: timestamp("registration_email_sent_at", {
@@ -82,6 +87,12 @@ export const members = pgTable(
   (t) => [
     index("members_season_idx").on(t.season),
     index("members_group_idx").on(t.groupName),
+    // Créés en SQL dans la migration 0008 mais oubliés ici : sans cette
+    // déclaration, drizzle-kit croit qu'ils sont en trop et propose de les
+    // supprimer à la première migration suivante. Les listes courantes
+    // filtrent sur ces deux colonnes à chaque lecture.
+    index("members_archived_idx").on(t.archivedAt),
+    index("members_trashed_idx").on(t.trashedAt),
   ],
 );
 
@@ -137,9 +148,19 @@ export const medicalInfo = pgTable(
     memberId: uuid("member_id")
       .notNull()
       .references(() => members.id, { onDelete: "cascade" }),
+    // Déclaration explicite du responsable légal. Sans elle, trois champs
+    // vides ne veulent rien dire : impossible de distinguer « rien à
+    // signaler » de « le formulaire a été traversé sans être lu ». C'est
+    // exactement la différence qui compte pour une asthmatique.
+    hasHealthIssue: boolean("has_health_issue").notNull().default(false),
     allergies: text("allergies"),
     currentTreatments: text("current_treatments"),
     healthNotes: text("health_notes"),
+    // Ventoline, stylo auto-injecteur : la seule information que l'encadrante
+    // peut utiliser en trente secondes au bord du terrain.
+    carriesEmergencyTreatment: boolean("carries_emergency_treatment")
+      .notNull()
+      .default(false),
   },
   (t) => [index("medical_info_member_idx").on(t.memberId)],
 );

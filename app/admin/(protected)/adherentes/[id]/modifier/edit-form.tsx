@@ -4,7 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { updateMember } from "@/app/admin/(protected)/actions";
-import { SCHOOL_LEVELS, SCHOOL_LEVEL_LABELS } from "@/lib/constants";
+import {
+  INSURANCE_STATUSES,
+  INSURANCE_STATUS_LABELS,
+  SCHOOL_LEVELS,
+  SCHOOL_LEVEL_LABELS,
+} from "@/lib/constants";
 import type { GroupInfo } from "@/lib/settings";
 
 type Initial = Record<string, string>;
@@ -180,6 +185,46 @@ export function EditMemberForm({
           <Area label="Traitements en cours" name="currentTreatments" defaultValue={initial.currentTreatments} />
           <Area label="Remarques" name="healthNotes" defaultValue={initial.healthNotes} />
         </div>
+        {/* Pas de case « rien à signaler » ici : elle se déduit des trois
+            champs ci-dessus. Deux commandes qui disent la même chose finissent
+            toujours par se contredire. */}
+        <p className="mt-3 text-sm text-brand-dark/60">
+          Ces trois champs vides valent « rien à signaler » sur la fiche.
+        </p>
+        <label className="mt-3 flex cursor-pointer items-center gap-3">
+          <input
+            type="checkbox"
+            name="carriesEmergencyTreatment"
+            defaultChecked={initial.carriesEmergencyTreatment === "1"}
+            className="h-5 w-5 accent-brand"
+          />
+          <span className="font-medium text-brand-dark">
+            Elle a un traitement d’urgence sur elle (Ventoline, stylo
+            auto-injecteur…)
+          </span>
+        </label>
+      </fieldset>
+
+      <fieldset className="rounded-2xl border border-brand-light/40 bg-white p-5">
+        <legend className="px-2 font-bold text-brand-dark">Assurance</legend>
+        <label className="label mt-3" htmlFor="insuranceStatus">
+          Assurance individuelle accident
+        </label>
+        <select
+          id="insuranceStatus"
+          name="insuranceStatus"
+          defaultValue={initial.insuranceStatus}
+          className="field"
+        >
+          {INSURANCE_STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {INSURANCE_STATUS_LABELS[status]}
+            </option>
+          ))}
+        </select>
+        <p className="mt-2 text-sm text-brand-dark/60">
+          Déclaratif. Aucune attestation n’est demandée ni conservée.
+        </p>
       </fieldset>
 
       {error && (
