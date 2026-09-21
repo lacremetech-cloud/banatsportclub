@@ -72,10 +72,21 @@ export default async function AdminDashboard() {
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <StatCard label="Adhésions validées" value={String(stats.activeCount)} />
-          <StatCard label="En attente de règlement" value={String(stats.pendingCount)} />
+          <StatCard
+            label="Inscriptions en attente"
+            value={String(stats.pendingCount)}
+            hint="Aucun règlement encaissé à ce jour"
+          />
           <StatCard label="Annulées" value={String(stats.cancelledCount)} />
         </div>
       </section>
+
+      {stats.equipmentPending > 0 && (
+        <p className="rounded-2xl border border-brand-light/50 bg-brand-light/10 px-5 py-4 text-brand-dark">
+          Équipements à remettre :{" "}
+          <strong className="text-brand-dark">{stats.equipmentPending}</strong>
+        </p>
+      )}
 
       <section>
         <h2 className="mb-3 text-lg font-bold text-brand-dark">Trésorerie suivie</h2>

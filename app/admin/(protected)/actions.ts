@@ -212,6 +212,46 @@ export async function updateMemberInstallments(
   return { ok: true };
 }
 
+// --- Équipement -----------------------------------------------------------
+
+const equipmentSchema = z.object({
+  memberId: z.uuid(),
+  delivered: z.enum(["true", "false"]),
+});
+
+/**
+ * Marque le kit comme remis, ou revient en arrière.
+ *
+ * Le booléen porte la réponse, la date garde la trace du quand. Annuler la
+ * remise remet les deux à zéro : une date de remise sans remise n'aurait
+ * aucun sens.
+ */
+export async function setEquipmentDelivered(
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = equipmentSchema.safeParse({
+    memberId: formData.get("memberId"),
+    delivered: formData.get("delivered"),
+  });
+  if (!parsed.success) return fail("Adhérente introuvable.");
+
+  const delivered = parsed.data.delivered === "true";
+
+  await db
+    .update(schema.members)
+    .set({
+      equipmentDelivered: delivered,
+      equipmentDeliveredAt: delivered ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.members.id, parsed.data.memberId));
+
+  refreshMember(parsed.data.memberId);
+  return { ok: true };
+}
+
 // --- Notes internes -------------------------------------------------------
 
 const noteSchema = z.object({

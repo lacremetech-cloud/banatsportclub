@@ -60,6 +60,10 @@ export const members = pgTable(
     feeAmountCents: integer("fee_amount_cents").notNull().default(20000),
     // Échéancier accepté : 1, 2 (choix public) ou 3 (accordé par le bureau).
     paymentInstallments: integer("payment_installments").notNull().default(1),
+    // Kit remis à l'adhérente. Le booléen répond à la seule question utile au
+    // bureau — remis ou pas — et la date garde la trace du quand.
+    equipmentDelivered: boolean("equipment_delivered").notNull().default(false),
+    equipmentDeliveredAt: timestamp("equipment_delivered_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

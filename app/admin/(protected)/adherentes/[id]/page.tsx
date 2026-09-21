@@ -33,6 +33,7 @@ import {
   ChangeFeeButton,
   ChangeInstallmentsButton,
   DeletePaymentButton,
+  EquipmentAction,
   NotesSection,
 } from "./member-actions";
 
@@ -89,9 +90,13 @@ export default async function MemberPage({
               · {group ? `${group.day} ${group.time} — ${group.place}` : member.groupName}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <RegistrationBadge status={member.registrationStatus} />
-            <PaymentBadge status={paymentStatus} full />
+          <div className="flex flex-col gap-2 sm:items-end">
+            <p className="flex flex-wrap items-center gap-2 text-sm text-brand-dark/60">
+              Adhésion <RegistrationBadge status={member.registrationStatus} />
+            </p>
+            <p className="flex flex-wrap items-center gap-2 text-sm text-brand-dark/60">
+              Paiement <PaymentBadge status={paymentStatus} full />
+            </p>
           </div>
         </div>
 
@@ -353,6 +358,14 @@ export default async function MemberPage({
             authorName: note.authorName,
             createdAt: note.createdAt.toISOString(),
           }))}
+        />
+      </Section>
+
+      <Section title="Équipement">
+        <EquipmentAction
+          memberId={member.id}
+          delivered={member.equipmentDelivered}
+          deliveredAt={member.equipmentDeliveredAt?.toISOString() ?? null}
         />
       </Section>
 

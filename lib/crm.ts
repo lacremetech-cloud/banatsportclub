@@ -32,16 +32,16 @@ const PAID = "paid";
 export type PaymentStatus = "UNPAID" | "PARTIAL" | "ON_SCHEDULE" | "PAID" | "EXEMPT";
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  UNPAID: "Impayé",
+  UNPAID: "Non payé",
   PARTIAL: "Partiel",
-  ON_SCHEDULE: "Paiement en cours — échéancier",
+  ON_SCHEDULE: "Échéancier en cours",
   PAID: "Payé",
   EXEMPT: "Cotisation offerte",
 };
 
 /** Version courte, pour les pastilles où la place manque. */
 export const PAYMENT_STATUS_SHORT_LABELS: Record<PaymentStatus, string> = {
-  UNPAID: "Impayé",
+  UNPAID: "Non payé",
   PARTIAL: "Partiel",
   ON_SCHEDULE: "Échéancier",
   PAID: "Payé",
@@ -96,16 +96,18 @@ export type MemberRow = {
   feeType: string;
   feeAmountCents: number;
   paymentInstallments: number;
+  equipmentDelivered: boolean;
   paidCents: number;
   dueCents: number;
   paymentStatus: PaymentStatus;
 };
 
-/** Colonnes de cotisation, sélectionnées partout de la même façon. */
+/** Colonnes de cotisation et d'équipement, sélectionnées partout pareil. */
 const FEE_COLUMNS = {
   feeType: schema.members.feeType,
   feeAmountCents: schema.members.feeAmountCents,
   paymentInstallments: schema.members.paymentInstallments,
+  equipmentDelivered: schema.members.equipmentDelivered,
 } as const;
 
 /** Assemble les chiffres d'une adhérente à partir de SA cotisation. */
@@ -202,6 +204,8 @@ export type DashboardStats = {
   totalMembers: number;
   byGroup: Record<string, number>;
   byFeeType: Record<string, number>;
+  /** Adhésions validées dont le kit reste à remettre. */
+  equipmentPending: number;
   activeCount: number;
   pendingCount: number;
   cancelledCount: number;
@@ -231,6 +235,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   let pendingCount = 0;
   let cancelledCount = 0;
   let expectedCents = 0;
+  let equipmentPending = 0;
   const byFeeType: Record<string, number> = { STANDARD: 0, SOLIDARITY: 0, FREE: 0 };
 
   for (const row of rows) {
@@ -244,6 +249,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     if (row.registrationStatus !== "CANCELLED") {
       expectedCents += row.feeAmountCents;
       byFeeType[row.feeType] = (byFeeType[row.feeType] ?? 0) + 1;
+      // Le kit ne concerne que les adhésions validées : inutile de préparer
+      // celui d'une inscription encore en attente.
+      if (row.registrationStatus === "ACTIVE" && !row.equipmentDelivered) {
+        equipmentPending += 1;
+      }
     }
   }
 
@@ -259,6 +269,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalMembers: rows.length,
     byGroup,
     byFeeType,
+    equipmentPending,
     activeCount,
     pendingCount,
     cancelledCount,
@@ -488,10 +499,15 @@ export async function getAttendanceForSession(sessionId: string) {
 /**
  * Aligne `registration_status` sur les encaissements.
  *
- * La référence est la cotisation de l'adhérente, pas le tarif général. Le
- * statut reste PENDING_PAYMENT tant que la TOTALITÉ du montant dû n'est pas
- * encaissée, même quand un échéancier a été accepté : l'échéancier change ce
- * qu'on affiche au bureau, pas ce qui a été réellement encaissé.
+ * Règle métier : l'adhésion est VALIDÉE dès le premier euro encaissé. Une
+ * adhérente qui règle la première de ses deux échéances est inscrite au club
+ * et apparaît en séance ; elle doit simplement encore de l'argent.
+ *
+ * Validation de l'inscription et solde de la cotisation sont donc deux choses
+ * distinctes, et ce fichier les garde séparées : `registration_status` dit si
+ * l'adhérente fait partie du club, `computePaymentStatus()` dit où en est son
+ * règlement. Une adhérente ACTIVE peut très bien être en échéancier avec un
+ * reste à payer.
  *
  * Une adhésion annulée ne repasse jamais ACTIVE automatiquement : seule une
  * action explicite du bureau peut la réactiver.
@@ -515,12 +531,12 @@ export async function recomputeMemberStatus(memberId: string): Promise<Registrat
     .from(schema.payments)
     .where(and(eq(schema.payments.memberId, memberId), eq(schema.payments.status, PAID)));
 
-  // Une cotisation offerte vaut 0 : la condition « tout est réglé » est
-  // vraie d'emblée, et l'adhésion devient ACTIVE sans qu'aucune ligne de faux
-  // paiement de 0 € n'ait besoin d'exister.
+  // Une cotisation offerte vaut 0 : il n'y a rien à encaisser, l'adhésion est
+  // validée d'emblée, sans qu'aucune ligne de faux paiement de 0 € n'ait
+  // besoin d'exister.
   const paidCents = Number(row?.total ?? 0);
   const next: RegistrationStatus =
-    paidCents >= member.feeAmountCents ? "ACTIVE" : "PENDING_PAYMENT";
+    member.feeAmountCents <= 0 || paidCents > 0 ? "ACTIVE" : "PENDING_PAYMENT";
 
   if (next !== member.status) {
     await db

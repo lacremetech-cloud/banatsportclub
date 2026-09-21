@@ -124,6 +124,17 @@ export default async function AdherentesPage({
                           reste {formatEuros(member.dueCents)}
                         </span>
                       )}
+                    {/* Une seule mention, et seulement là où elle sert : on
+                        n'affiche « kit à remettre » que pour les adhésions
+                        validées, celles dont le kit est réellement attendu. */}
+                    {member.registrationStatus === "ACTIVE" &&
+                      (member.equipmentDelivered ? (
+                        <span className="text-sm text-brand-dark/50">Kit remis</span>
+                      ) : (
+                        <span className="text-sm font-medium text-brand">
+                          Kit à remettre
+                        </span>
+                      ))}
                   </span>
                 </Link>
               </li>

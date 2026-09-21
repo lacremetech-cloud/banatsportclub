@@ -9,6 +9,7 @@ import {
   cancelMembership,
   deleteNote,
   deletePayment,
+  setEquipmentDelivered,
   updateMemberFee,
   updateMemberInstallments,
 } from "@/app/admin/(protected)/actions";
@@ -17,6 +18,7 @@ import {
   NOTE_AUTHORS,
   PAYMENT_METHODS,
   PAYMENT_METHOD_LABELS,
+  formatDate,
   formatEuros,
 } from "@/lib/constants";
 import {
@@ -514,6 +516,79 @@ export function ChangeInstallmentsButton({
       >
         Fermer
       </button>
+    </div>
+  );
+}
+
+/**
+ * Remise du kit.
+ *
+ * Deux états, un seul bouton : remettre, ou annuler la remise. Le bureau voit
+ * d'un coup d'œil où il en est, sans ouvrir de formulaire.
+ */
+export function EquipmentAction({
+  memberId,
+  delivered,
+  deliveredAt,
+}: {
+  memberId: string;
+  delivered: boolean;
+  /** Date ISO, pour éviter de faire traverser un objet Date au client. */
+  deliveredAt: string | null;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function apply(next: boolean) {
+    if (
+      !next &&
+      !confirm("Annuler la remise de l’équipement ? La date enregistrée sera effacée.")
+    )
+      return;
+
+    startTransition(async () => {
+      setError(null);
+      const formData = new FormData();
+      formData.set("memberId", memberId);
+      formData.set("delivered", String(next));
+      const result = await setEquipmentDelivered(formData);
+      if (result.ok) router.refresh();
+      else setError(result.message);
+    });
+  }
+
+  return (
+    <div>
+      {delivered ? (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="font-semibold text-emerald-800">
+            Équipement remis
+            {deliveredAt ? ` le ${formatDate(deliveredAt)}` : ""}
+          </p>
+          <button
+            type="button"
+            disabled={pending}
+            className="min-h-11 text-sm font-semibold text-brand-dark/60 underline hover:text-brand"
+            onClick={() => apply(false)}
+          >
+            {pending ? "…" : "Annuler la remise"}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="text-brand-dark/70">Équipement non remis.</p>
+          <button
+            type="button"
+            className="btn-ghost"
+            disabled={pending}
+            onClick={() => apply(true)}
+          >
+            {pending ? "Enregistrement…" : "Marquer l’équipement comme remis"}
+          </button>
+        </div>
+      )}
+      <ErrorLine message={error} />
     </div>
   );
 }
