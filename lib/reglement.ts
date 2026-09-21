@@ -5,15 +5,23 @@ import { getAppUrl } from "./app-url";
 import type { EmailAttachment } from "./email";
 
 /**
- * Règlement intérieur joint à l'email de confirmation.
+ * Règlement intérieur officiel — source de vérité unique.
+ *
+ * Un seul fichier dans tout le projet : c'est lui que la page `/reglement`
+ * propose au téléchargement et en consultation, et lui que l'email de
+ * confirmation joint. Deux copies finiraient par diverger, et une famille
+ * recevrait par email un document différent de celui affiché sur le site.
  *
  * Le document est daté : il vaut pour la saison 2026-2027 et pour elle seule.
  * Changer la saison active dans les réglages ne doit donc PAS renommer ce
  * fichier — ce serait annoncer une saison que le document ne couvre pas. Le
  * jour où le bureau publiera un règlement 2027-2028, il déposera un nouveau
- * fichier et ces deux constantes changeront ensemble.
+ * fichier et ces constantes changeront ensemble.
  */
 const FILE_NAME = "Reglement_Interieur_BSC_2026-2027.pdf";
+
+/** Chemin public, servi par le site et utilisé par la page `/reglement`. */
+export const REGLEMENT_PDF_PATH = `/${FILE_NAME}`;
 
 /** Nom que la famille verra dans sa boîte mail. */
 export const REGLEMENT_ATTACHMENT_NAME =

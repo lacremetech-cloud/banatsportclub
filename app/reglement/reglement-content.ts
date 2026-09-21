@@ -1,13 +1,14 @@
 /**
  * Transcription fidèle du règlement intérieur officiel de Banat Sport Club,
- * saison 2026 – 2027 (public/Reglement_Interieur_BSC.pdf).
+ * saison 2026 – 2027.
  *
  * Ce fichier ne contient AUCUNE reformulation : le texte est repris mot pour
  * mot du PDF officiel, qui reste le document de référence. Toute mise à jour
  * du règlement doit remplacer le PDF ET ce fichier, conjointement.
+ *
+ * Le PDF lui-même est déclaré une seule fois, dans `lib/reglement.ts` : la
+ * page et l'email de confirmation servent ainsi exactement le même document.
  */
-
-export const PDF_PATH = "/Reglement_Interieur_BSC.pdf";
 
 export const HEADER = {
   organisation: "BANAT SPORT CLUB",

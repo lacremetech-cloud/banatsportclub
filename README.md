@@ -336,6 +336,20 @@ dépense n'est créée automatiquement. « À prévoir : 1 500 € » et « déj
 500 € » sont deux chiffres distincts, et le second ne bouge que lorsque le
 bureau saisit un reversement réel.
 
+## Règlement intérieur : un seul fichier
+
+`public/Reglement_Interieur_BSC_2026-2027.pdf` est la **source de vérité
+unique**. Son chemin est déclaré une seule fois, dans `lib/reglement.ts`, et
+deux usages s'en servent :
+
+| Usage | Route |
+| --- | --- |
+| Téléchargement et consultation | `/reglement` |
+| Pièce jointe de l'email de confirmation | `POST /api/registration` |
+
+Deux copies finiraient par diverger, et une famille recevrait par email un
+document différent de celui affiché sur le site.
+
 ## Email de confirmation d'inscription
 
 Dès qu'une inscription est **écrite en base**, un email de confirmation part
