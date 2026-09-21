@@ -407,6 +407,9 @@ npm run db:migrate
 
 ```
 app/
+  favicon.ico               Écusson du club, 16/32/48 px
+  icon.png                  Écusson 512 px (navigateurs modernes)
+  apple-icon.png            Écusson 180 px (écran d'accueil iOS)
   page.tsx                  Landing page publique
   inscription/              Parcours d'inscription en 8 étapes
   inscription/paiement/     Retour après paiement Mollie
@@ -446,6 +449,7 @@ lib/
   sms.ts                    Messages préremplis pour les liens sms:
   db/index.ts               Client Drizzle + Neon
   db/schema.ts              Schéma des tables
+public/logo-bsc.png         Écusson officiel, utilisé dans l'interface
 drizzle/                    Migrations SQL générées
 scripts/seed.ts             Réglages initiaux
 ```

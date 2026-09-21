@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
@@ -89,10 +90,18 @@ export default async function HomePage() {
       <main>
         {/* 1 — Hero */}
         <section className="mx-auto max-w-5xl px-5 pb-14 pt-12 sm:pb-20 sm:pt-20">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
+          <Image
+            src="/logo-bsc.png"
+            alt="Écusson du Banat Sport Club"
+            width={512}
+            height={512}
+            priority
+            className="h-24 w-24 sm:h-32 sm:w-32"
+          />
+          <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-brand">
             Banat Sport Club
           </p>
-          <h1 className="mt-4 text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-dark sm:text-6xl">
+          <h1 className="mt-3 text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-dark sm:text-6xl">
             Remettre les filles
             <br />
             en jeu.
