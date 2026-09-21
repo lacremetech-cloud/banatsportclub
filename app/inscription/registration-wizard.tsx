@@ -717,7 +717,12 @@ export function RegistrationWizard({
                           : `2 × ${formatEuros(parts[0])}`,
                         plan === 1
                           ? "Tout est réglé en une seule fois."
-                          : "La seconde échéance est réglée plus tard.",
+                          // Deux mensualités consécutives, pas deux paiements
+                          // espacés librement. Les montants viennent du
+                          // découpage réel : jamais de 100 € écrit en dur.
+                          : `${formatEuros(parts[0])} maintenant, puis ${formatEuros(
+                              parts[1],
+                            )} le mois suivant.`,
                       ]}
                     />
                   );
