@@ -141,6 +141,8 @@ export function ChoiceCard({
   lines,
   badge,
   footer,
+  disabled,
+  disabledLabel,
 }: {
   name: string;
   value: string;
@@ -154,13 +156,22 @@ export function ChoiceCard({
   badge?: string;
   /** Contenu libre sous les lignes : un lien, une précision. */
   footer?: React.ReactNode;
+  /** Option affichée mais pas encore proposée : grisée et non cliquable. */
+  disabled?: boolean;
+  /** Ce qui remplace la pastille de sélection : « Bientôt disponible ». */
+  disabledLabel?: string;
 }) {
   return (
     <label
-      className={`flex cursor-pointer flex-col rounded-2xl border-2 p-5 transition ${
-        checked
-          ? "border-brand bg-brand-light/10"
-          : "border-brand-light/40 bg-white hover:border-brand-light"
+      // `aria-disabled` plutôt que masquer la carte : l'option reste lisible
+      // et annoncée, elle n'est simplement pas encore proposée.
+      aria-disabled={disabled || undefined}
+      className={`flex flex-col rounded-2xl border-2 p-5 transition ${
+        disabled
+          ? "cursor-not-allowed border-brand-light/30 bg-brand-light/5 opacity-60"
+          : checked
+            ? "cursor-pointer border-brand bg-brand-light/10"
+            : "cursor-pointer border-brand-light/40 bg-white hover:border-brand-light"
       }`}
     >
       <input
@@ -168,6 +179,7 @@ export function ChoiceCard({
         name={name}
         value={value}
         checked={checked}
+        disabled={disabled}
         onChange={() => onSelect(value)}
         className="sr-only"
       />
@@ -181,14 +193,20 @@ export function ChoiceCard({
             </span>
           )}
         </span>
-        <span
-          aria-hidden
-          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
-            checked ? "border-brand bg-brand text-white" : "border-brand-light/70"
-          }`}
-        >
-          {checked ? "✓" : ""}
-        </span>
+        {disabled && disabledLabel ? (
+          <span className="shrink-0 rounded-full bg-brand-dark/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-dark/60">
+            {disabledLabel}
+          </span>
+        ) : (
+          <span
+            aria-hidden
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
+              checked ? "border-brand bg-brand text-white" : "border-brand-light/70"
+            }`}
+          >
+            {checked ? "✓" : ""}
+          </span>
+        )}
       </span>
       {lines.map((line, index) => (
         <span

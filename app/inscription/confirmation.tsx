@@ -22,6 +22,8 @@ export type RegistrationResult = {
   preferredPaymentMethod: string;
   feeAmountCents: number;
   season: string;
+  /** Statut réel de l'adhésion, tel que la base le connaît. */
+  registrationStatus: string;
 };
 
 export type { BankDetails };
@@ -96,14 +98,32 @@ export function ConfirmationScreen({
   const installments = result.paymentInstallments;
   const firstDueCents = splitInstallments(result.feeAmountCents, installments)[0];
 
+  /**
+   * Deux situations, deux messages.
+   *
+   * L'adhésion n'est « validée » que si la logique métier l'a réellement
+   * constaté — `registration_status` passe à ACTIVE dès le premier euro
+   * encaissé, ou d'emblée si la cotisation est offerte. Tant que ce n'est pas
+   * le cas, la page ne doit pas laisser croire que tout est réglé : c'est une
+   * demande bien reçue, pas une adhésion acquise.
+   *
+   * Aucun statut n'est inventé ici : on lit celui que la base vient de
+   * renvoyer.
+   */
+  const settled = result.registrationStatus === "ACTIVE";
+
   return (
     <div>
       <h1 className="text-3xl font-bold tracking-tight text-brand-dark sm:text-4xl">
-        Inscription enregistrée ✓
+        {settled ? "Inscription validée ✓" : "Demande d’inscription bien reçue ✓"}
       </h1>
       <p className="mt-3 text-brand-dark/80">
-        Votre inscription est enregistrée. Un email de confirmation vient de
-        vous être envoyé.
+        {settled
+          ? "L’inscription est bien enregistrée et le règlement a été reçu."
+          : "Votre demande d’inscription a bien été enregistrée. Il vous reste à effectuer le règlement pour valider définitivement l’inscription."}
+      </p>
+      <p className="mt-2 text-sm text-brand-dark/60">
+        Un email de confirmation vient de vous être envoyé.
       </p>
 
       <dl className="card mt-6 space-y-3">
@@ -174,9 +194,11 @@ export function ConfirmationScreen({
         )}
       </div>
 
-      <p className="mt-4 text-sm text-brand-dark/60">
-        L’adhésion sera définitivement validée après réception du règlement.
-      </p>
+      {!settled && (
+        <p className="mt-4 text-sm text-brand-dark/60">
+          L’adhésion sera définitivement validée après réception du règlement.
+        </p>
+      )}
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link href="/" className="btn-ghost w-full justify-center py-3 sm:w-auto">

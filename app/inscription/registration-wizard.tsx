@@ -147,6 +147,7 @@ export function RegistrationWizard({
   defaultGroup,
   bank,
   clubPhone,
+  cardEnabled,
 }: {
   groups: GroupInfo[];
   season: string;
@@ -154,6 +155,8 @@ export function RegistrationWizard({
   defaultGroup: string;
   bank: BankDetails;
   clubPhone: string;
+  /** Le paiement en ligne est-il réellement configuré côté serveur ? */
+  cardEnabled: boolean;
 }) {
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Values>(() => emptyValues(defaultGroup));
@@ -691,6 +694,10 @@ export function RegistrationWizard({
               <p className="mt-1 text-3xl font-extrabold text-brand-dark">
                 {formatEuros(annualFeeCents)}
               </p>
+              <p className="mt-2 text-sm text-brand-dark/70">
+                Accès aux séances hebdomadaires sur la saison (hors vacances
+                scolaires) + kit BSC.
+              </p>
             </div>
 
             <div>
@@ -730,17 +737,31 @@ export function RegistrationWizard({
             <div>
               <h3 className="font-bold text-brand-dark">Comment souhaitez-vous régler ?</h3>
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                {PREFERRED_PAYMENT_METHODS.map((method) => (
-                  <ChoiceCard
-                    key={method}
-                    name="preferredPaymentMethod"
-                    value={method}
-                    checked={values.preferredPaymentMethod === method}
-                    onSelect={(value) => set("preferredPaymentMethod", value)}
-                    title={PREFERRED_PAYMENT_METHOD_LABELS[method]}
-                    lines={[PREFERRED_PAYMENT_METHOD_HINTS[method]]}
-                  />
-                ))}
+                {PREFERRED_PAYMENT_METHODS.map((method) => {
+                  // Le paiement carte suit la configuration réelle du
+                  // prestataire : tant que MOLLIE_API_KEY est absente, l'API
+                  // refuse déjà tout paiement, l'option n'a donc rien à faire
+                  // de sélectionnable. Poser la clé la réactive, sans
+                  // toucher à cette page.
+                  const unavailable = method === "CARD" && !cardEnabled;
+                  return (
+                    <ChoiceCard
+                      key={method}
+                      name="preferredPaymentMethod"
+                      value={method}
+                      checked={values.preferredPaymentMethod === method}
+                      onSelect={(value) => set("preferredPaymentMethod", value)}
+                      title={PREFERRED_PAYMENT_METHOD_LABELS[method]}
+                      lines={[
+                        unavailable
+                          ? "Paiement par carte bientôt disponible."
+                          : PREFERRED_PAYMENT_METHOD_HINTS[method],
+                      ]}
+                      disabled={unavailable}
+                      disabledLabel="Bientôt disponible"
+                    />
+                  );
+                })}
               </div>
               <FieldError message={errors.preferredPaymentMethod} />
             </div>
