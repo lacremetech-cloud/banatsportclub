@@ -7,7 +7,12 @@ import {
   SCHOOL_LEVEL_LABELS,
   formatEuros,
 } from "@/lib/constants";
-import { listMembers } from "@/lib/crm";
+import {
+  listMembers,
+  MEMBER_VIEWS,
+  MEMBER_VIEW_LABELS,
+  type MemberView,
+} from "@/lib/crm";
 import { getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -19,10 +24,16 @@ export const dynamic = "force-dynamic";
 export default async function AdherentesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; groupe?: string; statut?: string }>;
+  searchParams: Promise<{ q?: string; groupe?: string; statut?: string; vue?: string }>;
 }) {
   const params = await searchParams;
   const { groups } = await getSiteSettings();
+
+  // Trois vues, un seul écran : les archives et la corbeille ne méritent pas
+  // deux entrées de plus dans la navigation du bureau.
+  const view = (MEMBER_VIEWS.includes(params.vue as MemberView)
+    ? params.vue
+    : "current") as MemberView;
 
   const search = params.q?.trim() ?? "";
   const group = groups.some((g) => g.key === params.groupe) ? params.groupe! : "";
@@ -30,29 +41,61 @@ export default async function AdherentesPage({
     ? params.statut!
     : "";
 
-  const { members, season } = await listMembers({ search, group, status });
+  const { members, season } = await listMembers({ search, group, status, view });
 
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-dark">Adhérentes</h1>
+          <h1 className="text-2xl font-bold text-brand-dark">
+            {MEMBER_VIEW_LABELS[view]}
+          </h1>
           <p className="mt-1 text-brand-dark/70">
             {members.length} résultat{members.length > 1 ? "s" : ""} — saison {season}
           </p>
         </div>
-        {/* L'export porte sur toute la saison, pas sur le filtre affiché :
-            c'est le fichier que le bureau attend pour l'assurance ou la
-            mairie. Aucune donnée médicale n'y figure. */}
-        <a href="/api/admin/export/adherentes" className="btn-ghost" download>
-          Exporter CSV
-        </a>
+        {/* L'export porte sur toute la vue affichée, pas sur le filtre de
+            recherche : c'est le fichier que le bureau attend pour l'assurance
+            ou la mairie. Aucune donnée médicale n'y figure. La corbeille n'a
+            pas d'export : ce n'est pas une liste de travail. */}
+        {view !== "trashed" && (
+          <a
+            href={`/api/admin/export/adherentes?vue=${view}`}
+            className="btn-ghost"
+            download
+          >
+            Exporter CSV
+          </a>
+        )}
       </header>
+
+      <nav className="-mx-5 overflow-x-auto px-5">
+        <ul className="flex min-w-max gap-2">
+          {MEMBER_VIEWS.map((item) => (
+            <li key={item}>
+              <Link
+                href={item === "current" ? "/admin/adherentes" : `/admin/adherentes?vue=${item}`}
+                aria-current={view === item ? "page" : undefined}
+                className={`block rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                  view === item
+                    ? "bg-brand text-white"
+                    : "border border-brand-light/50 bg-white text-brand-dark hover:border-brand"
+                }`}
+              >
+                {MEMBER_VIEW_LABELS[item]}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <form
         method="get"
         className="grid gap-3 rounded-2xl border border-brand-light/40 bg-white p-4 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end"
       >
+        {/* La vue voyage avec les filtres : filtrer dans les archives doit
+            rester dans les archives. */}
+        {view !== "current" && <input type="hidden" name="vue" value={view} />}
         <div>
           <label className="label" htmlFor="q">
             Rechercher
@@ -98,7 +141,13 @@ export default async function AdherentesPage({
       </form>
 
       {members.length === 0 ? (
-        <EmptyState>Aucune adhérente ne correspond à cette recherche.</EmptyState>
+        <EmptyState>
+          {view === "archived"
+            ? "Aucune adhérente archivée."
+            : view === "trashed"
+              ? "La corbeille est vide."
+              : "Aucune adhérente ne correspond à cette recherche."}
+        </EmptyState>
       ) : (
         <ul className="space-y-3">
           {members.map((member) => {

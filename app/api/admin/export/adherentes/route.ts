@@ -5,7 +5,12 @@ import {
   type RegistrationStatus,
   type SchoolLevel,
 } from "@/lib/constants";
-import { listMembersForExport, PAYMENT_STATUS_LABELS } from "@/lib/crm";
+import {
+  listMembersForExport,
+  MEMBER_VIEWS,
+  PAYMENT_STATUS_LABELS,
+  type MemberView,
+} from "@/lib/crm";
 import {
   csvAmount,
   csvDate,
@@ -60,13 +65,25 @@ const HEADERS = [
  * Cette route n'est pas rendue par le layout de l'espace bureau : elle
  * revérifie donc la session elle-même.
  */
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getSession();
   if (!session) {
     return new Response("Non autorisé.", { status: 401 });
   }
 
-  const [members, groups] = await Promise.all([listMembersForExport(), getGroups()]);
+  // L'export suit la vue d'où il est déclenché : les listes courantes par
+  // défaut, les archives si le bureau exporte depuis les archives. La
+  // corbeille n'est pas exportable — elle n'a pas de bouton non plus.
+  const requested = new URL(request.url).searchParams.get("vue");
+  const view: MemberView =
+    MEMBER_VIEWS.includes(requested as MemberView) && requested !== "trashed"
+      ? (requested as MemberView)
+      : "current";
+
+  const [members, groups] = await Promise.all([
+    listMembersForExport(view),
+    getGroups(),
+  ]);
   const groupLabel = new Map(groups.map((group) => [group.key as string, group.shortLabel]));
 
   const rows: CsvRow[] = members.map((member) => [
@@ -99,5 +116,8 @@ export async function GET() {
     member.season,
   ]);
 
-  return csvResponse(csvFileName("adherentes"), toCsv(HEADERS, rows));
+  return csvResponse(
+    csvFileName(view === "archived" ? "adherentes-archives" : "adherentes"),
+    toCsv(HEADERS, rows),
+  );
 }

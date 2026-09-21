@@ -6,12 +6,16 @@ import { useState, useTransition } from "react";
 import {
   addNote,
   addPayment,
+  archiveMember,
   cancelMembership,
   deleteNote,
   deletePayment,
+  restoreMember,
   setEquipmentDelivered,
+  trashMember,
   updateMemberFee,
   updateMemberInstallments,
+  type ActionResult,
 } from "@/app/admin/(protected)/actions";
 import {
   DEFAULT_NOTE_AUTHOR,
@@ -589,6 +593,92 @@ export function EquipmentAction({
         </div>
       )}
       <ErrorLine message={error} />
+    </div>
+  );
+}
+
+/**
+ * Archiver, mettre à la corbeille, restaurer.
+ *
+ * Les gestes qui retirent une fiche des listes sont volontairement
+ * secondaires : pas de bouton plein, pas de rouge. Rien n'est supprimé, donc
+ * rien ne justifie d'alarmer — mais chacun demande confirmation, parce qu'ils
+ * font disparaître la fiche de l'écran où le bureau travaille.
+ */
+export function ArchiveActions({
+  memberId,
+  view,
+}: {
+  memberId: string;
+  view: "current" | "archived" | "trashed";
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function run(
+    action: (formData: FormData) => Promise<ActionResult>,
+    question: string | null,
+  ) {
+    if (question && !confirm(question)) return;
+    startTransition(async () => {
+      setError(null);
+      const formData = new FormData();
+      formData.set("memberId", memberId);
+      const result = await action(formData);
+      if (result.ok) router.refresh();
+      else setError(result.message);
+    });
+  }
+
+  const secondary = "btn-ghost border-brand-dark/25 text-brand-dark/70";
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {view !== "current" && (
+        <button
+          type="button"
+          disabled={pending}
+          className="btn-ghost"
+          onClick={() => run(restoreMember, null)}
+        >
+          {pending ? "…" : "Restaurer"}
+        </button>
+      )}
+
+      {view === "current" && (
+        <button
+          type="button"
+          disabled={pending}
+          className="btn-ghost"
+          onClick={() =>
+            run(
+              archiveMember,
+              "Archiver cette adhérente ?\n\nElle sera retirée des listes courantes mais son historique sera conservé.",
+            )
+          }
+        >
+          {pending ? "…" : "Archiver"}
+        </button>
+      )}
+
+      {view !== "trashed" && (
+        <button
+          type="button"
+          disabled={pending}
+          className={secondary}
+          onClick={() =>
+            run(
+              trashMember,
+              "Mettre cette adhérente à la corbeille ?\n\nSes données seront conservées et pourront être restaurées.",
+            )
+          }
+        >
+          {pending ? "…" : "Mettre à la corbeille"}
+        </button>
+      )}
+
+      {error && <span className="text-sm text-brand">{error}</span>}
     </div>
   );
 }
