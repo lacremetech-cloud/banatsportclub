@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    Favicon Banat Sport Club.
+
+    Reprend l'identité déjà en place : le rose de marque (#e84670, la même
+    valeur que --color-brand dans globals.css et que themeColor du layout) et
+    l'initiale du club. Le « B » est tracé au trait plutôt qu'avec une police,
+    pour que le rendu soit identique partout sans dépendre des polices
+    installées.
+  -->
+  <rect width="32" height="32" rx="7" fill="#e84670" />
+  <g fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 7.5 V 24.5" />
+    <path d="M11 7.5 H 16.2 a 4.3 4.3 0 0 1 0 8.5 H 11" />
+    <path d="M11 16 H 17.2 a 4.25 4.25 0 0 1 0 8.5 H 11" />
+  </g>
+</svg>
