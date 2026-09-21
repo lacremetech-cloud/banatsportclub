@@ -2,14 +2,9 @@ import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { REGLEMENT_PDF_PATH } from "@/lib/reglement";
 
-import {
-  ARTICLES,
-  HEADER,
-  PDF_PATH,
-  PREAMBLE,
-  type Block,
-} from "./reglement-content";
+import { ARTICLES, HEADER, PREAMBLE, type Block } from "./reglement-content";
 
 export const metadata = {
   title: "Règlement intérieur — Banat Sport Club",
@@ -40,11 +35,11 @@ export default function ReglementPage() {
         </header>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <a href={PDF_PATH} download className="btn w-full sm:w-auto">
+          <a href={REGLEMENT_PDF_PATH} download className="btn w-full sm:w-auto">
             Télécharger le règlement intérieur
           </a>
           <a
-            href={PDF_PATH}
+            href={REGLEMENT_PDF_PATH}
             target="_blank"
             rel="noopener"
             className="btn-ghost w-full justify-center py-3 sm:w-auto"

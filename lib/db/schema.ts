@@ -64,6 +64,11 @@ export const members = pgTable(
     // bureau — remis ou pas — et la date garde la trace du quand.
     equipmentDelivered: boolean("equipment_delivered").notNull().default(false),
     equipmentDeliveredAt: timestamp("equipment_delivered_at", { withTimezone: true }),
+    // Horodatage de l'email de confirmation. Sert de verrou : un seul envoi,
+    // même si la route est rejouée. Même patron que payments.paid_email_sent_at.
+    registrationEmailSentAt: timestamp("registration_email_sent_at", {
+      withTimezone: true,
+    }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

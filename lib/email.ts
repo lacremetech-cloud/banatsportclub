@@ -1,13 +1,33 @@
+import nodemailer from "nodemailer";
+
 /**
- * Envoi d'emails via Resend.
+ * Envoi d'emails.
  *
- * Règle absolue : une panne ou une absence de configuration email ne doit
- * JAMAIS faire échouer une inscription ou un encaissement. Toutes les
- * fonctions renvoient un booléen et journalisent côté serveur, sans jamais
- * exposer la clé ni remonter d'erreur à la famille.
+ * Deux voies coexistent, et c'est délibéré :
+ *
+ * - **Gmail SMTP** (`sendGmailEmail`) pour l'email de confirmation
+ *   d'inscription. Il part de l'adresse du club, la famille peut y répondre
+ *   directement, et il porte le règlement intérieur en pièce jointe.
+ * - **Resend** (`sendEmail`) pour les autres messages transactionnels déjà en
+ *   place : notification au bureau et accusé de paiement.
+ *
+ * Toute la logique SMTP tient dans ce fichier : aucun autre module ne
+ * construit de transport.
+ *
+ * Règle absolue, commune aux deux : une panne ou une absence de configuration
+ * ne doit JAMAIS faire échouer une inscription ou un encaissement. Chaque
+ * fonction renvoie un booléen et journalise côté serveur, sans jamais exposer
+ * le mot de passe d'application ni la clé API, et sans remonter d'erreur à la
+ * famille.
  */
 
 export type EmailResult = { sent: boolean; reason?: string };
+
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+};
 
 export function isEmailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim() && process.env.RESEND_FROM_EMAIL?.trim());
@@ -80,4 +100,81 @@ export function table(rows: string): string {
 
 export function button(href: string, label: string): string {
   return `<p style="margin:24px 0"><a href="${href}" style="display:inline-block;background:#e84670;color:#fff;text-decoration:none;padding:14px 28px;border-radius:12px;font-weight:700">${label}</a></p>`;
+}
+
+// --- Gmail SMTP -----------------------------------------------------------
+
+/**
+ * Le mot de passe d'application Google n'existe que dans l'environnement du
+ * serveur. Il n'est jamais journalisé, jamais renvoyé au navigateur, jamais
+ * affiché dans l'admin. Seule sa PRÉSENCE est observable, via cette fonction.
+ */
+export function isGmailConfigured(): boolean {
+  return Boolean(
+    process.env.GMAIL_USER?.trim() && process.env.GMAIL_APP_PASSWORD?.trim(),
+  );
+}
+
+/**
+ * Transport SMTP Gmail.
+ *
+ * Créé à la demande plutôt qu'au chargement du module : sur une fonction
+ * serverless, l'import ne doit pas dépendre de la présence des variables.
+ * `secure: true` sur le port 465 chiffre la connexion dès l'ouverture, sans
+ * passer par STARTTLS.
+ */
+function gmailTransport() {
+  return nodemailer.createTransport({
+    // GMAIL_SMTP_HOST permet de router vers un serveur de test, exactement
+    // comme RESEND_API_BASE plus haut. Vide en production : on parle alors à
+    // Gmail. La connexion reste chiffrée et le certificat vérifié dans les
+    // deux cas.
+    host: process.env.GMAIL_SMTP_HOST?.trim() || "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.GMAIL_USER!.trim(),
+      pass: process.env.GMAIL_APP_PASSWORD!.trim(),
+    },
+  });
+}
+
+export async function sendGmailEmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  /** Nom affiché de l'expéditeur ; l'adresse reste GMAIL_USER. */
+  fromName: string;
+  replyTo?: string;
+  attachments?: EmailAttachment[];
+}): Promise<EmailResult> {
+  if (!isGmailConfigured()) {
+    // Message volontairement neutre : il dit ce qui manque, jamais sa valeur.
+    console.warn(
+      `[email] Gmail email sending not configured — email non envoyé (sujet : ${input.subject})`,
+    );
+    return { sent: false, reason: "Gmail email sending not configured" };
+  }
+
+  const user = process.env.GMAIL_USER!.trim();
+
+  try {
+    await gmailTransport().sendMail({
+      from: `"${input.fromName}" <${user}>`,
+      to: input.to,
+      replyTo: input.replyTo ?? user,
+      subject: input.subject,
+      html: input.html,
+      text: input.text,
+      attachments: input.attachments,
+    });
+    return { sent: true };
+  } catch (error) {
+    // On ne journalise que le message : une erreur SMTP peut contenir la
+    // commande AUTH, donc le mot de passe d'application.
+    const message = error instanceof Error ? error.message : "erreur inconnue";
+    console.error(`[email] échec Gmail SMTP : ${message.slice(0, 200)}`);
+    return { sent: false, reason: "Gmail SMTP" };
+  }
 }

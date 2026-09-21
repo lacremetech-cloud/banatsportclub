@@ -1,0 +1,12 @@
+-- Verrou d'envoi de l'email de confirmation d'inscription.
+--
+-- Une colonne nullable suffit : l'envoi se réserve par un UPDATE conditionnel
+-- (… WHERE registration_email_sent_at IS NULL RETURNING), si bien qu'un
+-- rejeu de la requête d'inscription ne peut pas produire un second email.
+-- Même mécanisme que payments.paid_email_sent_at, déjà éprouvé sur le
+-- webhook Mollie.
+--
+-- Les adhérentes déjà inscrites restent à NULL : leur inscription est
+-- ancienne, aucun email de confirmation ne partira rétroactivement puisque
+-- rien ne déclenche l'envoi en dehors de la création d'une inscription.
+ALTER TABLE "members" ADD COLUMN "registration_email_sent_at" timestamp with time zone;

@@ -336,6 +336,68 @@ dépense n'est créée automatiquement. « À prévoir : 1 500 € » et « déj
 500 € » sont deux chiffres distincts, et le second ne bouge que lorsque le
 bureau saisit un reversement réel.
 
+## Règlement intérieur : un seul fichier
+
+`public/Reglement_Interieur_BSC_2026-2027.pdf` est la **source de vérité
+unique**. Son chemin est déclaré une seule fois, dans `lib/reglement.ts`, et
+deux usages s'en servent :
+
+| Usage | Route |
+| --- | --- |
+| Téléchargement et consultation | `/reglement` |
+| Pièce jointe de l'email de confirmation | `POST /api/registration` |
+
+Deux copies finiraient par diverger, et une famille recevrait par email un
+document différent de celui affiché sur le site.
+
+## Email de confirmation d'inscription
+
+Dès qu'une inscription est **écrite en base**, un email de confirmation part
+vers le responsable légal. Il est envoyé par **Gmail SMTP**
+(`smtp.gmail.com:465`, SSL), depuis l'adresse du club, avec le **règlement
+intérieur en pièce jointe** et l'adresse du bureau en `Reply-To` : la famille
+répond directement à cet email.
+
+| Variable | Rôle |
+| --- | --- |
+| `GMAIL_USER` | `banatsportclub@gmail.com` |
+| `GMAIL_APP_PASSWORD` | **Mot de passe d'application** Google, jamais le mot de passe du compte |
+
+Le mot de passe d'application se crée sur
+<https://myaccount.google.com/apppasswords> (validation en deux étapes
+requise). Il vit uniquement dans l'environnement du serveur : il n'est jamais
+envoyé au navigateur, jamais journalisé — même une erreur SMTP n'est
+journalisée que par son message, tronqué —, jamais affiché dans l'admin.
+
+Quatre garanties :
+
+- **L'inscription passe avant l'email.** L'envoi n'est tenté qu'une fois
+  l'adhérente, le responsable légal, les contacts d'urgence, la fiche santé,
+  les consentements et le numéro `BSC-26-XXXX` écrits en base. Un échec
+  d'envoi ne déclenche aucun rollback et ne renvoie aucune erreur à la
+  famille.
+- **Sans configuration, tout continue.** Si `GMAIL_USER` ou
+  `GMAIL_APP_PASSWORD` manque, l'inscription réussit, aucun 500 n'est produit,
+  et le serveur journalise simplement `Gmail email sending not configured`.
+- **Un seul email par inscription.** `members.registration_email_sent_at` sert
+  de verrou : l'envoi se réserve par un `UPDATE … WHERE … IS NULL RETURNING`,
+  si bien qu'un rejeu de la requête ne peut pas produire un second message. En
+  cas d'échec SMTP, le verrou est relâché pour qu'une tentative ultérieure
+  reste possible.
+- **Aucune donnée médicale, aucune note interne.** C'est un récapitulatif
+  administratif : numéro, identité, saison, créneau, cotisation, plan de
+  paiement, moyen choisi, déjà payé, reste à régler.
+
+Le bloc de paiement s'adapte au moyen choisi : consigne carte, coordonnées
+bancaires complètes avec la référence pour un virement, consigne chèque avec
+le numéro à porter au dos, consigne espèces. En 2 fois, l'email annonce
+**deux mensualités consécutives** avec les montants issus du découpage réel de
+la cotisation — jamais une somme écrite en dur.
+
+Les autres emails transactionnels — notification au bureau, accusé de
+paiement — continuent de passer par **Resend**. Toute la logique SMTP tient
+dans `lib/email.ts` ; aucun autre module ne construit de transport.
+
 ## Paiement en ligne et emails
 
 ### Parcours

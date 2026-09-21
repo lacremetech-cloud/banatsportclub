@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { SCHOOL_LEVEL_LABELS, type SchoolLevel } from "@/lib/constants";
 import {
   sendBureauNotification,
-  sendRegistrationEmail,
-  type RegistrationEmailData,
+  sendRegistrationConfirmationOnce,
+  type BureauNotificationData,
 } from "@/lib/notifications";
 import { createRegistration } from "@/lib/registration";
 import { getSiteSettings } from "@/lib/settings";
@@ -54,13 +54,15 @@ export async function POST(request: Request) {
     );
   }
 
-  // Les emails sont accessoires : une panne Resend ne doit jamais faire
-  // échouer une inscription déjà écrite en base.
+  // À partir d'ici, l'inscription EST enregistrée : adhérente, responsable
+  // légal, contacts d'urgence, fiche santé, consentements et numéro BSC. Tout
+  // ce qui suit est accessoire et ne peut plus rien remettre en cause — ni
+  // annuler l'inscription, ni renvoyer une erreur à la famille.
   try {
     const { groups } = await getSiteSettings();
     const group = groups.find((item) => item.key === registration.groupName);
 
-    const emailData: RegistrationEmailData = {
+    const bureauData: BureauNotificationData = {
       memberNumber: registration.memberNumber,
       firstName: registration.firstName,
       lastName: registration.lastName,
@@ -81,8 +83,17 @@ export async function POST(request: Request) {
     };
 
     await Promise.allSettled([
-      sendRegistrationEmail(emailData),
-      sendBureauNotification(emailData),
+      // Confirmation à la famille : Gmail SMTP, règlement en pièce jointe,
+      // verrou d'unicité posé en base. Elle relit les montants réels plutôt
+      // que de faire confiance à ce qui vient d'être calculé ici.
+      sendRegistrationConfirmationOnce(registration.id, {
+        schoolLevelLabel: bureauData.schoolLevelLabel,
+        guardianFirstName: bureauData.guardianFirstName,
+        guardianLastName: bureauData.guardianLastName,
+        guardianPhone: bureauData.guardianPhone,
+      }),
+      // Notification au bureau : inchangée, toujours par Resend.
+      sendBureauNotification(bureauData),
     ]);
   } catch (error) {
     console.error("[registration] envoi des emails impossible :", error);
