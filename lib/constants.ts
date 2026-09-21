@@ -162,8 +162,24 @@ export const EXPENSE_CATEGORIES = [
 export const NOTE_AUTHORS = ["Bureau BSC", "Rayyan", "Imen", "Dawssen"] as const;
 export const DEFAULT_NOTE_AUTHOR = "Bureau BSC";
 
-/** Contact public de l'association. */
+/** Contacts publics de l'association. */
 export const CLUB_EMAIL = "banatsportclub@gmail.com";
+export const CLUB_PHONE = "06 25 77 35 92";
+
+/**
+ * Exemples de lien de parenté proposés pour les contacts d'urgence.
+ * Le champ reste libre : une situation familiale ne rentre pas toujours
+ * dans une liste.
+ */
+export const RELATIONSHIP_SUGGESTIONS = [
+  "Mère",
+  "Père",
+  "Tante",
+  "Oncle",
+  "Sœur",
+  "Frère",
+  "Autre",
+] as const;
 
 /**
  * Valeurs par défaut, également écrites dans `settings` par le seed.
@@ -172,13 +188,39 @@ export const CLUB_EMAIL = "banatsportclub@gmail.com";
 export const DEFAULT_SEASON = "2026-2027";
 export const DEFAULT_ANNUAL_FEE_CENTS = 20000;
 
+/**
+ * Affichage par défaut des deux créneaux.
+ *
+ * `levels` guide le parent vers le bon groupe sans rien verrouiller : la 3e
+ * est volontairement éligible aux deux, et le bureau peut accepter une
+ * situation particulière (voir le numéro de contact affiché à l'étape).
+ */
 export const DEFAULT_GROUP_DISPLAY: Record<
   GroupName,
-  { day: string; time: string; place: string }
+  { day: string; levels: string; time: string; place: string; address: string }
 > = {
-  jeudi: { day: "Jeudi", time: "18h00 – 19h30", place: "Dojo Montpellier" },
-  dimanche: { day: "Dimanche", time: "10h30 – 12h30", place: "Stade de Grabels" },
+  jeudi: {
+    day: "Jeudi soir",
+    levels: "6e à 3e",
+    time: "18h00 – 19h30",
+    place: "Complexe sportif des Garrigues — Haut de Massane",
+    address: "297 Av. du Comté de Nice, 34080 Montpellier",
+  },
+  dimanche: {
+    day: "Dimanche matin",
+    levels: "3e à Terminale",
+    time: "10h30 – 12h30",
+    place: "Stade Serge Oltra — Grabels",
+    address: "Rue du Mas d'Armand, 34790 Grabels",
+  },
 };
+
+/** Lien Google Maps vers un lieu, à partir de son nom et de son adresse. */
+export function mapsUrl(place: string, address: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    `${place} ${address}`,
+  )}`;
+}
 
 export function formatEuros(cents: number): string {
   return new Intl.NumberFormat("fr-FR", {

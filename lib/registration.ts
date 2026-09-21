@@ -116,21 +116,36 @@ export async function createRegistration(
       phone: input.guardianPhone,
       email: input.guardianEmail,
     }),
-    db.insert(schema.emergencyContacts).values({
-      memberId,
-      // Quand la famille a coché « c'est moi », on reprend l'identité du
-      // responsable légal et on ne stocke que le second numéro fourni.
-      firstName: input.emergencySameAsGuardian
-        ? input.guardianFirstName
-        : (input.emergencyFirstName ?? ""),
-      lastName: input.emergencySameAsGuardian
-        ? input.guardianLastName
-        : (input.emergencyLastName ?? ""),
-      phone: input.emergencyPhone,
-      relationship: input.emergencySameAsGuardian
-        ? "Responsable légal"
-        : input.emergencyRelationship,
-    }),
+    db.insert(schema.emergencyContacts).values([
+      {
+        memberId,
+        priority: 1,
+        // Quand la famille a coché « c'est la même personne », on recopie le
+        // responsable légal : identité ET numéro. Rien n'est ressaisi.
+        firstName: input.emergencySameAsGuardian
+          ? input.guardianFirstName
+          : (input.emergencyFirstName ?? ""),
+        lastName: input.emergencySameAsGuardian
+          ? input.guardianLastName
+          : (input.emergencyLastName ?? null),
+        phone: input.emergencySameAsGuardian
+          ? input.guardianPhone
+          : (input.emergencyPhone ?? ""),
+        // La relation du responsable n'est pas demandée à l'étape 3 : on
+        // enregistre ce qu'on sait réellement de lui.
+        relationship: input.emergencySameAsGuardian
+          ? "Responsable légal"
+          : (input.emergencyRelationship ?? null),
+      },
+      {
+        memberId,
+        priority: 2,
+        firstName: input.secondFirstName,
+        lastName: null,
+        phone: input.secondPhone,
+        relationship: input.secondRelationship,
+      },
+    ]),
     db.insert(schema.medicalInfo).values({
       memberId,
       allergies: input.allergies,

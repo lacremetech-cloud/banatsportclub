@@ -70,26 +70,36 @@ export const guardianStepSchema = z.object({
 });
 
 /**
- * Étape 4 — le second numéro à joindre.
+ * Étape 4 — qui joindre en cas d'urgence.
  *
- * Le club doit toujours disposer de DEUX numéros : celui du responsable légal
- * (étape 3) et celui-ci. Dans le cas le plus courant c'est le même parent qui
- * donne un second numéro, d'où la case à cocher — elle évite de resaisir une
- * identité déjà connue, sans jamais faire l'économie du deuxième numéro.
+ * Deux contacts distincts, parce que l'objectif est pratique : si le premier
+ * ne répond pas, le bureau doit savoir immédiatement qui appeler ensuite, et
+ * à qui appartient le numéro.
+ *
+ * 1. Le contact principal. Dans le cas le plus courant c'est le responsable
+ *    légal lui-même : la case à cocher évite alors de resaisir une identité
+ *    déjà donnée à l'étape précédente.
+ * 2. Le deuxième numéro, toujours demandé, avec le prénom et le lien de la
+ *    personne — jamais un numéro orphelin.
  */
 const emergencyStepShape = {
   emergencySameAsGuardian: z.boolean(),
-  emergencyPhone: phone,
-  // Obligatoires seulement si le contact est une autre personne.
+  // Contact principal : obligatoires seulement si ce n'est pas le responsable.
   emergencyFirstName: z.string().trim().max(120).optional(),
   emergencyLastName: z.string().trim().max(120).optional(),
+  emergencyPhone: z.string().trim().max(20).optional(),
   emergencyRelationship: z.string().trim().max(80).optional(),
+  // Deuxième numéro : toujours obligatoire.
+  secondFirstName: requiredText("Le prénom du deuxième contact"),
+  secondPhone: phone,
+  secondRelationship: requiredText("Le lien du deuxième contact", 80),
 };
 
 type EmergencyValues = {
   emergencySameAsGuardian: boolean;
   emergencyFirstName?: string;
   emergencyLastName?: string;
+  emergencyPhone?: string;
   emergencyRelationship?: string;
 };
 
@@ -99,17 +109,23 @@ function checkEmergencyContact(values: EmergencyValues, ctx: z.RefinementCtx) {
   const required: [keyof EmergencyValues, string][] = [
     ["emergencyFirstName", "Le prénom du contact d’urgence"],
     ["emergencyLastName", "Le nom du contact d’urgence"],
+    ["emergencyPhone", "Le téléphone du contact d’urgence"],
     ["emergencyRelationship", "Le lien avec l’adhérente"],
   ];
 
   for (const [field, label] of required) {
     if (!String(values[field] ?? "").trim()) {
-      ctx.addIssue({
-        code: "custom",
-        path: [field],
-        message: `${label} est obligatoire`,
-      });
+      ctx.addIssue({ code: "custom", path: [field], message: `${label} est obligatoire` });
     }
+  }
+
+  const phoneValue = String(values.emergencyPhone ?? "").trim();
+  if (phoneValue && phoneValue.length < 6) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["emergencyPhone"],
+      message: "Numéro de téléphone trop court",
+    });
   }
 }
 

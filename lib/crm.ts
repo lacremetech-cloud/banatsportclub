@@ -303,10 +303,14 @@ export async function getMemberDetail(memberId: string) {
     .select()
     .from(schema.guardians)
     .where(eq(schema.guardians.memberId, memberId));
-  const [emergency] = await db
+  // Deux contacts, ordonnés par priorité : le principal puis le second.
+  const emergencyRows = await db
     .select()
     .from(schema.emergencyContacts)
-    .where(eq(schema.emergencyContacts.memberId, memberId));
+    .where(eq(schema.emergencyContacts.memberId, memberId))
+    .orderBy(asc(schema.emergencyContacts.priority));
+  const emergency = emergencyRows.find((row) => row.priority === 1) ?? null;
+  const secondContact = emergencyRows.find((row) => row.priority === 2) ?? null;
   const [medical] = await db
     .select()
     .from(schema.medicalInfo)
@@ -356,6 +360,7 @@ export async function getMemberDetail(memberId: string) {
     member,
     guardian,
     emergency,
+    secondContact,
     medical,
     consents,
     payments,

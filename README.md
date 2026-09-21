@@ -4,8 +4,12 @@ Mini-site public, formulaire d'inscription et mini-CRM pour **Banat Sport Club**
 association sportive féminine à Montpellier.
 
 - **Public** : collégiennes et lycéennes, de la 6e à la Terminale
-- **Groupe jeudi** : jeudi 18h00 – 19h30, Dojo Montpellier
-- **Groupe dimanche** : dimanche 10h30 – 12h30, Stade de Grabels
+- **Jeudi soir — 6e à 3e** : 18h00 – 19h30, Complexe sportif des Garrigues — Haut de Massane, 297 Av. du Comté de Nice, 34080 Montpellier
+- **Dimanche matin — 3e à Terminale** : 10h30 – 12h30, Stade Serge Oltra — Grabels, Rue du Mas d'Armand, 34790 Grabels
+
+La 3e est volontairement éligible aux deux créneaux. Les niveaux guident le
+parent, ils ne bloquent aucune inscription : le bureau peut accepter une
+situation particulière.
 
 ## Stack
 
@@ -64,8 +68,8 @@ Ce script écrit dans la table `settings` :
 | --- | --- |
 | `season` | `2026-2027` |
 | `annual_fee_cents` | `20000` (200 €) |
-| `group_jeudi_day` / `_time` / `_place` | `Jeudi` / `18h00 – 19h30` / `Dojo Montpellier` |
-| `group_dimanche_day` / `_time` / `_place` | `Dimanche` / `10h30 – 12h30` / `Stade de Grabels` |
+| `group_jeudi_day` / `_levels` / `_time` / `_place` / `_address` | `Jeudi soir` / `6e à 3e` / `18h00 – 19h30` / `Complexe sportif des Garrigues — Haut de Massane` / `297 Av. du Comté de Nice, 34080 Montpellier` |
+| `group_dimanche_day` / `_levels` / `_time` / `_place` / `_address` | `Dimanche matin` / `3e à Terminale` / `10h30 – 12h30` / `Stade Serge Oltra — Grabels` / `Rue du Mas d'Armand, 34790 Grabels` |
 
 Le tarif et les créneaux affichés sur le site viennent **toujours** de cette
 table, jamais d'une constante recopiée dans un composant (voir
