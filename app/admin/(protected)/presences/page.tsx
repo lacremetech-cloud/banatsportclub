@@ -115,12 +115,15 @@ export default async function PresencesPage({
             />
           </div>
           {members.length === 0 && (
-            <p className="mt-4">
+            // `EmptyState` rend déjà un <p> : l'envelopper dans un autre <p>
+            // produisait du HTML invalide, que le navigateur réorganise, d'où
+            // une erreur d'hydratation React (#418).
+            <div className="mt-4">
               <EmptyState>
                 Aucune adhérente avec une adhésion validée dans ce groupe pour
                 l’instant.
               </EmptyState>
-            </p>
+            </div>
           )}
         </div>
       )}
