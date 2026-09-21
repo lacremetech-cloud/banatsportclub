@@ -110,9 +110,20 @@ export function button(href: string, label: string): string {
  * affiché dans l'admin. Seule sa PRÉSENCE est observable, via cette fonction.
  */
 export function isGmailConfigured(): boolean {
-  return Boolean(
-    process.env.GMAIL_USER?.trim() && process.env.GMAIL_APP_PASSWORD?.trim(),
-  );
+  return Boolean(process.env.GMAIL_USER?.trim() && gmailAppPassword());
+}
+
+/**
+ * Mot de passe d'application Google, débarrassé de ses espaces.
+ *
+ * Google l'affiche en quatre groupes de quatre — « abcd efgh ijkl mnop » —
+ * et c'est sous cette forme qu'on le copie. Les espaces ne font pas partie
+ * du secret : les laisser passer fait échouer l'authentification avec un
+ * « 535 Username and Password not accepted » impossible à diagnostiquer
+ * depuis la valeur, puisqu'elle n'est jamais affichée.
+ */
+function gmailAppPassword(): string {
+  return (process.env.GMAIL_APP_PASSWORD ?? "").replace(/\s/g, "");
 }
 
 /**
@@ -134,7 +145,7 @@ function gmailTransport() {
     secure: true,
     auth: {
       user: process.env.GMAIL_USER!.trim(),
-      pass: process.env.GMAIL_APP_PASSWORD!.trim(),
+      pass: gmailAppPassword(),
     },
   });
 }

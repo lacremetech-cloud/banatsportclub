@@ -365,7 +365,9 @@ répond directement à cet email.
 
 Le mot de passe d'application se crée sur
 <https://myaccount.google.com/apppasswords> (validation en deux étapes
-requise). Il vit uniquement dans l'environnement du serveur : il n'est jamais
+requise). Google l'affiche en quatre groupes de quatre : les espaces ne font
+pas partie du secret et sont retirés avant l'envoi, la valeur peut donc être
+collée telle quelle. Il vit uniquement dans l'environnement du serveur : il n'est jamais
 envoyé au navigateur, jamais journalisé — même une erreur SMTP n'est
 journalisée que par son message, tronqué —, jamais affiché dans l'admin.
 
