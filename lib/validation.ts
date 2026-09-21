@@ -156,7 +156,9 @@ export const consentsStepSchema = z.object({
     .refine((value) => value, "L’autorisation parentale est obligatoire"),
   acceptsImageRights: z.boolean(),
   guardianFullName: requiredText("Le nom du parent signataire", 160),
-  // Renseigné plus tard, quand la signature digitale et R2 seront en place.
+  // Réservé au futur dépôt d'un document signé sur papier (bucket R2). Le
+  // formulaire ne le remplit pas : l'engagement en ligne repose sur le nom du
+  // signataire et l'horodatage du consentement, pas sur une image de signature.
   signatureFileKey: optionalText(300),
 });
 
