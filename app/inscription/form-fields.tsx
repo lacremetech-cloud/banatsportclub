@@ -136,6 +136,7 @@ export function ChoiceCard({
   value,
   checked,
   onSelect,
+  header,
   title,
   lines,
   badge,
@@ -145,6 +146,8 @@ export function ChoiceCard({
   value: string;
   checked: boolean;
   onSelect: (value: string) => void;
+  /** Bandeau au-dessus du titre : ce qu'on doit voir en premier. */
+  header?: React.ReactNode;
   title: string;
   lines: string[];
   /** Petite étiquette, pour signaler le choix le plus courant. */
@@ -168,6 +171,7 @@ export function ChoiceCard({
         onChange={() => onSelect(value)}
         className="sr-only"
       />
+      {header}
       <span className="flex items-center justify-between gap-3">
         <span className="text-lg font-extrabold uppercase tracking-tight text-brand-dark">
           {title}

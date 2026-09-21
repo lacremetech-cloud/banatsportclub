@@ -7,18 +7,28 @@
  * applicatif (listes de statuts, libellés).
  */
 
-/** Données techniques des deux groupes. L'affichage vient des settings. */
+/**
+ * Données techniques des deux groupes. L'affichage vient des settings.
+ *
+ * `levels` énumère les classes visées par le créneau. La 3e figure
+ * volontairement dans les deux : c'est une année charnière, et une 3e peut
+ * être mieux à sa place dans l'un ou l'autre groupe selon sa maturité et ses
+ * horaires. Cette liste sert à CONSEILLER, jamais à interdire : aucune
+ * inscription n'est refusée sur la base de la classe.
+ */
 export const GROUPS = {
   jeudi: {
     // 4 = jeudi, 0 = dimanche (Date.getDay)
     weekday: 4,
     startTime: "18:00",
     endTime: "19:30",
+    levels: ["6e", "5e", "4e", "3e"],
   },
   dimanche: {
     weekday: 0,
     startTime: "10:30",
     endTime: "12:30",
+    levels: ["3e", "2nde", "1ere", "terminale"],
   },
 } as const;
 

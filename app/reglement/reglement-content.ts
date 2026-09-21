@@ -274,14 +274,3 @@ export const ARTICLES: Article[] = [
     ],
   },
 ];
-
-export const ACCEPTANCE = {
-  statement: "J’ai lu et j’accepte le règlement intérieur de Banat Sport Club.",
-  fields: [
-    "Nom de l’adhérente :",
-    "Signature de l’adhérente :",
-    "Nom du représentant légal :",
-    "Signature du représentant légal :",
-    "Date :",
-  ],
-};

@@ -10,6 +10,7 @@ import {
   PREFERRED_PAYMENT_METHOD_LABELS,
   SCHOOL_LEVELS,
   SCHOOL_LEVEL_LABELS,
+  type SchoolLevel,
   formatDate,
   formatEuros,
   type PreferredPaymentMethod,
@@ -352,14 +353,44 @@ export function RegistrationWizard({
         {step === 1 && (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
-              {groups.map((item) => (
+              {groups.map((item) => {
+                // La classe a été saisie à l'étape précédente : on peut donc
+                // dire lequel des deux créneaux lui correspond. C'est un
+                // conseil, pas une règle — les deux restent choisissables, et
+                // le bureau tranche les situations particulières.
+                const suits = item.levelKeys.includes(values.schoolLevel as SchoolLevel);
+                return (
                 <ChoiceCard
                   key={item.key}
                   name="groupName"
                   value={item.key}
                   checked={values.groupName === item.key}
                   onSelect={(value) => set("groupName", value)}
-                  title={`${item.day} — ${item.levels}`}
+                  header={
+                    <span className="mb-3 block">
+                      <span className="flex flex-wrap gap-1.5">
+                        {item.levelKeys.map((level) => (
+                          <span
+                            key={level}
+                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                              level === values.schoolLevel
+                                ? "bg-brand text-white"
+                                : "bg-brand-light/30 text-brand-dark"
+                            }`}
+                          >
+                            {SCHOOL_LEVEL_LABELS[level]}
+                          </span>
+                        ))}
+                      </span>
+                      {suits && (
+                        <span className="mt-2 block text-sm font-bold text-brand">
+                          ✓ Conseillé pour la{" "}
+                          {SCHOOL_LEVEL_LABELS[values.schoolLevel as SchoolLevel]}
+                        </span>
+                      )}
+                    </span>
+                  }
+                  title={item.day}
                   lines={[item.time, item.place]}
                   footer={
                     <a
@@ -375,9 +406,20 @@ export function RegistrationWizard({
                     </a>
                   }
                 />
-              ))}
+                );
+              })}
             </div>
             <FieldError message={errors.groupName} />
+
+            {groups.filter((item) =>
+              item.levelKeys.includes(values.schoolLevel as SchoolLevel),
+            ).length > 1 && (
+              <p className="text-brand-dark/70">
+                La {SCHOOL_LEVEL_LABELS[values.schoolLevel as SchoolLevel]} est
+                accueillie dans les deux créneaux : choisissez celui qui
+                convient le mieux.
+              </p>
+            )}
 
             <p className="rounded-2xl bg-brand-light/15 px-5 py-4 text-brand-dark/85">
               Pour toute demande particulière, contrainte d’emploi du temps ou
@@ -675,7 +717,12 @@ export function RegistrationWizard({
                           : `2 × ${formatEuros(parts[0])}`,
                         plan === 1
                           ? "Tout est réglé en une seule fois."
-                          : "La seconde échéance est réglée plus tard.",
+                          // Deux mensualités consécutives, pas deux paiements
+                          // espacés librement. Les montants viennent du
+                          // découpage réel : jamais de 100 € écrit en dur.
+                          : `${formatEuros(parts[0])} maintenant, puis ${formatEuros(
+                              parts[1],
+                            )} le mois suivant.`,
                       ]}
                     />
                   );

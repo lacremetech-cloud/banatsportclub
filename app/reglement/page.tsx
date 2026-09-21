@@ -4,7 +4,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 import {
-  ACCEPTANCE,
   ARTICLES,
   HEADER,
   PDF_PATH,
@@ -70,22 +69,6 @@ export default function ReglementPage() {
             </article>
           ))}
         </div>
-
-        <section className="mt-12 rounded-2xl border-2 border-brand-light/50 bg-white p-6">
-          <p className="font-semibold text-brand-dark">{ACCEPTANCE.statement}</p>
-          <dl className="mt-5 space-y-4">
-            {ACCEPTANCE.fields.map((field) => (
-              <div key={field}>
-                <dt className="text-sm text-brand-dark/60">{field}</dt>
-                <dd className="mt-1 h-8 border-b border-dashed border-brand-light/70" />
-              </div>
-            ))}
-          </dl>
-          <p className="mt-5 text-sm text-brand-dark/60">
-            Le règlement est accepté en ligne à l’étape « Autorisations » du
-            formulaire d’inscription.
-          </p>
-        </section>
 
         <div className="mt-10">
           <Link href="/inscription" className="btn w-full sm:w-auto">
