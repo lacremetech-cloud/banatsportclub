@@ -25,8 +25,11 @@ export function normalizePhone(phone: string): string {
  * Android attend `?body=`, iOS historiquement `&body=`. La forme `?&body=`
  * est comprise par les deux, c'est pour cela qu'elle paraît bizarre.
  */
-export function smsHref(phone: string, body: string): string {
-  return `sms:${normalizePhone(phone)}?&body=${encodeURIComponent(body)}`;
+export function smsHref(phone: string, body = ""): string {
+  const number = normalizePhone(phone);
+  // Sans texte à proposer, on ouvre simplement la conversation : un `body`
+  // vide ferait apparaître un brouillon bizarre sur certains téléphones.
+  return body ? `sms:${number}?&body=${encodeURIComponent(body)}` : `sms:${number}`;
 }
 
 const SIGNATURE = "Banat Sport Club";

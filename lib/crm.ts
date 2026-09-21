@@ -206,6 +206,8 @@ export type DashboardStats = {
   byFeeType: Record<string, number>;
   /** Adhésions validées dont le kit reste à remettre. */
   equipmentPending: number;
+  /** Dossiers auxquels il manque un élément obligatoire du formulaire. */
+  dossiersToCheck: number;
   activeCount: number;
   pendingCount: number;
   cancelledCount: number;
@@ -217,10 +219,12 @@ export type DashboardStats = {
 export async function getDashboardStats(): Promise<DashboardStats> {
   const { season, annualFeeCents, groups } = await getSiteSettings();
 
-  const [rows, paidTotals] = await Promise.all([
+  const [rows, paidTotals, dossierParts] = await Promise.all([
     db
       .select({
         id: schema.members.id,
+        birthDate: schema.members.birthDate,
+        schoolLevel: schema.members.schoolLevel,
         groupName: schema.members.groupName,
         registrationStatus: schema.members.registrationStatus,
         ...FEE_COLUMNS,
@@ -228,6 +232,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .from(schema.members)
       .where(eq(schema.members.season, season)),
     paidTotalsByMember(),
+    loadDossierParts(season),
   ]);
 
   const byGroup: Record<string, number> = {};
@@ -236,6 +241,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   let cancelledCount = 0;
   let expectedCents = 0;
   let equipmentPending = 0;
+  let dossiersToCheck = 0;
   const byFeeType: Record<string, number> = { STANDARD: 0, SOLIDARITY: 0, FREE: 0 };
 
   for (const row of rows) {
@@ -254,6 +260,17 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       if (row.registrationStatus === "ACTIVE" && !row.equipmentDelivered) {
         equipmentPending += 1;
       }
+      // Un dossier annulé n'est plus à relancer : il ne compte pas.
+      const dossier = checkDossier({
+        birthDate: row.birthDate,
+        schoolLevel: row.schoolLevel,
+        groupName: row.groupName,
+        guardian: dossierParts.guardianByMember.get(row.id) ?? null,
+        emergency: dossierParts.primaryByMember.get(row.id) ?? null,
+        secondContact: dossierParts.secondByMember.get(row.id) ?? null,
+        consents: dossierParts.consentsByMember.get(row.id) ?? [],
+      });
+      if (!dossier.complete) dossiersToCheck += 1;
     }
   }
 
@@ -270,6 +287,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     byGroup,
     byFeeType,
     equipmentPending,
+    dossiersToCheck,
     activeCount,
     pendingCount,
     cancelledCount,
@@ -379,6 +397,15 @@ export async function getMemberDetail(memberId: string) {
       member.paymentInstallments,
       paidCents,
     ),
+    dossier: checkDossier({
+      birthDate: member.birthDate,
+      schoolLevel: member.schoolLevel,
+      groupName: member.groupName,
+      guardian: guardian ?? null,
+      emergency,
+      secondContact,
+      consents,
+    }),
     season,
     annualFeeCents,
     group: groups.find((item) => item.key === member.groupName),
@@ -553,3 +580,246 @@ export async function recomputeMemberStatus(memberId: string): Promise<Registrat
   return next;
 }
 
+
+// --- Dossier d'inscription -------------------------------------------------
+
+/**
+ * Complétude du dossier.
+ *
+ * Ne sont vérifiés que les éléments RÉELLEMENT collectés par le formulaire
+ * d'inscription. Aucun document n'est inventé : tant que le certificat médical
+ * ou la photo ne sont pas demandés quelque part, leur absence ne peut pas
+ * rendre un dossier incomplet.
+ *
+ * Le droit à l'image est volontairement exclu : une famille a parfaitement le
+ * droit de le refuser, et ce refus est une réponse, pas un manque.
+ */
+export type DossierCheck = {
+  complete: boolean;
+  /** Ce qu'il manque, en clair, prêt à être affiché. */
+  missing: string[];
+};
+
+type DossierInput = {
+  birthDate: string | null;
+  schoolLevel: string | null;
+  groupName: string | null;
+  guardian: { firstName: string; lastName: string; phone: string; email: string } | null;
+  emergency: { firstName: string; phone: string } | null;
+  secondContact: { firstName: string; phone: string } | null;
+  consents: { type: string; accepted: boolean }[];
+};
+
+const filled = (value: string | null | undefined) => Boolean(value?.trim());
+
+export function checkDossier(input: DossierInput): DossierCheck {
+  const missing: string[] = [];
+
+  if (!filled(input.birthDate)) missing.push("Date de naissance");
+  if (!filled(input.schoolLevel)) missing.push("Classe");
+  if (!filled(input.groupName)) missing.push("Créneau");
+
+  const guardian = input.guardian;
+  if (
+    !guardian ||
+    !filled(guardian.firstName) ||
+    !filled(guardian.lastName) ||
+    !filled(guardian.phone) ||
+    !filled(guardian.email)
+  ) {
+    missing.push("Responsable légal");
+  }
+
+  if (!input.emergency || !filled(input.emergency.firstName) || !filled(input.emergency.phone)) {
+    missing.push("Contact d’urgence principal");
+  }
+
+  // Le deuxième contact est obligatoire dans le formulaire depuis le
+  // 21 septembre 2026 : les inscriptions antérieures apparaissent donc à
+  // vérifier, ce qui est exactement l'intention.
+  if (
+    !input.secondContact ||
+    !filled(input.secondContact.firstName) ||
+    !filled(input.secondContact.phone)
+  ) {
+    missing.push("Deuxième contact d’urgence");
+  }
+
+  const accepted = new Set(
+    input.consents.filter((row) => row.accepted).map((row) => row.type),
+  );
+  if (!accepted.has("INTERNAL_RULES")) missing.push("Règlement intérieur");
+  if (!accepted.has("PARENTAL_AUTHORIZATION")) missing.push("Autorisation parentale");
+
+  return { complete: missing.length === 0, missing };
+}
+
+/**
+ * Pièces nécessaires au contrôle des dossiers, pour toutes les adhérentes
+ * d'une saison. Trois requêtes plutôt qu'une par adhérente.
+ */
+async function loadDossierParts(season: string) {
+  const [guardians, contacts, consents] = await Promise.all([
+    db
+      .select({
+        memberId: schema.guardians.memberId,
+        firstName: schema.guardians.firstName,
+        lastName: schema.guardians.lastName,
+        phone: schema.guardians.phone,
+        email: schema.guardians.email,
+      })
+      .from(schema.guardians)
+      .innerJoin(schema.members, eq(schema.members.id, schema.guardians.memberId))
+      .where(eq(schema.members.season, season)),
+    db
+      .select({
+        memberId: schema.emergencyContacts.memberId,
+        priority: schema.emergencyContacts.priority,
+        firstName: schema.emergencyContacts.firstName,
+        lastName: schema.emergencyContacts.lastName,
+        phone: schema.emergencyContacts.phone,
+        relationship: schema.emergencyContacts.relationship,
+      })
+      .from(schema.emergencyContacts)
+      .innerJoin(schema.members, eq(schema.members.id, schema.emergencyContacts.memberId))
+      .where(eq(schema.members.season, season)),
+    db
+      .select({
+        memberId: schema.consents.memberId,
+        type: schema.consents.type,
+        accepted: schema.consents.accepted,
+      })
+      .from(schema.consents)
+      .innerJoin(schema.members, eq(schema.members.id, schema.consents.memberId))
+      .where(eq(schema.members.season, season)),
+  ]);
+
+  const guardianByMember = new Map(guardians.map((row) => [row.memberId, row]));
+  const primaryByMember = new Map(
+    contacts.filter((row) => row.priority === 1).map((row) => [row.memberId, row]),
+  );
+  const secondByMember = new Map(
+    contacts.filter((row) => row.priority === 2).map((row) => [row.memberId, row]),
+  );
+  const consentsByMember = new Map<string, { type: string; accepted: boolean }[]>();
+  for (const row of consents) {
+    const list = consentsByMember.get(row.memberId) ?? [];
+    list.push({ type: row.type, accepted: row.accepted });
+    consentsByMember.set(row.memberId, list);
+  }
+
+  return { guardianByMember, primaryByMember, secondByMember, consentsByMember };
+}
+
+// --- Export CSV ------------------------------------------------------------
+
+export type MemberExportRow = {
+  memberNumber: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  schoolLevel: string;
+  schoolName: string | null;
+  groupName: string;
+  guardianName: string;
+  guardianPhone: string;
+  guardianEmail: string;
+  emergencyName: string;
+  emergencyPhone: string;
+  secondName: string;
+  secondPhone: string;
+  secondRelationship: string;
+  feeType: string;
+  feeAmountCents: number;
+  paidCents: number;
+  dueCents: number;
+  installments: number;
+  registrationStatus: string;
+  paymentStatus: PaymentStatus;
+  equipmentDelivered: boolean;
+  equipmentDeliveredAt: Date | null;
+  imageRights: boolean;
+  season: string;
+};
+
+/**
+ * Toutes les adhérentes de la saison, à plat, pour l'export du bureau.
+ *
+ * Aucune donnée médicale n'est lue ici — ni allergie, ni traitement, ni
+ * remarque de santé. Un export général circule par email, se retrouve sur
+ * une clé USB et s'ouvre sur n'importe quel poste : ces informations n'ont
+ * rien à y faire. Elles restent consultables sur la fiche, derrière la
+ * connexion du bureau.
+ */
+export async function listMembersForExport(): Promise<MemberExportRow[]> {
+  const { season } = await getSiteSettings();
+
+  const [rows, paidTotals, parts] = await Promise.all([
+    db
+      .select({
+        id: schema.members.id,
+        memberNumber: schema.members.memberNumber,
+        firstName: schema.members.firstName,
+        lastName: schema.members.lastName,
+        birthDate: schema.members.birthDate,
+        schoolLevel: schema.members.schoolLevel,
+        schoolName: schema.members.schoolName,
+        groupName: schema.members.groupName,
+        registrationStatus: schema.members.registrationStatus,
+        equipmentDeliveredAt: schema.members.equipmentDeliveredAt,
+        season: schema.members.season,
+        ...FEE_COLUMNS,
+      })
+      .from(schema.members)
+      .where(eq(schema.members.season, season))
+      .orderBy(asc(schema.members.lastName), asc(schema.members.firstName)),
+    paidTotalsByMember(),
+    loadDossierParts(season),
+  ]);
+
+  return rows.map((row) => {
+    const paidCents = paidTotals.get(row.id) ?? 0;
+    const guardian = parts.guardianByMember.get(row.id);
+    const emergency = parts.primaryByMember.get(row.id);
+    const second = parts.secondByMember.get(row.id);
+    const consents = parts.consentsByMember.get(row.id) ?? [];
+
+    const fullName = (first?: string | null, last?: string | null) =>
+      [first?.trim(), last?.trim()].filter(Boolean).join(" ");
+
+    return {
+      memberNumber: row.memberNumber,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      birthDate: row.birthDate,
+      schoolLevel: row.schoolLevel,
+      schoolName: row.schoolName,
+      groupName: row.groupName,
+      guardianName: fullName(guardian?.firstName, guardian?.lastName),
+      guardianPhone: guardian?.phone ?? "",
+      guardianEmail: guardian?.email ?? "",
+      emergencyName: fullName(emergency?.firstName, emergency?.lastName),
+      emergencyPhone: emergency?.phone ?? "",
+      secondName: fullName(second?.firstName, second?.lastName),
+      secondPhone: second?.phone ?? "",
+      secondRelationship: second?.relationship ?? "",
+      feeType: row.feeType,
+      feeAmountCents: row.feeAmountCents,
+      paidCents,
+      dueCents: Math.max(row.feeAmountCents - paidCents, 0),
+      installments: row.paymentInstallments,
+      registrationStatus: row.registrationStatus,
+      paymentStatus: computePaymentStatus(
+        paidCents,
+        row.feeAmountCents,
+        row.paymentInstallments,
+      ),
+      equipmentDelivered: row.equipmentDelivered,
+      equipmentDeliveredAt: row.equipmentDeliveredAt,
+      imageRights: consents.some(
+        (consent) => consent.type === "IMAGE_RIGHTS" && consent.accepted,
+      ),
+      season: row.season,
+    };
+  });
+}

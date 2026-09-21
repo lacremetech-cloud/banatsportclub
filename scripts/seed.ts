@@ -2,6 +2,9 @@
 // les imports ESM sont hissés, un dotenv appelé ici s'exécuterait trop tard.
 import {
   DEFAULT_ANNUAL_FEE_CENTS,
+  DEFAULT_CLUB_EMAIL,
+  DEFAULT_CLUB_NAME,
+  DEFAULT_CLUB_PHONE,
   DEFAULT_GROUP_DISPLAY,
   DEFAULT_SEASON,
   GROUP_NAMES,
@@ -23,6 +26,10 @@ const SETTINGS: Record<string, string> = {
   solidarity_fee_cents: String(DEFAULT_SOLIDARITY_FEE_CENTS),
   // Reversement prévu par adhérente du dimanche (provision, pas une dépense).
   partner_club_fee_cents: String(DEFAULT_PARTNER_CLUB_FEE_CENTS),
+  // Identité de l'association, modifiable ensuite depuis /admin/parametres.
+  club_name: DEFAULT_CLUB_NAME,
+  club_email: DEFAULT_CLUB_EMAIL,
+  club_phone: DEFAULT_CLUB_PHONE,
   ...Object.fromEntries(
     GROUP_NAMES.flatMap((key) => [
       [`group_${key}_day`, DEFAULT_GROUP_DISPLAY[key].day],
@@ -30,6 +37,7 @@ const SETTINGS: Record<string, string> = {
       [`group_${key}_time`, DEFAULT_GROUP_DISPLAY[key].time],
       [`group_${key}_place`, DEFAULT_GROUP_DISPLAY[key].place],
       [`group_${key}_address`, DEFAULT_GROUP_DISPLAY[key].address],
+      [`group_${key}_short_label`, DEFAULT_GROUP_DISPLAY[key].shortLabel],
     ]),
   ),
 };

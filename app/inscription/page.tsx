@@ -1,7 +1,7 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { GROUP_NAMES, type GroupName } from "@/lib/constants";
-import { getBankDetails, getSiteSettings } from "@/lib/settings";
+import { getAssociation, getBankDetails, getSiteSettings } from "@/lib/settings";
 
 import { RegistrationWizard } from "./registration-wizard";
 
@@ -17,9 +17,10 @@ export default async function InscriptionPage({
   searchParams: Promise<{ creneau?: string }>;
 }) {
   const { creneau } = await searchParams;
-  const [{ season, annualFeeCents, groups }, bank] = await Promise.all([
+  const [{ season, annualFeeCents, groups }, bank, association] = await Promise.all([
     getSiteSettings(),
     getBankDetails(),
+    getAssociation(),
   ]);
 
   // Créneau présélectionné depuis les cartes de la page d'accueil.
@@ -36,6 +37,7 @@ export default async function InscriptionPage({
           annualFeeCents={annualFeeCents}
           defaultGroup={defaultGroup}
           bank={bank}
+          clubPhone={association.phone}
         />
       </main>
 

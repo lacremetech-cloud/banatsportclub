@@ -1,10 +1,15 @@
 import Link from "next/link";
 
+import { BankTransferDetails } from "@/components/bank-transfer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { formatEuros } from "@/lib/constants";
+import {
+  formatEuros,
+  type PreferredPaymentMethod,
+} from "@/lib/constants";
 import { installmentLabel } from "@/lib/fees";
 import { getPaymentSummary } from "@/lib/payments";
+import { getBankDetails } from "@/lib/settings";
 
 import { RetryPaymentButton } from "./retry-payment-button";
 
@@ -24,7 +29,10 @@ export default async function PaiementPage({
   searchParams: Promise<{ adherente?: string }>;
 }) {
   const { adherente } = await searchParams;
-  const summary = adherente ? await getPaymentSummary(adherente) : null;
+  const [summary, bank] = await Promise.all([
+    adherente ? getPaymentSummary(adherente) : null,
+    getBankDetails(),
+  ]);
 
   if (!summary) {
     return (
@@ -47,6 +55,10 @@ export default async function PaiementPage({
 
   const fullyPaid = summary.remainingCents <= 0;
   const partiallyPaid = summary.paidCents > 0 && !fullyPaid;
+  // Le mode choisi à l'inscription commande ce qui est proposé ici : on ne
+  // renvoie pas vers la carte une famille qui a choisi le chèque.
+  const method = summary.preferredPaymentMethod as PreferredPaymentMethod | null;
+  const stillDue = summary.nextPaymentCents > 0;
 
   return (
     <>
@@ -100,7 +112,7 @@ export default async function PaiementPage({
           )}
         </dl>
 
-        {summary.nextPaymentCents > 0 && (
+        {stillDue && method === "CARD" && (
           <div className="mt-6">
             <RetryPaymentButton
               memberId={summary.memberId}
@@ -112,6 +124,46 @@ export default async function PaiementPage({
                 payées plus tard.
               </p>
             )}
+          </div>
+        )}
+
+        {/* La famille qui a choisi le virement retrouve ici les mêmes
+            informations qu'après l'inscription, avec le montant recalculé :
+            ce qui a déjà été encaissé n'est plus demandé. */}
+        {stillDue && method === "BANK_TRANSFER" && (
+          <div className="mt-6">
+            <BankTransferDetails
+              memberNumber={summary.memberNumber}
+              amountCents={summary.nextPaymentCents}
+              remainingCents={summary.remainingCents}
+              installments={summary.installments}
+              bank={bank}
+            />
+          </div>
+        )}
+
+        {stillDue && method === "CHEQUE" && (
+          <div className="mt-6 rounded-2xl bg-brand-light/15 px-5 py-4 text-brand-dark/85">
+            <p className="font-semibold text-brand-dark">
+              Paiement choisi : chèque
+            </p>
+            <p className="mt-2">
+              Il reste {formatEuros(summary.remainingCents)} à régler. Merci
+              d’indiquer {summary.memberNumber} au dos du chèque, à remettre
+              directement au club.
+            </p>
+          </div>
+        )}
+
+        {stillDue && method === "CASH" && (
+          <div className="mt-6 rounded-2xl bg-brand-light/15 px-5 py-4 text-brand-dark/85">
+            <p className="font-semibold text-brand-dark">
+              Paiement choisi : espèces
+            </p>
+            <p className="mt-2">
+              Il reste {formatEuros(summary.remainingCents)} à régler,
+              directement auprès du bureau.
+            </p>
           </div>
         )}
 

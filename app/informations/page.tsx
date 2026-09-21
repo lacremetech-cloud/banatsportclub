@@ -3,12 +3,11 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import {
-  CLUB_EMAIL,
   PREFERRED_PAYMENT_METHODS,
   PREFERRED_PAYMENT_METHOD_LABELS,
   formatEuros,
 } from "@/lib/constants";
-import { getSiteSettings } from "@/lib/settings";
+import { getAssociation, getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +32,10 @@ const ESSENTIAL_RULES = [
 ];
 
 export default async function InformationsPage() {
-  const { season, annualFeeCents, groups } = await getSiteSettings();
+  const [{ season, annualFeeCents, groups }, association] = await Promise.all([
+    getSiteSettings(),
+    getAssociation(),
+  ]);
 
   return (
     <>
@@ -101,8 +103,11 @@ export default async function InformationsPage() {
             <div>
               <dt className="font-semibold text-brand-dark">Contact</dt>
               <dd>
-                <a href={`mailto:${CLUB_EMAIL}`} className="text-brand underline">
-                  {CLUB_EMAIL}
+                <a
+                  href={`mailto:${association.email}`}
+                  className="text-brand underline"
+                >
+                  {association.email}
                 </a>
               </dd>
             </div>

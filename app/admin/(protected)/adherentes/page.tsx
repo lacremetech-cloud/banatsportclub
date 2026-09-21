@@ -34,11 +34,19 @@ export default async function AdherentesPage({
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-brand-dark">Adhérentes</h1>
-        <p className="mt-1 text-brand-dark/70">
-          {members.length} résultat{members.length > 1 ? "s" : ""} — saison {season}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-dark">Adhérentes</h1>
+          <p className="mt-1 text-brand-dark/70">
+            {members.length} résultat{members.length > 1 ? "s" : ""} — saison {season}
+          </p>
+        </div>
+        {/* L'export porte sur toute la saison, pas sur le filtre affiché :
+            c'est le fichier que le bureau attend pour l'assurance ou la
+            mairie. Aucune donnée médicale n'y figure. */}
+        <a href="/api/admin/export/adherentes" className="btn-ghost" download>
+          Exporter CSV
+        </a>
       </header>
 
       <form
@@ -66,7 +74,7 @@ export default async function AdherentesPage({
             <option value="">Toutes</option>
             {groups.map((item) => (
               <option key={item.key} value={item.key}>
-                {item.day}
+                {item.shortLabel}
               </option>
             ))}
           </select>
@@ -109,7 +117,7 @@ export default async function AdherentesPage({
                       {SCHOOL_LEVEL_LABELS[
                         member.schoolLevel as keyof typeof SCHOOL_LEVEL_LABELS
                       ] ?? member.schoolLevel}{" "}
-                      · {group?.day ?? member.groupName}
+                      · {group?.shortLabel ?? member.groupName}
                     </span>
                     <span className="mt-0.5 block font-mono text-xs text-brand-dark/50">
                       {member.memberNumber}

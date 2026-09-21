@@ -32,6 +32,8 @@ export type PaymentSummary = {
   firstName: string;
   lastName: string;
   registrationStatus: string;
+  /** Mode choisi à l'inscription : sert à réafficher les bonnes consignes. */
+  preferredPaymentMethod: string | null;
   guardianEmail: string | null;
   /** Cotisation réellement due par cette adhérente. */
   feeAmountCents: number;
@@ -54,6 +56,7 @@ export async function getPaymentSummary(
       firstName: schema.members.firstName,
       lastName: schema.members.lastName,
       registrationStatus: schema.members.registrationStatus,
+      preferredPaymentMethod: schema.members.preferredPaymentMethod,
       feeType: schema.members.feeType,
       feeAmountCents: schema.members.feeAmountCents,
       installments: schema.members.paymentInstallments,
@@ -78,6 +81,7 @@ export async function getPaymentSummary(
     firstName: member.firstName,
     lastName: member.lastName,
     registrationStatus: member.registrationStatus,
+    preferredPaymentMethod: member.preferredPaymentMethod,
     guardianEmail: member.guardianEmail,
     feeType: member.feeType,
     feeAmountCents: member.feeAmountCents,

@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { CLUB_EMAIL } from "@/lib/constants";
+import { getAssociation } from "@/lib/settings";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const association = await getAssociation();
+
   return (
     <footer className="mt-20 border-t border-brand-light/40 bg-white">
       <div className="mx-auto max-w-5xl px-5 py-8">
@@ -17,7 +19,7 @@ export function SiteFooter() {
           />
           <div>
             <p className="text-base font-extrabold uppercase tracking-tight text-brand-dark">
-              Banat Sport Club
+              {association.name}
             </p>
             <p className="text-brand">Remettre les filles en jeu</p>
           </div>
@@ -26,10 +28,10 @@ export function SiteFooter() {
           Association multisport loisir féminine — Montpellier
         </p>
         <a
-          href={`mailto:${CLUB_EMAIL}`}
+          href={`mailto:${association.email}`}
           className="mt-1 inline-block text-sm text-brand-dark/70 underline"
         >
-          {CLUB_EMAIL}
+          {association.email}
         </a>
 
         <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-brand-dark/70">

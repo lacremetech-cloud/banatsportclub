@@ -30,6 +30,18 @@ export type AccountingType = (typeof ACCOUNTING_TYPES)[number];
 
 export type MovementSource = "payment" | "entry";
 
+/**
+ * Origine d'un mouvement, en clair.
+ *
+ * Le bureau doit pouvoir distinguer dans un export ce qui est arrivé tout
+ * seul (un encaissement Mollie) de ce qu'une personne a saisi à la main.
+ */
+export type MovementOrigin =
+  | "Cotisation manuelle"
+  | "Mollie"
+  | "Recette manuelle"
+  | "Dépense manuelle";
+
 export type Movement = {
   id: string;
   date: string;
@@ -38,6 +50,9 @@ export type Movement = {
   /** Positif pour une recette, négatif pour une dépense. */
   amountCents: number;
   source: MovementSource;
+  origin: MovementOrigin;
+  /** Saison de rattachement : celle de l'adhérente, ou celle notée sur la ligne. */
+  season: string;
   /** Une cotisation n'est jamais supprimable ici : elle vit dans Paiements. */
   deletable: boolean;
   /** Renseigné pour une cotisation : permet d'ouvrir la fiche en un clic. */
@@ -164,6 +179,7 @@ export async function getAccountingOverview(
         firstName: schema.members.firstName,
         lastName: schema.members.lastName,
         memberNumber: schema.members.memberNumber,
+        memberSeason: schema.members.season,
       })
       .from(schema.payments)
       .innerJoin(schema.members, eq(schema.members.id, schema.payments.memberId))
@@ -185,6 +201,8 @@ export async function getAccountingOverview(
       category: "Cotisation",
       amountCents: row.amountCents,
       source: "payment" as const,
+      origin: (row.provider === "mollie" ? "Mollie" : "Cotisation manuelle") as MovementOrigin,
+      season: row.memberSeason,
       // Une cotisation se corrige dans Paiements, jamais ici.
       deletable: false,
       memberId: row.memberId,
@@ -197,6 +215,10 @@ export async function getAccountingOverview(
       category: row.category,
       amountCents: row.type === "EXPENSE" ? -row.amountCents : row.amountCents,
       source: "entry" as const,
+      origin: (row.type === "EXPENSE"
+        ? "Dépense manuelle"
+        : "Recette manuelle") as MovementOrigin,
+      season: row.season,
       deletable: true,
       memberId: null,
       note: row.note,

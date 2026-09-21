@@ -1,5 +1,8 @@
 import {
   DEFAULT_ANNUAL_FEE_CENTS,
+  DEFAULT_CLUB_EMAIL,
+  DEFAULT_CLUB_NAME,
+  DEFAULT_CLUB_PHONE,
   DEFAULT_GROUP_DISPLAY,
   DEFAULT_SEASON,
   GROUPS,
@@ -29,6 +32,14 @@ export type GroupInfo = {
   address: string;
   /** Lien Google Maps, dérivé du lieu et de l'adresse. */
   mapsUrl: string;
+  /**
+   * Libellé court du CRM : « Jeudi soir — Dojo ».
+   *
+   * Le bureau sait où ont lieu les séances ; répéter l'adresse complète sur
+   * chaque ligne de liste n'apporterait rien et encombrerait l'écran. Le nom
+   * exact et l'adresse restent affichés dans le parcours public.
+   */
+  shortLabel: string;
   /** Heures SQL de la séance, utilisées par la feuille de présence. */
   startTime: string;
   endTime: string;
@@ -62,6 +73,7 @@ function buildGroups(settings: Record<string, string>): GroupInfo[] {
       time: settings[`group_${key}_time`] ?? fallback.time,
       place,
       address,
+      shortLabel: settings[`group_${key}_short_label`] ?? fallback.shortLabel,
       mapsUrl: mapsUrl(place, address),
       startTime: GROUPS[key].startTime,
       endTime: GROUPS[key].endTime,
@@ -156,4 +168,72 @@ export async function getAnnualFeeCents(): Promise<number> {
 
 export async function getGroups(): Promise<GroupInfo[]> {
   return buildGroups(await getSettings());
+}
+
+/** Identité publique de l'association, modifiable depuis /admin/parametres. */
+export type Association = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
+function readText(
+  settings: Record<string, string>,
+  key: string,
+  fallback: string,
+): string {
+  return settings[key]?.trim() || fallback;
+}
+
+export async function getAssociation(): Promise<Association> {
+  const settings = await getSettings();
+  return readAssociation(settings);
+}
+
+function readAssociation(settings: Record<string, string>): Association {
+  return {
+    name: readText(settings, "club_name", DEFAULT_CLUB_NAME),
+    email: readText(settings, "club_email", DEFAULT_CLUB_EMAIL),
+    phone: readText(settings, "club_phone", DEFAULT_CLUB_PHONE),
+  };
+}
+
+/**
+ * Tout ce qu'affiche la page Paramètres, en une seule lecture.
+ *
+ * Volontairement limité aux réglages de l'association : aucune variable
+ * d'environnement, aucune clé technique. Ce qui est secret ne transite jamais
+ * par cette page.
+ */
+export type AdminSettings = {
+  season: string;
+  annualFeeCents: number;
+  solidarityFeeCents: number;
+  partnerClubFeeCents: number;
+  bank: BankDetails;
+  association: Association;
+};
+
+export async function getAdminSettings(): Promise<AdminSettings> {
+  const settings = await getSettings();
+  return {
+    season: settings.season ?? DEFAULT_SEASON,
+    annualFeeCents: readFeeCents(settings),
+    solidarityFeeCents: readCents(
+      settings,
+      "solidarity_fee_cents",
+      DEFAULT_SOLIDARITY_FEE_CENTS,
+    ),
+    partnerClubFeeCents: readCents(
+      settings,
+      "partner_club_fee_cents",
+      DEFAULT_PARTNER_CLUB_FEE_CENTS,
+    ),
+    bank: {
+      holder: settings.bank_holder?.trim() || null,
+      iban: settings.bank_iban?.trim() || null,
+      bic: settings.bank_bic?.trim() || null,
+    },
+    association: readAssociation(settings),
+  };
 }

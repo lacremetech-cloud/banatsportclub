@@ -603,3 +603,139 @@ export async function deleteAccountingEntry(formData: FormData): Promise<ActionR
   refreshAccounting();
   return { ok: true };
 }
+
+// --- Réglages de l'association --------------------------------------------
+
+/**
+ * Valide un IBAN par sa clé de contrôle (norme ISO 7064, modulo 97).
+ *
+ * Une simple vérification de forme laisserait passer un chiffre inversé, et
+ * un virement partirait dans le vide. Le calcul se fait sur la chaîne, sans
+ * conversion en nombre : un IBAN dépasse largement la précision d'un entier
+ * JavaScript.
+ */
+function isValidIban(value: string): boolean {
+  const iban = value.replace(/\s/g, "").toUpperCase();
+  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}$/.test(iban)) return false;
+
+  const rearranged = iban.slice(4) + iban.slice(0, 4);
+  let remainder = 0;
+  for (const char of rearranged) {
+    const digits = /[A-Z]/.test(char) ? String(char.charCodeAt(0) - 55) : char;
+    for (const digit of digits) {
+      remainder = (remainder * 10 + Number(digit)) % 97;
+    }
+  }
+  return remainder === 1;
+}
+
+/** Montant saisi en euros par le bureau, converti en centimes. */
+const euros = (label: string) =>
+  z.coerce
+    .number({ error: `${label} : montant invalide` })
+    .min(0, `${label} ne peut pas être négatif`)
+    .max(10_000, `${label} : montant trop élevé`);
+
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((value) => value || "");
+
+const settingsSchema = z
+  .object({
+    // Le tiret long se glisse facilement dans un copier-coller : on l'accepte
+    // et on le normalise plutôt que de renvoyer une erreur incompréhensible.
+    season: z
+      .string()
+      .trim()
+      .transform((value) => value.replace(/[–—]/g, "-").replace(/\s/g, ""))
+      .refine((value) => /^\d{4}-\d{4}$/.test(value), "Saison attendue au format 2026-2027"),
+    annualFeeEuros: euros("Cotisation standard"),
+    solidarityFeeEuros: euros("Cotisation solidaire"),
+    partnerClubFeeEuros: euros("Reversement club partenaire"),
+
+    bankHolder: optionalText(120),
+    bankIban: optionalText(60),
+    bankBic: optionalText(20),
+
+    clubName: requiredText("Le nom du club"),
+    clubEmail: z.email("Adresse email du bureau invalide"),
+    clubPhone: requiredText("Le téléphone du club", 20),
+  })
+  .superRefine((value, ctx) => {
+    const [start, end] = value.season.split("-").map(Number);
+    if (end !== start + 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["season"],
+        message: "La saison doit couvrir deux années consécutives (2026-2027).",
+      });
+    }
+    if (value.bankIban && !isValidIban(value.bankIban)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["bankIban"],
+        message: "Cet IBAN est invalide : vérifiez la saisie.",
+      });
+    }
+    if (value.bankBic && !/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(value.bankBic.toUpperCase())) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["bankBic"],
+        message: "Ce BIC est invalide : 8 ou 11 caractères.",
+      });
+    }
+  });
+
+/**
+ * Enregistre les réglages de l'association.
+ *
+ * Rien n'est réécrit rétroactivement : changer le tarif standard ne modifie
+ * pas `members.fee_amount_cents`, changer la saison ne retouche ni les
+ * adhésions ni les écritures comptables des saisons passées. Le nouveau
+ * barème ne s'applique qu'aux inscriptions et aux changements de cotisation
+ * à venir.
+ *
+ * Aucun secret technique ne passe par ici : cette action n'écrit que dans
+ * `settings`, jamais dans l'environnement.
+ */
+export async function updateSettings(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = settingsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Réglages invalides.");
+  }
+
+  const v = parsed.data;
+  const values: Record<string, string> = {
+    season: v.season,
+    annual_fee_cents: String(Math.round(v.annualFeeEuros * 100)),
+    solidarity_fee_cents: String(Math.round(v.solidarityFeeEuros * 100)),
+    partner_club_fee_cents: String(Math.round(v.partnerClubFeeEuros * 100)),
+    // L'IBAN est stocké en majuscules, espaces conservés : c'est la forme que
+    // le bureau relit et recopie.
+    bank_holder: v.bankHolder,
+    bank_iban: v.bankIban.toUpperCase(),
+    bank_bic: v.bankBic.toUpperCase(),
+    club_name: v.clubName,
+    club_email: v.clubEmail,
+    club_phone: v.clubPhone,
+  };
+
+  const upserts = Object.entries(values).map(([key, value]) =>
+    db
+      .insert(schema.settings)
+      .values({ key, value })
+      .onConflictDoUpdate({ target: schema.settings.key, set: { value } }),
+  );
+  const [first, ...rest] = upserts;
+  await db.batch([first, ...rest]);
+
+  // Ces valeurs sont lues par le site public comme par le CRM.
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
