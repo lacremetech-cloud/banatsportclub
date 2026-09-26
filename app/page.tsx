@@ -16,15 +16,22 @@ import { getAssociation, getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
+/** Reprise à l'identique dans la description, l'aperçu social et Twitter. */
+const DESCRIPTION =
+  "Club multisport pour les filles à Montpellier : foot, volley, basket, self-défense, cardio boxe. Un créneau par semaine, dans un cadre bienveillant, sans compétition. Inscriptions ouvertes.";
+
 export const metadata: Metadata = {
-  title: "Banat Sport Club — Remettre les filles en jeu",
-  description:
-    "Club multisport féminin à Montpellier : foot, volley, rugby, self-défense, gym, danse. Un créneau par semaine, encadré, dans un cadre bienveillant. Inscriptions ouvertes.",
+  title: "Banat Sport Club — Enfin un club de sport pensé pour elles",
+  description: DESCRIPTION,
   openGraph: {
-    title: "Banat Sport Club — Remettre les filles en jeu",
-    description:
-      "Un club multisport rien que pour elles, à Montpellier : pour apprendre, s’amuser et grandir ensemble. Places limitées.",
+    title: "Banat Sport Club — Enfin un club de sport pensé pour elles",
+    description: DESCRIPTION,
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Banat Sport Club — Enfin un club de sport pensé pour elles",
+    description: DESCRIPTION,
   },
 };
 
@@ -44,45 +51,44 @@ export const metadata: Metadata = {
 const SPORTS = [
   "Football",
   "Volley",
-  "Rugby",
+  "Basket",
   "Self-défense",
-  "Gym",
-  "Danse",
-  "Renforcement",
-  "Jeux collectifs",
+  "Cardio boxe",
+  "Circuit training",
+  "Grands jeux collectifs",
 ];
 
 const VALEURS = [
-  "Entre filles",
-  "Séances encadrées",
-  "Cadre bienveillant",
   "Débutante ou confirmée",
-  "Pas de compétition",
+  "Entre filles",
+  "Encadrées",
+  "Sans compétition",
   "Le téléphone au vestiaire",
   "On s’encourage",
   "On s’entraide",
+  "On grandit ensemble",
 ];
 
 const BENEFICES = [
   {
     number: "01",
     title: "Bouger",
-    text: "Du sport qui fait du bien, sans pression et sans chrono.",
+    text: "Du sport qui fait du bien, sans pression. Elles courent, elles jouent, elles repartent le sourire aux lèvres.",
   },
   {
     number: "02",
     title: "Prendre confiance",
-    text: "Oser, progresser à son rythme, et être fière de soi en repartant.",
+    text: "Oser, essayer, progresser à son rythme. Sans classement, sans sélection, sans jugement.",
   },
   {
     number: "03",
     title: "Créer des liens",
-    text: "On arrive parfois seule, on repart avec un groupe.",
+    text: "Un vrai groupe, construit sur l’entraide et le respect. On arrive parfois seule, on repart avec des amies.",
   },
   {
     number: "04",
     title: "Déconnecter",
-    text: "Le téléphone reste au vestiaire, le temps d’une séance.",
+    text: "Le téléphone reste au vestiaire, le temps de la séance, pour être pleinement là, avec les autres.",
   },
 ];
 
@@ -94,22 +100,10 @@ const BENEFICES = [
  * bureau, et le message d'absence est prévu au règlement intérieur.
  */
 const GARANTIES = [
-  {
-    title: "Séances encadrées",
-    text: "Une équipe présente à chaque séance, du début à la fin.",
-  },
-  {
-    title: "Appel à chaque séance",
-    text: "Les présences sont relevées, et vous êtes prévenue si votre fille est absente.",
-  },
-  {
-    title: "Assurance du club",
-    text: "L’association est couverte en responsabilité civile pour ses activités.",
-  },
-  {
-    title: "Des lieux équipés",
-    text: "Un complexe sportif à Montpellier, un stade à Grabels.",
-  },
+  "Des séances encadrées par une équipe passionnée",
+  "Un appel à chaque séance, et un message si votre fille est absente",
+  "L’assurance du club",
+  "Des lieux sportifs équipés, à Montpellier et Grabels",
 ];
 
 const INCLUS = [
@@ -117,7 +111,7 @@ const INCLUS = [
   { text: "L’encadrement" },
   { text: "L’assurance du club" },
   {
-    text: "Le kit BSC — sac, gourde, accessoires",
+    text: "Le kit BSC (sac, gourde, accessoires)",
     highlight: "Offert cette première saison",
   },
 ];
@@ -136,9 +130,9 @@ const REGLES = [
 /** Ce que chaque lieu a de concret à offrir. */
 const LIEUX: Record<string, string> = {
   jeudi:
-    "Plus de 200 m² de tatamis : de la place pour se déplacer, tomber sans se faire mal et profiter vraiment de la séance.",
+    "Plus de 200 m² de tatamis : de la place pour bouger, jouer au ballon, tomber sans se faire mal et profiter pleinement de la séance.",
   dimanche:
-    "Un vrai stade, en plein air : terrain complet pour le football, le rugby et les grands jeux collectifs.",
+    "Un vrai stade en plein air : de l’espace pour le foot, les grands jeux collectifs et tous les sports de plein air.",
 };
 
 /**
@@ -191,7 +185,7 @@ export default async function AccueilPage() {
             </span>
           </Link>
           <a
-            href="#inscription"
+            href="#adherer"
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white hover:text-brand-dark"
           >
             Réserver sa place
@@ -266,26 +260,32 @@ export default async function AccueilPage() {
                 </p>
 
                 <h1 className="mt-5 text-[2.4rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  Cette année, vos filles ont{" "}
-                  <span className="text-brand-light">leur propre terrain de jeu.</span>
+                  Enfin un club de sport{" "}
+                  <span className="text-brand-light">pensé pour elles.</span>
                 </h1>
 
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
                   On a écouté leurs besoins, et on y répond : un club multisport
-                  rien que pour elles, pour apprendre, s’amuser et grandir
+                  rien que pour les filles, pour apprendre, s’amuser et grandir
                   ensemble.
                 </p>
 
                 <div
                   data-reveal
                   style={{ ["--bsc-delay" as string]: "120ms" }}
-                  className="mt-9"
+                  className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
                 >
                   <a
-                    href="#inscription"
+                    href="#adherer"
                     className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-brand px-9 text-base font-bold text-white shadow-lg shadow-brand/25 transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-dark"
                   >
                     Réserver sa place
+                  </a>
+                  <a
+                    href="#creneaux"
+                    className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/30 px-7 text-base font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Voir les créneaux
                   </a>
                 </div>
 
@@ -300,11 +300,30 @@ export default async function AccueilPage() {
                   <span aria-hidden className="text-white/30">·</span>
                   <span className="font-semibold text-brand-light">Places limitées</span>
                 </p>
+
+                <dl
+                  data-reveal
+                  style={{ ["--bsc-delay" as string]: "260ms" }}
+                  className="mt-10 grid max-w-xl grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-7 sm:grid-cols-3"
+                >
+                  {[
+                    { k: "Rendez-vous", v: "Une fois par semaine" },
+                    { k: "Niveau", v: "Débutante ou confirmée" },
+                    { k: "Esprit", v: "Loisir et bienveillance" },
+                  ].map((item) => (
+                    <div key={item.k}>
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                        {item.k}
+                      </dt>
+                      <dd className="mt-1 text-lg font-bold text-white">{item.v}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             </div>
 
             <a
-              href="#concept"
+              href="#creneaux"
               aria-label="Découvrir le club"
               className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 hover:text-white"
             >
@@ -314,99 +333,64 @@ export default async function AccueilPage() {
             </a>
           </section>
 
-          {/* 2 — Le concept ------------------------------------------------ */}
-          <section id="concept" className="scroll-mt-16 bg-white py-20 sm:py-24">
+          {/* 2 — Bandeaux défilants ---------------------------------------- */}
+          <section
+            aria-label="Les sports pratiqués et l’esprit du club"
+            className="overflow-hidden border-y border-brand-light/40 bg-white py-5"
+          >
+            <Marquee items={SPORTS} />
+            <Marquee items={VALEURS} reverse muted />
+          </section>
+
+          {/* 3 — Citation ---------------------------------------------------- */}
+          <section className="py-20 sm:py-24">
             <div className="mx-auto max-w-4xl px-5 text-center">
-              <h2
-                data-reveal
-                className="text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl"
-              >
-                Un créneau par semaine,
-                <span className="block text-brand">rien que pour elles</span>
-              </h2>
               <p
                 data-reveal
-                style={{ ["--bsc-delay" as string]: "100ms" }}
-                className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-dark/80"
+                className="text-2xl font-bold leading-snug tracking-tight text-brand-dark sm:text-4xl"
               >
-                Entre filles, entre amies, dans un cadre bienveillant. Pas de
-                compétition, que du plaisir, entourées d’une équipe passionnée.
+                Il y a celles qui font du sport depuis des années, et celles qui
+                n’ont jamais mis les pieds sur un terrain.{" "}
+                <span className="text-brand">
+                  Chez nous, elles jouent dans la même équipe.
+                </span>
               </p>
               <p
                 data-reveal
-                style={{ ["--bsc-delay" as string]: "180ms" }}
-                className="mx-auto mt-4 max-w-2xl text-lg font-semibold text-brand-dark"
+                style={{ ["--bsc-delay" as string]: "120ms" }}
+                className="mx-auto mt-5 max-w-2xl text-lg text-brand-dark/75"
               >
-                Débutante ou sportive confirmée, chacune y trouve sa place.
+                Ce n’est pas le niveau qui fait entrer au club. C’est l’envie.
               </p>
             </div>
           </section>
 
-          {/* 3 — Les sports ------------------------------------------------ */}
-          <section className="overflow-hidden border-y border-brand-light/40 py-20 sm:py-24">
+          {/* 4 — Les sports --------------------------------------------------- */}
+          <section className="border-y border-brand-light/40 bg-white py-20 sm:py-24">
             <div className="mx-auto max-w-4xl px-5 text-center">
               <p data-reveal className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
                 Les sports
               </p>
               <h2
                 data-reveal
-                className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-4xl"
+                className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl"
               >
                 Pas besoin de choisir une seule discipline
               </h2>
               <p
                 data-reveal
                 style={{ ["--bsc-delay" as string]: "100ms" }}
-                className="mx-auto mt-5 max-w-2xl text-lg text-brand-dark/80"
+                className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-dark/80"
               >
-                Foot, volley, rugby, self-défense, gym, danse… Le programme
-                change au fil de l’année : elles découvrent, elles testent, elles
-                adorent.
+                Foot, volley, basket, self-défense, cardio boxe, circuit
+                training, grands jeux collectifs… et bien d’autres ! Le
+                programme change au fil de l’année, pour que chacune découvre,
+                teste et trouve ce qu’elle aime.
               </p>
             </div>
-
-            <div className="mt-12">
-              <Marquee items={SPORTS} />
-              <Marquee items={VALEURS} reverse muted />
-            </div>
           </section>
 
-          {/* 4 — Ce qu'elles y gagnent ------------------------------------- */}
-          <section className="bsc-grain relative overflow-hidden bg-brand-dark py-20 text-white sm:py-24">
-            <div
-              aria-hidden
-              className="bsc-halo absolute -right-32 top-1/4 h-[50vh] w-[50vh] rounded-full bg-brand/30 blur-[110px]"
-            />
-            <div className="relative mx-auto max-w-6xl px-5">
-              <h2
-                data-reveal
-                className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl"
-              >
-                Ce qu’elles y gagnent
-              </h2>
-
-              <div className="mt-12 grid gap-px overflow-hidden rounded-3xl bg-white/10 sm:grid-cols-2">
-                {BENEFICES.map((item, index) => (
-                  <div
-                    key={item.title}
-                    data-reveal
-                    style={{ ["--bsc-delay" as string]: `${index * 90}ms` }}
-                    className="bg-brand-dark p-7 transition hover:bg-[#6d1430] sm:p-9"
-                  >
-                    <span className="text-sm font-bold text-brand-light">
-                      {item.number}
-                    </span>
-                    <h3 className="mt-2 text-2xl font-bold uppercase tracking-tight">
-                      {item.title}
-                    </h3>
-                    <p className="mt-3 leading-relaxed text-white/75">{item.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* 5 — Les créneaux ---------------------------------------------- */}
+          {/* 5 — Les créneaux ------------------------------------------------- */}
           <section id="creneaux" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
               <div data-reveal className="max-w-2xl">
@@ -414,7 +398,7 @@ export default async function AccueilPage() {
                   Les créneaux
                 </p>
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
-                  Le rendez-vous de votre fille
+                  Un créneau par semaine, rien que pour elles
                 </h2>
                 {/*
                   « Deux créneaux » se lisait comme « elle vient deux fois par
@@ -422,13 +406,10 @@ export default async function AccueilPage() {
                   s'imposer en gras : on informe, on ne rectifie pas.
                 */}
                 <p className="mt-4 text-lg text-brand-dark/75">
-                  Deux créneaux ouvrent cette saison, un par tranche d’âge.
-                  Celui de votre fille dépend de sa classe : une séance par
-                  semaine, toujours avec le même groupe.
-                </p>
-                <p className="mt-3 text-brand-dark/70">
-                  En 3e, elle peut choisir l’un ou l’autre, comme elle préfère.
-                  On en discute ensemble.
+                  Deux créneaux cette saison, selon la classe de votre fille.
+                  Une séance par semaine, toujours avec le même groupe, entre
+                  filles et entre amies. En 3e, elle peut choisir le jeudi ou le
+                  dimanche : on en discute ensemble.
                 </p>
               </div>
 
@@ -476,10 +457,68 @@ export default async function AccueilPage() {
                   </article>
                 ))}
               </div>
+
+              {/* 6 — Et en plus des séances de la semaine */}
+              <div
+                data-reveal
+                className="mt-8 rounded-3xl border border-brand-light/60 bg-brand-light/15 p-6 sm:p-8"
+              >
+                <h3 className="text-xl font-bold tracking-tight text-brand-dark">
+                  <span aria-hidden>✨</span> Et en plus des séances de la semaine
+                </h3>
+                <p className="mt-3 max-w-3xl leading-relaxed text-brand-dark/80">
+                  Tout au long de l’année, d’autres activités sportives seront
+                  proposées en dehors des créneaux réguliers : stages, sorties,
+                  événements. Elles vous seront communiquées au fur et à mesure.
+                </p>
+              </div>
             </div>
           </section>
 
-          {/* 6 — Pour les parents ------------------------------------------ */}
+          {/* 7 — Ce qu'elles y gagnent ---------------------------------------- */}
+          <section className="bsc-grain relative overflow-hidden bg-brand-dark py-20 text-white sm:py-24">
+            <div
+              aria-hidden
+              className="bsc-halo absolute -right-32 top-1/4 h-[50vh] w-[50vh] rounded-full bg-brand/30 blur-[110px]"
+            />
+            <div className="relative mx-auto max-w-6xl px-5">
+              <h2
+                data-reveal
+                className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl"
+              >
+                Ce qu’elles y gagnent
+              </h2>
+
+              <div className="mt-12 grid gap-px overflow-hidden rounded-3xl bg-white/10 sm:grid-cols-2">
+                {BENEFICES.map((item, index) => (
+                  <div
+                    key={item.title}
+                    data-reveal
+                    style={{ ["--bsc-delay" as string]: `${index * 90}ms` }}
+                    className="bg-brand-dark p-7 transition hover:bg-[#6d1430] sm:p-9"
+                  >
+                    <span className="text-sm font-bold text-brand-light">
+                      {item.number}
+                    </span>
+                    <h3 className="mt-2 text-2xl font-bold uppercase tracking-tight">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 leading-relaxed text-white/75">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+
+              <blockquote
+                data-reveal
+                className="mt-14 max-w-3xl border-l-4 border-brand pl-6 text-xl leading-relaxed text-brand-light sm:text-2xl"
+              >
+                « Se déconnecter des écrans pour se reconnecter à soi, aux autres
+                et au mouvement. »
+              </blockquote>
+            </div>
+          </section>
+
+          {/* 8 — Pour les parents --------------------------------------------- */}
           <section className="bg-white py-20 sm:py-24">
             <div className="mx-auto max-w-5xl px-5">
               <div data-reveal className="max-w-2xl">
@@ -494,10 +533,10 @@ export default async function AccueilPage() {
               <ul className="mt-10 grid gap-4 sm:grid-cols-2">
                 {GARANTIES.map((item, index) => (
                   <li
-                    key={item.title}
+                    key={item}
                     data-reveal
                     style={{ ["--bsc-delay" as string]: `${index * 80}ms` }}
-                    className="flex gap-4 rounded-2xl border border-brand-light/50 bg-cream p-5"
+                    className="flex items-start gap-4 rounded-2xl border border-brand-light/50 bg-cream p-5 font-medium text-brand-dark"
                   >
                     <span
                       aria-hidden
@@ -505,40 +544,42 @@ export default async function AccueilPage() {
                     >
                       ✓
                     </span>
-                    <span>
-                      <span className="block font-bold text-brand-dark">
-                        {item.title}
-                      </span>
-                      <span className="mt-1 block text-brand-dark/75">{item.text}</span>
-                    </span>
+                    {item}
                   </li>
                 ))}
               </ul>
-
-              <div data-reveal className="mt-10">
-                <h3 className="font-bold text-brand-dark">Les règles du jeu</h3>
-                <p className="mt-2 max-w-2xl text-brand-dark/75">
-                  Huit phrases, rappelées à chaque séance. C’est le cadre que les
-                  filles se donnent entre elles.
-                </p>
-                <ul className="mt-5 flex flex-wrap gap-2.5">
-                  {REGLES.map((regle, index) => (
-                    <li
-                      key={regle}
-                      data-reveal
-                      style={{ ["--bsc-delay" as string]: `${index * 40}ms` }}
-                      className="rounded-full border border-brand-light/60 bg-white px-4 py-2 text-sm font-medium text-brand-dark"
-                    >
-                      {regle}
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
           </section>
 
-          {/* 7 — Inscription ------------------------------------------------ */}
-          <section id="inscription" className="scroll-mt-16 py-20 sm:py-24">
+          {/* 9 — Les règles du jeu -------------------------------------------- */}
+          <section className="py-20 sm:py-24">
+            <div className="mx-auto max-w-5xl px-5">
+              <h2
+                data-reveal
+                className="text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl"
+              >
+                Les règles du jeu
+              </h2>
+              <p data-reveal className="mt-4 max-w-2xl text-lg text-brand-dark/75">
+                Huit règles simples, pour que chacune se sente bien.
+              </p>
+              <ul className="mt-9 flex flex-wrap gap-2.5">
+                {REGLES.map((regle, index) => (
+                  <li
+                    key={regle}
+                    data-reveal
+                    style={{ ["--bsc-delay" as string]: `${index * 45}ms` }}
+                    className="rounded-full border border-brand-light/60 bg-white px-5 py-2.5 font-medium text-brand-dark transition hover:border-brand hover:bg-brand-light/15"
+                  >
+                    {regle}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          {/* 10 — Réserver sa place ------------------------------------------ */}
+          <section id="adherer" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
               <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-14">
                 {/*
@@ -551,7 +592,7 @@ export default async function AccueilPage() {
                     Inscriptions ouvertes — {season}
                   </p>
                   <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
-                    Inscrire ma fille
+                    Réservez la place de votre fille
                   </h2>
 
                   <p className="mt-7 flex items-baseline gap-2">
@@ -582,7 +623,7 @@ export default async function AccueilPage() {
                   </ul>
 
                   <p className="mt-6 rounded-xl border border-brand-light/60 bg-brand-light/15 px-4 py-3 text-sm font-semibold text-brand-dark">
-                    Première saison : le nombre de places est limité.
+                    Première saison : les places sont limitées.
                   </p>
 
                   <div className="mt-8 rounded-2xl border border-brand-light/50 bg-cream p-5">
@@ -616,23 +657,23 @@ export default async function AccueilPage() {
 
                   <p className="mt-7 text-sm text-brand-dark/70">
                     Une question ?{" "}
-                    {phoneHref && (
-                      <>
-                        <a
-                          href={`tel:${phoneHref}`}
-                          className="font-semibold text-brand underline"
-                        >
-                          {association.phone}
-                        </a>
-                        {" · "}
-                      </>
-                    )}
                     <a
                       href={`mailto:${association.email}`}
                       className="font-semibold text-brand underline"
                     >
                       {association.email}
                     </a>
+                    {phoneHref && (
+                      <>
+                        {" · "}
+                        <a
+                          href={`tel:${phoneHref}`}
+                          className="font-semibold text-brand underline"
+                        >
+                          {association.phone}
+                        </a>
+                      </>
+                    )}
                   </p>
                 </div>
 
@@ -643,7 +684,7 @@ export default async function AccueilPage() {
             </div>
           </section>
 
-          {/* 8 — Appel final ------------------------------------------------ */}
+          {/* 11 — Appel final ------------------------------------------------ */}
           <section className="bsc-grain relative overflow-hidden bg-brand py-16 text-center text-white">
             <div
               aria-hidden

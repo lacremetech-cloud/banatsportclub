@@ -109,7 +109,7 @@ export default async function InformationsPage() {
           </ul>
           <p>
             L’inscription et le paiement se font en ligne depuis{" "}
-            <Link href="/#inscription" className="text-brand underline">
+            <Link href="/#adherer" className="text-brand underline">
               la page d’accueil
             </Link>
             . Le détail figure dans les{" "}
