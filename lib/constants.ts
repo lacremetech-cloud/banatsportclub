@@ -22,7 +22,7 @@ export const GROUPS = {
     weekday: 4,
     startTime: "18:00",
     endTime: "19:30",
-    levels: ["6e", "5e", "4e", "3e"],
+    levels: ["6e", "5e", "4e"],
   },
   dimanche: {
     weekday: 0,
@@ -262,7 +262,7 @@ export const DEFAULT_GROUP_DISPLAY: Record<
 > = {
   jeudi: {
     day: "Jeudi soir",
-    levels: "6e à 3e",
+    levels: "6e à 4e",
     time: "18h00 – 19h30",
     place: "Complexe sportif des Garrigues — Haut de Massane",
     address: "145 Av. du Comté de Nice, 34080 Montpellier",
@@ -298,6 +298,24 @@ export function formatEuros(cents: number): string {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
+  }).format(cents / 100);
+}
+
+/**
+ * Montant sans les centimes quand ils valent zéro : « 200 € » plutôt que
+ * « 200,00 € ».
+ *
+ * Réservé aux pages publiques, où le prix est un argument et non une écriture
+ * comptable. Le CRM, les exports et les reçus gardent `formatEuros` : là,
+ * deux décimales manquantes sont une information perdue.
+ *
+ * Le montant reste lu depuis les réglages — rien n'est écrit en dur.
+ */
+export function formatEurosCompact(cents: number): string {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
   }).format(cents / 100);
 }
 

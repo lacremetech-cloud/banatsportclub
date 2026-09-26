@@ -49,7 +49,7 @@ export default async function InformationsPage() {
           <p>
             Deux créneaux ouvrent cette saison, un par tranche d’âge. Votre
             fille suit celui qui correspond à sa classe — une séance par
-            semaine. En 3e, elle peut choisir l’un ou l’autre.
+            semaine, toujours avec le même groupe.
           </p>
           <div className="grid gap-4 pt-2 sm:grid-cols-2">
             {groups.map((group) => (
@@ -81,6 +81,22 @@ export default async function InformationsPage() {
               </div>
             ))}
           </div>
+          <p>
+            Votre fille préfère l’autre créneau que celui prévu pour son âge ?
+            Contactez-nous, on en discute
+            {association.phone && (
+              <>
+                {" : "}
+                <a
+                  href={`tel:${association.phone.replace(/\s/g, "")}`}
+                  className="font-semibold text-brand underline"
+                >
+                  {association.phone}
+                </a>
+              </>
+            )}
+            .
+          </p>
           <p className="text-sm text-brand-dark/70">
             Les séances régulières ont lieu jusqu’au 20 juin 2027, hors vacances
             scolaires. Des activités ponctuelles peuvent être proposées pendant

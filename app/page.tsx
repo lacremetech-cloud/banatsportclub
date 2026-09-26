@@ -11,7 +11,7 @@ import { HeroVideo, Motion, ScrollProgress } from "@/components/vitrine/motion";
 import { Terrain } from "@/components/vitrine/terrain";
 import "@/components/vitrine/vitrine.css";
 import { ADHESION_QR_PATH, ADHESION_URL } from "@/lib/adhesion";
-import { formatEuros } from "@/lib/constants";
+import { formatEurosCompact } from "@/lib/constants";
 import { getAssociation, getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -126,6 +126,13 @@ const REGLES = [
   "On pose son téléphone.",
   "On profite du moment.",
 ];
+
+/**
+ * Adresse où le bureau reçoit les familles qui préfèrent s'inscrire de vive
+ * voix. Distincte des lieux de séance : ce sont des bureaux, pas un gymnase.
+ */
+const RENDEZ_VOUS_ADRESSE =
+  "Bureaux & Co – Parc 2000, 84 rue Maurice Béjart, 34080 Montpellier";
 
 /** Ce que chaque lieu a de concret à offrir. */
 const LIEUX: Record<string, string> = {
@@ -294,7 +301,9 @@ export default async function AccueilPage() {
                   style={{ ["--bsc-delay" as string]: "200ms" }}
                   className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70"
                 >
-                  <span>{formatEuros(annualFeeCents)} l’année</span>
+                  <span>{formatEurosCompact(annualFeeCents)} l’année</span>
+                  <span aria-hidden className="text-white/30">·</span>
+                  <span>Paiement en plusieurs fois possible</span>
                   <span aria-hidden className="text-white/30">·</span>
                   <span>Kit BSC offert cette première saison</span>
                   <span aria-hidden className="text-white/30">·</span>
@@ -385,8 +394,7 @@ export default async function AccueilPage() {
                 <p className="mt-4 text-lg text-brand-dark/75">
                   Deux créneaux cette saison, selon la classe de votre fille.
                   Une séance par semaine, toujours avec le même groupe, entre
-                  filles et entre amies. En 3e, elle peut choisir le jeudi ou le
-                  dimanche : on en discute ensemble.
+                  filles et entre amies.
                 </p>
               </div>
 
@@ -434,6 +442,30 @@ export default async function AccueilPage() {
                   </article>
                 ))}
               </div>
+
+              {/*
+                Les tranches d'âge ne sont pas un mur : une fille peut se sentir
+                mieux dans l'autre groupe. On le dit ici plutôt que de laisser
+                la famille renoncer faute d'avoir demandé.
+              */}
+              <p data-reveal className="mt-6 text-brand-dark/75">
+                Votre fille préfère l’autre créneau que celui prévu pour son
+                âge ? Contactez-nous, on en discute
+                {phoneHref ? (
+                  <>
+                    {" : "}
+                    <a
+                      href={`tel:${phoneHref}`}
+                      className="font-semibold text-brand underline"
+                    >
+                      {association.phone}
+                    </a>
+                  </>
+                ) : (
+                  ""
+                )}
+                .
+              </p>
 
               {/* 5 — Et en plus des séances de la semaine */}
               <div
@@ -558,7 +590,82 @@ export default async function AccueilPage() {
           {/* 9 — Réserver sa place ------------------------------------------ */}
           <section id="adherer" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
-              <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-14">
+              {/*
+                Placé AVANT le formulaire, et sur toute la largeur : une famille
+                qui préfère venir sur place ne doit pas avoir à faire défiler
+                quatre mille pixels de formulaire pour découvrir qu'un
+                rendez-vous était possible.
+              */}
+              <div data-reveal className="mx-auto max-w-3xl text-center">
+                <h2 className="text-3xl font-extrabold tracking-tight text-brand-dark sm:text-4xl">
+                  Deux façons de vous inscrire
+                </h2>
+              </div>
+
+              <div className="mt-10 grid gap-5 sm:grid-cols-2">
+                <div
+                  data-reveal
+                  className="rounded-3xl border-2 border-brand-light/60 bg-white p-6 sm:p-7"
+                >
+                  <p className="text-lg font-bold text-brand-dark">
+                    <span aria-hidden>💻</span> 100 % en ligne
+                  </p>
+                  <p className="mt-3 leading-relaxed text-brand-dark/80">
+                    Remplissez le formulaire ci-dessous et réglez par carte
+                    bancaire en quelques minutes.
+                  </p>
+                  <p className="mt-3 font-semibold text-brand-dark">
+                    <span aria-hidden>💳</span> Paiement en plusieurs fois
+                    possible, à choisir au moment de l’inscription.
+                  </p>
+                </div>
+
+                <div
+                  data-reveal
+                  style={{ ["--bsc-delay" as string]: "100ms" }}
+                  className="rounded-3xl border-2 border-brand-light/60 bg-white p-6 sm:p-7"
+                >
+                  <p className="text-lg font-bold text-brand-dark">
+                    <span aria-hidden>🤝</span> Sur rendez-vous
+                  </p>
+                  <p className="mt-3 leading-relaxed text-brand-dark/80">
+                    Vous préférez nous rencontrer ? Appelez-nous
+                    {phoneHref ? (
+                      <>
+                        {" au "}
+                        <a
+                          href={`tel:${phoneHref}`}
+                          className="font-semibold text-brand underline"
+                        >
+                          {association.phone}
+                        </a>
+                      </>
+                    ) : (
+                      " "
+                    )}{" "}
+                    pour fixer un rendez-vous dans nos locaux :
+                  </p>
+                  <p className="mt-3 flex gap-2 font-semibold text-brand-dark">
+                    <span aria-hidden>📍</span>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        RENDEZ_VOUS_ADRESSE,
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+                    >
+                      {RENDEZ_VOUS_ADRESSE}
+                    </a>
+                  </p>
+                  <p className="mt-3 leading-relaxed text-brand-dark/80">
+                    On complète le dossier ensemble et vous pouvez régler en
+                    espèces ou par chèque.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-14 grid items-start gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-14">
                 {/*
                   Le formulaire AssoConnect fait plusieurs milliers de pixels de
                   haut. Sans `sticky`, le prix et le QR code défilent hors de vue
@@ -574,11 +681,14 @@ export default async function AccueilPage() {
 
                   <p className="mt-7 flex items-baseline gap-2">
                     <span className="text-5xl font-extrabold tracking-tight text-brand-dark sm:text-6xl">
-                      {formatEuros(annualFeeCents)}
+                      {formatEurosCompact(annualFeeCents)}
                     </span>
                     <span className="text-lg font-semibold text-brand-dark/60">
                       pour l’année
                     </span>
+                  </p>
+                  <p className="mt-2 font-semibold text-brand">
+                    Paiement en plusieurs fois possible.
                   </p>
 
                   <ul className="mt-7 space-y-3">
