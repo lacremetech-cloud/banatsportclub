@@ -20,30 +20,30 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Rejoindre Banat Sport Club — Montpellier",
   description:
-    "Un créneau le jeudi soir, un le dimanche matin, du sport sans compétition et sans jugement. Adhésion en ligne pour la saison.",
+    "Club multisport féminin à Montpellier : football, rugby, volley, self-défense, danse. Une séance par semaine selon ta classe, débutante ou confirmée.",
   openGraph: {
     title: "Rejoindre Banat Sport Club",
     description:
-      "Multisport loisir féminin à Montpellier. Tous niveaux, aucune compétition, adhésion en ligne.",
+      "Club multisport féminin à Montpellier. On joue, on se challenge — sans la pression de la compétition. Inscriptions ouvertes.",
     type: "website",
   },
 };
 
 const MARQUEE_ONE = [
   "Football",
-  "Volleyball",
-  "Rugby flag",
-  "Course",
-  "Relais",
+  "Rugby",
+  "Volley",
+  "Self-défense",
+  "Renforcement",
+  "Gym",
+  "Danse",
   "Jeux collectifs",
-  "Préparation physique",
-  "Plein air",
 ];
 
 const MARQUEE_TWO = [
-  "Tous niveaux",
-  "Aucune compétition",
-  "Zéro jugement",
+  "Débutante ou confirmée",
+  "On se challenge",
+  "Sans la pression du résultat",
   "Entre filles",
   "Encadrées",
   "Le téléphone au vestiaire",
@@ -51,16 +51,29 @@ const MARQUEE_TWO = [
   "On s’entraide",
 ];
 
+/**
+ * Ce que chaque lieu a de concret à offrir.
+ *
+ * Une surface, une taille : c'est ce qui rend un gymnase désirable pour une
+ * fille qui fait déjà du sport, là où « salle de sport » ne dit rien.
+ */
+const VENUE_NOTES: Record<string, string> = {
+  jeudi:
+    "Plus de 200 m² de tatamis : de la place pour se déplacer, tomber sans se faire mal et profiter vraiment de la séance.",
+  dimanche:
+    "Un vrai stade, en plein air : terrain complet pour le football, le rugby et les grands jeux collectifs.",
+};
+
 const PROMISES = [
   {
     number: "01",
-    title: "Bouger",
-    text: "Retrouver le plaisir d’être active, essayer des sports qu’on n’aurait pas osé essayer seule.",
+    title: "Jouer pour de vrai",
+    text: "On ne vient pas faire deux passes tranquillement. On joue, on se donne, on finit la séance vidée — et contente de l’être.",
   },
   {
     number: "02",
-    title: "Prendre confiance",
-    text: "Progresser à son rythme, être valorisée dans l’effort plutôt que classée sur un résultat.",
+    title: "Se challenger",
+    text: "Progresser, se mesurer aux autres et à soi-même. Simplement sans la pression du résultat, du classement et du regard.",
   },
   {
     number: "03",
@@ -70,16 +83,19 @@ const PROMISES = [
   {
     number: "04",
     title: "Se déconnecter",
-    text: "Le téléphone reste au vestiaire. Une heure et demie pour se reconnecter au mouvement et aux autres.",
+    text: "Le téléphone reste au vestiaire. Une heure et demie pour être pleinement là, avec les autres.",
   },
 ];
 
 const INCLUDED = [
-  "L’accès à toutes les séances de la saison",
-  "L’encadrement",
-  "L’assurance du club",
-  "Le kit BSC : sac, gourde, accessoires",
-  "L’affiliation",
+  { text: "L’accès à toutes les séances de la saison" },
+  { text: "L’encadrement" },
+  { text: "L’assurance du club" },
+  { text: "L’affiliation" },
+  {
+    text: "Le kit BSC — sac, gourde, accessoires",
+    highlight: "Offert cette première saison",
+  },
 ];
 
 const SPIRIT = [
@@ -149,7 +165,7 @@ export default async function RejoindrePage() {
             href="#adherer"
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white hover:text-brand-dark"
           >
-            Adhérer
+            Rejoindre
           </a>
         </div>
       </header>
@@ -207,8 +223,18 @@ export default async function RejoindrePage() {
                       le nom du premier créneau resterait caché s'il y était.
                     */}
                     <div className="absolute inset-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent p-4">
-                      <span className="text-lg font-extrabold uppercase tracking-tight text-white">
-                        {group.day}
+                      <span>
+                        <span className="block text-lg font-extrabold uppercase tracking-tight text-white">
+                          {group.day}
+                        </span>
+                        {/*
+                          La classe visée, dès le hero : c'est elle qui fait
+                          comprendre d'un coup d'œil que les deux cartes
+                          s'adressent à deux âges, et pas à la même fille.
+                        */}
+                        <span className="mt-0.5 block text-xs font-semibold text-white/75">
+                          {group.levels}
+                        </span>
                       </span>
                       <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-brand-dark">
                         {group.time}
@@ -235,9 +261,10 @@ export default async function RejoindrePage() {
                 </h1>
 
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-                  Un club multisport loisir, entre filles, à Montpellier. Deux
-                  créneaux par semaine, aucun niveau demandé, aucune compétition.
-                  On vient pour jouer, transpirer et rire — pas pour être notée.
+                  Un club multisport pour les filles, à Montpellier. Une séance
+                  par semaine : football, rugby, volley, self-défense,
+                  renforcement, danse. On joue, on se challenge, on progresse —
+                  sans la pression de la compétition.
                 </p>
 
                 <div
@@ -249,15 +276,30 @@ export default async function RejoindrePage() {
                     href="#adherer"
                     className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-brand px-8 text-base font-bold text-white shadow-lg shadow-brand/25 transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-dark"
                   >
-                    Adhérer pour {formatEuros(annualFeeCents)}
+                    Rejoindre le club
                   </a>
                   <a
                     href="#creneaux"
                     className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/30 px-7 text-base font-semibold text-white transition hover:bg-white/10"
                   >
-                    Voir les créneaux
+                    Voir mon créneau
                   </a>
                 </div>
+
+                {/*
+                  Le bouton ne porte plus le prix — il invite, il ne facture
+                  pas. Mais une famille a le droit de connaître le montant sans
+                  avoir à faire défiler : il est juste en dessous, avec la
+                  bonne nouvelle du kit offert.
+                */}
+                <p
+                  data-reveal
+                  style={{ ["--bsc-delay" as string]: "180ms" }}
+                  className="mt-4 text-sm text-white/65"
+                >
+                  {formatEuros(annualFeeCents)} pour l’année — kit BSC offert
+                  cette première saison.
+                </p>
 
                 <dl
                   data-reveal
@@ -265,9 +307,11 @@ export default async function RejoindrePage() {
                   className="mt-12 grid max-w-xl grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-7 sm:grid-cols-3"
                 >
                   {[
-                    { k: "Séances", v: "2 par semaine" },
-                    { k: "Niveau", v: "Tous niveaux" },
-                    { k: "Compétition", v: "Aucune" },
+                    // « 2 séances » laissait croire qu'une adhérente vient deux
+                    // fois. Elle vient une fois, à SON créneau.
+                    { k: "Ta séance", v: "1 par semaine" },
+                    { k: "Niveau", v: "Débutante ou confirmée" },
+                    { k: "Esprit", v: "On se challenge" },
                   ].map((item) => (
                     <div key={item.k}>
                       <dt className="text-xs font-semibold uppercase tracking-wider text-white/50">
@@ -300,19 +344,60 @@ export default async function RejoindrePage() {
             <Marquee items={MARQUEE_TWO} reverse muted />
           </section>
 
+          {/*
+            Le message qui décide de l'inscription pour beaucoup de familles :
+            une fille déjà en club ne doit pas croire que ce sera trop mou pour
+            elle, et une débutante ne doit pas croire que ce sera trop dur.
+            Il est placé haut, juste après le hero, parce que les deux se font
+            un avis en quelques secondes.
+          */}
+          <section className="border-b border-brand-light/40 bg-white py-14 sm:py-16">
+            <div className="mx-auto max-w-4xl px-5 text-center">
+              <p
+                data-reveal
+                className="text-2xl font-bold leading-snug tracking-tight text-brand-dark sm:text-4xl"
+              >
+                Certaines pratiquent en club depuis des années. D’autres n’ont
+                jamais fait de sport.{" "}
+                <span className="text-brand">Les deux ont leur place.</span>
+              </p>
+              <p
+                data-reveal
+                style={{ ["--bsc-delay" as string]: "120ms" }}
+                className="mx-auto mt-5 max-w-2xl text-lg text-brand-dark/75"
+              >
+                Ce qu’on cherche, ce n’est pas un niveau. C’est l’envie de
+                participer.
+              </p>
+            </div>
+          </section>
+
           {/* 3 — Créneaux -------------------------------------------------- */}
           <section id="creneaux" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
               <div data-reveal className="max-w-2xl">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-                  Les créneaux
+                  Ton créneau
                 </p>
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
-                  Deux rendez-vous par semaine
+                  Un seul créneau, celui de ta classe
                 </h2>
+                {/*
+                  Le malentendu à dissiper : « deux créneaux » se lisait comme
+                  « je viens deux fois par semaine ». Le club en ouvre deux ;
+                  chaque adhérente en suit un.
+                */}
                 <p className="mt-4 text-lg text-brand-dark/75">
-                  Les tranches d’âge sont indicatives : elles servent à composer
-                  des groupes homogènes, pas à refuser une inscription.
+                  Le club ouvre deux créneaux pour cette première saison, chacun
+                  pour une tranche d’âge.{" "}
+                  <strong className="font-semibold text-brand-dark">
+                    Chaque adhérente vient à un seul des deux
+                  </strong>
+                  , celui qui correspond à sa classe — une séance par semaine.
+                </p>
+                <p className="mt-3 text-brand-dark/70">
+                  Les 3e sont le cas particulier : elles peuvent choisir l’un ou
+                  l’autre. Dans le doute, écrivez-nous, on en discute.
                 </p>
               </div>
 
@@ -338,7 +423,7 @@ export default async function RejoindrePage() {
 
                     <div className="p-6 sm:p-7">
                       <p className="inline-flex rounded-full bg-brand-light/25 px-3.5 py-1.5 text-sm font-bold text-brand-dark">
-                        {group.levels}
+                        Pour les {group.levels}
                       </p>
                       <p className="mt-4 text-lg font-semibold text-brand-dark">
                         {group.place}
@@ -351,6 +436,11 @@ export default async function RejoindrePage() {
                       >
                         {group.address} — itinéraire
                       </a>
+                      {VENUE_NOTES[group.key] && (
+                        <p className="mt-4 border-t border-brand-light/40 pt-4 text-brand-dark/75">
+                          {VENUE_NOTES[group.key]}
+                        </p>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -440,7 +530,7 @@ export default async function RejoindrePage() {
                 */}
                 <div data-reveal className="lg:sticky lg:top-20 lg:self-start">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-                    Adhésion {season}
+                    Inscriptions ouvertes — {season}
                   </p>
                   <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
                     On vous attend
@@ -457,14 +547,25 @@ export default async function RejoindrePage() {
 
                   <ul className="mt-7 space-y-3">
                     {INCLUDED.map((item) => (
-                      <li key={item} className="flex gap-3 text-brand-dark/85">
+                      <li key={item.text} className="flex gap-3 text-brand-dark/85">
                         <span aria-hidden className="mt-0.5 font-bold text-brand">
                           ✓
                         </span>
-                        {item}
+                        <span>
+                          {item.text}
+                          {item.highlight && (
+                            <span className="ml-2 inline-block whitespace-nowrap rounded-full bg-brand px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
+                              {item.highlight}
+                            </span>
+                          )}
+                        </span>
                       </li>
                     ))}
                   </ul>
+
+                  <p className="mt-6 rounded-xl border border-brand-light/60 bg-brand-light/15 px-4 py-3 text-sm font-semibold text-brand-dark">
+                    Première saison : les places sont limitées.
+                  </p>
 
                   <div className="mt-9 rounded-2xl border border-brand-light/50 bg-cream p-5">
                     <div className="flex items-start gap-4">
@@ -532,7 +633,7 @@ export default async function RejoindrePage() {
             />
             <div className="relative mx-auto max-w-2xl px-5">
               <h2 data-reveal className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-                Première séance : venez essayer.
+                Venez essayer. On vous attend sur le terrain.
               </h2>
               <a
                 data-reveal
@@ -541,7 +642,7 @@ export default async function RejoindrePage() {
                 rel="noreferrer"
                 className="mt-7 inline-flex min-h-14 items-center justify-center rounded-2xl bg-white px-8 text-base font-bold text-brand-dark transition hover:-translate-y-0.5 hover:bg-brand-dark hover:text-white"
               >
-                Remplir le formulaire d’adhésion
+                Rejoindre le club
               </a>
             </div>
           </section>
