@@ -2,7 +2,7 @@
  * Adhésion en ligne — AssoConnect.
  *
  * Le club encaisse les adhésions sur AssoConnect : le formulaire, le paiement
- * et le reçu sont chez eux. La vitrine `/rejoindre` ne fait que donner envie
+ * et le reçu sont chez eux. La vitrine d'accueil ne fait que donner envie
  * puis y conduire. Rien n'est saisi ni stocké de notre côté sur ce chemin.
  *
  * Tout est réuni ici pour qu'un changement de campagne (nouvelle saison,

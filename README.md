@@ -131,10 +131,10 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 
 | Route | Contenu |
 | --- | --- |
-| `/` | Landing page : mission, créneaux, esprit BSC, cotisation |
+| `/` | Vitrine : donne envie, puis conduit au formulaire AssoConnect |
 | `/informations` | Horaires, lieux, cotisation, tenue, règles essentielles |
 | `/reglement` | Règlement intérieur |
-| `/rejoindre` | Vitrine de campagne : anime, convainc, envoie vers AssoConnect |
+| _(hors ligne)_ | `app/_le-club/` — l'ancienne page d'accueil, conservée mais non servie : le préfixe `_` la sort des routes |
 | `/inscription` | Parcours d'inscription en 8 étapes |
 | `/inscription/paiement` | Retour après paiement Mollie : état réel de la cotisation |
 
@@ -208,10 +208,10 @@ dans un tableur francophone.
   dans `accounting_entries` pour produire ce fichier : les deux sources sont
   simplement lues ensemble.
 
-## La vitrine `/rejoindre`
+## La vitrine d'accueil
 
-Page de campagne autonome : c'est l'adresse à mettre sur une affiche, un flyer
-ou une story. Elle ne collecte rien — elle donne envie, puis conduit au
+L'accueil du site est une page de campagne autonome : c'est l'adresse à mettre
+sur une affiche, un flyer ou une story. Elle ne collecte rien — elle donne envie, puis conduit au
 formulaire **AssoConnect**, où se font la saisie, le paiement et le reçu.
 
 Tout ce qui concerne AssoConnect tient dans `lib/adhesion.ts` : URL de la
@@ -243,8 +243,7 @@ calculé à la volée.
 ### Le mouvement
 
 Il n'y a aucune photo ni vidéo du club dans le dépôt. Le mouvement de la page
-est donc entièrement écrit en CSS et en SVG (`app/rejoindre/vitrine.css`,
-`terrain.tsx`) : halos qui respirent, balayage lumineux, bandeaux défilants,
+est donc entièrement écrit en CSS et en SVG (`components/vitrine/`) : halos qui respirent, balayage lumineux, bandeaux défilants,
 terrains qui se tracent, ballon qui circule, apparitions au défilement.
 
 Trois règles tenues :

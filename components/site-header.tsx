@@ -4,11 +4,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+/**
+ * L'accueil porte désormais la vitrine d'adhésion.
+ *
+ * Les trois entrées « Le club », « Notre mission » et « Créneaux » pointaient
+ * vers des ancres de l'ancienne page d'accueil, qui n'est plus servie : elles
+ * ne mèneraient nulle part. Un lien mort vaut moins qu'un menu court.
+ */
 const LINKS = [
-  { href: "/#le-club", label: "Le club" },
-  { href: "/#mission", label: "Notre mission" },
-  { href: "/#creneaux", label: "Créneaux" },
-  { href: "/informations", label: "Infos" },
+  { href: "/informations", label: "Infos pratiques" },
+  { href: "/reglement", label: "Règlement" },
 ];
 
 export function SiteHeader() {
