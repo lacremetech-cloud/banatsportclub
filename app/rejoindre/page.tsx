@@ -20,11 +20,11 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Rejoindre Banat Sport Club — Montpellier",
   description:
-    "Club multisport féminin à Montpellier : football, rugby, volley, self-défense, danse. Une séance par semaine selon ta classe, débutante ou confirmée.",
+    "Club multisport féminin à Montpellier : football, rugby, volley, self-défense, danse. Un rendez-vous par semaine, débutante ou confirmée.",
   openGraph: {
     title: "Rejoindre Banat Sport Club",
     description:
-      "Club multisport féminin à Montpellier. On joue, on se challenge — sans la pression de la compétition. Inscriptions ouvertes.",
+      "Club multisport féminin à Montpellier. On y joue pour de vrai — simplement, personne ne compte les points. Inscriptions ouvertes.",
     type: "website",
   },
 };
@@ -42,8 +42,8 @@ const MARQUEE_ONE = [
 
 const MARQUEE_TWO = [
   "Débutante ou confirmée",
-  "On se challenge",
-  "Sans la pression du résultat",
+  "On joue pour de vrai",
+  "Personne ne compte les points",
   "Entre filles",
   "Encadrées",
   "Le téléphone au vestiaire",
@@ -68,12 +68,12 @@ const PROMISES = [
   {
     number: "01",
     title: "Jouer pour de vrai",
-    text: "On ne vient pas faire deux passes tranquillement. On joue, on se donne, on finit la séance vidée — et contente de l’être.",
+    text: "Des séances où on court, où on se donne, où on ressort essoufflée et contente de l’être. Le jeu est réel, l’intensité aussi.",
   },
   {
     number: "02",
-    title: "Se challenger",
-    text: "Progresser, se mesurer aux autres et à soi-même. Simplement sans la pression du résultat, du classement et du regard.",
+    title: "Se dépasser",
+    text: "Se mesurer aux autres, à soi, à la semaine dernière. Sans classement, sans sélection, sans personne pour juger.",
   },
   {
     number: "03",
@@ -261,10 +261,11 @@ export default async function RejoindrePage() {
                 </h1>
 
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-                  Un club multisport pour les filles, à Montpellier. Une séance
-                  par semaine : football, rugby, volley, self-défense,
-                  renforcement, danse. On joue, on se challenge, on progresse —
-                  sans la pression de la compétition.
+                  Un club multisport pour les filles, à Montpellier. Chaque
+                  semaine, un terrain, un ballon, un groupe — et un sport qui
+                  change au fil de la saison : football, rugby, volley,
+                  self-défense, danse. On y joue pour de vrai. Simplement,
+                  personne ne compte les points.
                 </p>
 
                 <div
@@ -308,10 +309,11 @@ export default async function RejoindrePage() {
                 >
                   {[
                     // « 2 séances » laissait croire qu'une adhérente vient deux
-                    // fois. Elle vient une fois, à SON créneau.
-                    { k: "Ta séance", v: "1 par semaine" },
+                    // fois. Elle vient une fois, à SON créneau — dit ici comme
+                    // un rendez-vous à elle, pas comme une restriction.
+                    { k: "Ton rendez-vous", v: "Une fois par semaine" },
                     { k: "Niveau", v: "Débutante ou confirmée" },
-                    { k: "Esprit", v: "On se challenge" },
+                    { k: "Esprit", v: "On joue pour de vrai" },
                   ].map((item) => (
                     <div key={item.k}>
                       <dt className="text-xs font-semibold uppercase tracking-wider text-white/50">
@@ -357,17 +359,18 @@ export default async function RejoindrePage() {
                 data-reveal
                 className="text-2xl font-bold leading-snug tracking-tight text-brand-dark sm:text-4xl"
               >
-                Certaines pratiquent en club depuis des années. D’autres n’ont
-                jamais fait de sport.{" "}
-                <span className="text-brand">Les deux ont leur place.</span>
+                Il y a celles qui jouent en club depuis des années, et celles
+                qui n’ont jamais mis les pieds sur un terrain.{" "}
+                <span className="text-brand">
+                  Elles jouent dans la même équipe.
+                </span>
               </p>
               <p
                 data-reveal
                 style={{ ["--bsc-delay" as string]: "120ms" }}
                 className="mx-auto mt-5 max-w-2xl text-lg text-brand-dark/75"
               >
-                Ce qu’on cherche, ce n’est pas un niveau. C’est l’envie de
-                participer.
+                Ce n’est pas le niveau qui fait entrer au club. C’est l’envie.
               </p>
             </div>
           </section>
@@ -380,24 +383,22 @@ export default async function RejoindrePage() {
                   Ton créneau
                 </p>
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
-                  Un seul créneau, celui de ta classe
+                  Ton rendez-vous de la semaine
                 </h2>
                 {/*
                   Le malentendu à dissiper : « deux créneaux » se lisait comme
-                  « je viens deux fois par semaine ». Le club en ouvre deux ;
-                  chaque adhérente en suit un.
+                  « je viens deux fois par semaine ». La correction se glisse
+                  dans la phrase — « le tien », « ton groupe » — plutôt que de
+                  s'imposer en gras. On informe, on ne rectifie pas.
                 */}
                 <p className="mt-4 text-lg text-brand-dark/75">
-                  Le club ouvre deux créneaux pour cette première saison, chacun
-                  pour une tranche d’âge.{" "}
-                  <strong className="font-semibold text-brand-dark">
-                    Chaque adhérente vient à un seul des deux
-                  </strong>
-                  , celui qui correspond à sa classe — une séance par semaine.
+                  Deux créneaux ouvrent cette saison, un par tranche d’âge. Le
+                  tien se devine à ta classe : une séance par semaine, toujours
+                  avec le même groupe.
                 </p>
                 <p className="mt-3 text-brand-dark/70">
-                  Les 3e sont le cas particulier : elles peuvent choisir l’un ou
-                  l’autre. Dans le doute, écrivez-nous, on en discute.
+                  Et si tu es en 3e, tu as le luxe de pouvoir choisir : le jeudi
+                  ou le dimanche, comme tu préfères. On en discute ensemble.
                 </p>
               </div>
 
@@ -501,8 +502,8 @@ export default async function RejoindrePage() {
                 Les règles du jeu
               </h2>
               <p data-reveal className="mt-4 max-w-2xl text-lg text-brand-dark/75">
-                Huit phrases. C’est tout ce qu’on demande, et c’est non
-                négociable.
+                Huit phrases. C’est tout ce qu’on se demande les unes aux
+                autres.
               </p>
               <ul className="mt-9 flex flex-wrap gap-2.5">
                 {SPIRIT.map((rule, index) => (
@@ -564,7 +565,7 @@ export default async function RejoindrePage() {
                   </ul>
 
                   <p className="mt-6 rounded-xl border border-brand-light/60 bg-brand-light/15 px-4 py-3 text-sm font-semibold text-brand-dark">
-                    Première saison : les places sont limitées.
+                    Première saison : le nombre de places est limité.
                   </p>
 
                   <div className="mt-9 rounded-2xl border border-brand-light/50 bg-cream p-5">
