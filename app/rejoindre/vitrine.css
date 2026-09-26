@@ -1,0 +1,240 @@
+/**
+ * Mouvement de la vitrine `/rejoindre`.
+ *
+ * Tout est écrit ici, en CSS simple, plutôt qu'en classes utilitaires : ce sont
+ * des animations, pas de la mise en page, et elles n'ont d'intérêt que sur
+ * cette page. Aucune ne dépend de JavaScript — la page bouge même si le script
+ * ne charge pas.
+ *
+ * Deux règles tenues partout :
+ *
+ * 1. `prefers-reduced-motion` coupe TOUT. Le mouvement est un plaisir, pas un
+ *    péage : une visiteuse sujette au mal des transports doit pouvoir lire la
+ *    page sans que rien ne bouge. Le bloc en fin de fichier s'en charge.
+ * 2. Rien n'est jamais caché par une animation seule. Les révélations au défilement
+ *    ne s'activent que si JavaScript a posé `data-reveal-ready` : sans lui, le
+ *    contenu est simplement visible.
+ */
+
+/* --- Fond du hero ------------------------------------------------------- */
+
+/* Halo qui respire : donne de la profondeur sans image. */
+@keyframes bsc-drift {
+  0%,
+  100% {
+    transform: translate3d(-4%, -2%, 0) scale(1.08);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.22);
+    opacity: 1;
+  }
+}
+
+/* Balayage lumineux, comme un projecteur qui traverse le terrain. */
+@keyframes bsc-sweep {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-12deg);
+  }
+}
+
+.bsc-halo {
+  animation: bsc-drift 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.bsc-halo--slow {
+  animation-duration: 26s;
+  animation-direction: reverse;
+}
+
+.bsc-sweep {
+  animation: bsc-sweep 9s ease-in-out infinite;
+  animation-delay: 2s;
+  will-change: transform;
+}
+
+/* --- Terrains tracés --------------------------------------------------- */
+
+/* Les lignes du terrain se dessinent elles-mêmes. */
+@keyframes bsc-draw {
+  from {
+    stroke-dashoffset: var(--bsc-dash, 600);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.bsc-draw {
+  stroke-dasharray: var(--bsc-dash, 600);
+  animation: bsc-draw 2.4s ease-out forwards;
+}
+
+/*
+ * Le ballon qui circule sur le terrain : c'est lui qui fait vivre la carte.
+ *
+ * Les deux terrains partagent le même `viewBox` (0 0 100 64), ce qui permet une
+ * seule trajectoire écrite en unités SVG. `offset-path` aurait été plus élégant
+ * mais son support reste inégal ; des translations suffisent et marchent
+ * partout.
+ */
+@keyframes bsc-run {
+  0% {
+    transform: translate(18px, 46px);
+  }
+  22% {
+    transform: translate(40px, 18px);
+  }
+  44% {
+    transform: translate(66px, 40px);
+  }
+  62% {
+    transform: translate(84px, 24px);
+  }
+  80% {
+    transform: translate(52px, 50px);
+  }
+  100% {
+    transform: translate(18px, 46px);
+  }
+}
+
+.bsc-ball {
+  animation: bsc-run 11s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* --- Bandeau défilant -------------------------------------------------- */
+
+/*
+ * La piste est dupliquée dans le JSX et l'animation ne parcourt que la moitié
+ * de sa largeur : au moment où elle boucle, la seconde copie est exactement à
+ * la place de la première. Aucune coupure visible, aucun calcul de largeur.
+ */
+@keyframes bsc-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.bsc-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: bsc-marquee 38s linear infinite;
+  will-change: transform;
+}
+
+.bsc-marquee-track--reverse {
+  animation-direction: reverse;
+  animation-duration: 46s;
+}
+
+/* --- Apparitions au défilement ----------------------------------------- */
+
+/*
+ * État de départ appliqué UNIQUEMENT quand le script a pris la main. Sans JS,
+ * aucun de ces sélecteurs ne correspond et tout reste lisible.
+ */
+[data-reveal-ready] [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--bsc-delay, 0ms);
+}
+
+[data-reveal-ready] [data-reveal][data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Détails ------------------------------------------------------------ */
+
+@keyframes bsc-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(7px);
+    opacity: 1;
+  }
+}
+
+.bsc-nudge {
+  animation: bsc-nudge 2s ease-in-out infinite;
+}
+
+@keyframes bsc-ping {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  70%,
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+.bsc-ping {
+  animation: bsc-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Grain léger : casse les dégradés plats sans alourdir la page d'une image. */
+.bsc-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Vidéo de fond : invisible tant qu'elle n'est pas réellement jouable. */
+.bsc-video {
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.bsc-video[data-ready] {
+  opacity: 1;
+}
+
+/* --- Respect du réglage système ---------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .bsc-halo,
+  .bsc-sweep,
+  .bsc-draw,
+  .bsc-ball,
+  .bsc-marquee-track,
+  .bsc-nudge,
+  .bsc-ping {
+    animation: none !important;
+  }
+
+  .bsc-draw {
+    stroke-dasharray: none;
+  }
+
+  .bsc-sweep {
+    display: none;
+  }
+
+  [data-reveal-ready] [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

@@ -134,6 +134,7 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | `/` | Landing page : mission, créneaux, esprit BSC, cotisation |
 | `/informations` | Horaires, lieux, cotisation, tenue, règles essentielles |
 | `/reglement` | Règlement intérieur |
+| `/rejoindre` | Vitrine de campagne : anime, convainc, envoie vers AssoConnect |
 | `/inscription` | Parcours d'inscription en 8 étapes |
 | `/inscription/paiement` | Retour après paiement Mollie : état réel de la cotisation |
 
@@ -206,6 +207,56 @@ dans un tableur francophone.
   `Recette manuelle`, `Dépense manuelle`). Aucune cotisation n'est recopiée
   dans `accounting_entries` pour produire ce fichier : les deux sources sont
   simplement lues ensemble.
+
+## La vitrine `/rejoindre`
+
+Page de campagne autonome : c'est l'adresse à mettre sur une affiche, un flyer
+ou une story. Elle ne collecte rien — elle donne envie, puis conduit au
+formulaire **AssoConnect**, où se font la saisie, le paiement et le reçu.
+
+Tout ce qui concerne AssoConnect tient dans `lib/adhesion.ts` : URL de la
+collecte, version intégrable, origines autorisées. Changer de campagne ou de
+saison se fait là, en un seul endroit.
+
+### Le formulaire intégré
+
+Le formulaire est affiché **dans** la page, par un iframe dont la hauteur est
+pilotée par AssoConnect via `postMessage`. Deux précautions :
+
+- **L'origine est vérifiée à chaque message.** Sans ce filtre, n'importe quelle
+  page ouverte ailleurs pourrait redimensionner le cadre. Une hauteur hors de
+  `[300, 20000]` est également ignorée : un message malformé ne doit pas réduire
+  le formulaire à rien.
+- **Le lien direct est toujours affiché**, jamais conditionné au bon
+  fonctionnement du cadre. Un iframe peut être bloqué — personne ne doit se
+  retrouver devant un carré vide sans recours.
+
+### Le QR code
+
+`public/qr-adhesion.svg` encode l'URL de la collecte. Il a été **généré puis
+relu** (rastérisé et redécodé) pour vérifier qu'il pointe exactement là où il
+doit. En SVG : il reste net en impression grand format.
+
+Si l'adresse de la collecte change, le QR code doit être régénéré — il n'est pas
+calculé à la volée.
+
+### Le mouvement
+
+Il n'y a aucune photo ni vidéo du club dans le dépôt. Le mouvement de la page
+est donc entièrement écrit en CSS et en SVG (`app/rejoindre/vitrine.css`,
+`terrain.tsx`) : halos qui respirent, balayage lumineux, bandeaux défilants,
+terrains qui se tracent, ballon qui circule, apparitions au défilement.
+
+Trois règles tenues :
+
+1. **`prefers-reduced-motion` coupe tout.** Le mouvement est un plaisir, pas un
+   péage.
+2. **Aucune animation ne peut effacer le contenu.** Les apparitions au
+   défilement ne s'activent que si JavaScript a pris la main ; sans lui, la page
+   est simplement lisible.
+3. **Une vidéo de fond peut être ajoutée sans toucher au code** — voir
+   `public/videos/README.md`. Sa présence est testée au rendu, donc aucune
+   requête inutile n'est émise tant qu'il n'y en a pas.
 
 ## Dossier complet
 
