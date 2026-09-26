@@ -10,7 +10,7 @@ import { VitrineFooter } from "@/components/vitrine/page-shell";
 import { HeroVideo, Motion, ScrollProgress } from "@/components/vitrine/motion";
 import { Terrain } from "@/components/vitrine/terrain";
 import "@/components/vitrine/vitrine.css";
-import { ADHESION_QR_PATH, ADHESION_URL } from "@/lib/adhesion";
+import { ADHESION_URL } from "@/lib/adhesion";
 import { formatEurosCompact } from "@/lib/constants";
 import { getAssociation, getSiteSettings } from "@/lib/settings";
 
@@ -712,35 +712,6 @@ export default async function AccueilPage() {
                   <p className="mt-6 rounded-xl border border-brand-light/60 bg-brand-light/15 px-4 py-3 text-sm font-semibold text-brand-dark">
                     Première saison : les places sont limitées.
                   </p>
-
-                  <div className="mt-8 rounded-2xl border border-brand-light/50 bg-cream p-5">
-                    <div className="flex items-start gap-4">
-                      <Image
-                        src={ADHESION_QR_PATH}
-                        alt="QR code vers le formulaire d’inscription"
-                        width={112}
-                        height={112}
-                        className="h-28 w-28 shrink-0 rounded-lg bg-white p-1.5"
-                        unoptimized
-                      />
-                      <div>
-                        <p className="font-bold text-brand-dark">
-                          À afficher, à partager
-                        </p>
-                        <p className="mt-1 text-sm text-brand-dark/70">
-                          Ce QR code mène directement au formulaire. Utilisable
-                          sur une affiche, un flyer ou en story.
-                        </p>
-                        <a
-                          href={ADHESION_QR_PATH}
-                          download
-                          className="mt-2 inline-block text-sm font-semibold text-brand underline"
-                        >
-                          Télécharger le QR code
-                        </a>
-                      </div>
-                    </div>
-                  </div>
 
                   <p className="mt-7 text-sm text-brand-dark/70">
                     Une question ?{" "}
