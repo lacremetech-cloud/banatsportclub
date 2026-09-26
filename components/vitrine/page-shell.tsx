@@ -43,7 +43,7 @@ export function PageShell({
             </span>
           </Link>
           <Link
-            href="/#inscription"
+            href="/#adherer"
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white hover:text-brand-dark"
           >
             Réserver sa place
@@ -147,7 +147,7 @@ export async function VitrineFooter() {
           </div>
 
           <nav className="grid gap-x-10 gap-y-2 text-sm text-brand-dark/75 sm:grid-cols-2">
-            <Link href="/#inscription" className="font-semibold text-brand hover:underline">
+            <Link href="/#adherer" className="font-semibold text-brand hover:underline">
               Réserver sa place
             </Link>
             <Link href="/informations" className="hover:underline">

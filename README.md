@@ -137,7 +137,7 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | `/conditions` | Conditions d'adhésion : durée, montant, remboursement |
 | `/confidentialite` | Données personnelles (RGPD) |
 | `/mentions-legales` | Éditeur, hébergement, contact |
-| _(hors ligne)_ | `app/_le-club/` et `app/_informations/` — pages de la première version du site, conservées mais non servies : le préfixe `_` les sort des routes |
+| _(hors ligne)_ | `app/_le-club/`, `app/_informations/` et `app/_inscription/` — la première version du site, conservée mais non servie : le préfixe `_` les sort des routes |
 | `/inscription` | Parcours d'inscription en 8 étapes |
 | `/inscription/paiement` | Retour après paiement Mollie : état réel de la cotisation |
 
