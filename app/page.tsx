@@ -342,31 +342,8 @@ export default async function AccueilPage() {
             <Marquee items={VALEURS} reverse muted />
           </section>
 
-          {/* 3 — Citation ---------------------------------------------------- */}
-          <section className="py-20 sm:py-24">
-            <div className="mx-auto max-w-4xl px-5 text-center">
-              <p
-                data-reveal
-                className="text-2xl font-bold leading-snug tracking-tight text-brand-dark sm:text-4xl"
-              >
-                Il y a celles qui font du sport depuis des années, et celles qui
-                n’ont jamais mis les pieds sur un terrain.{" "}
-                <span className="text-brand">
-                  Chez nous, elles jouent dans la même équipe.
-                </span>
-              </p>
-              <p
-                data-reveal
-                style={{ ["--bsc-delay" as string]: "120ms" }}
-                className="mx-auto mt-5 max-w-2xl text-lg text-brand-dark/75"
-              >
-                Ce n’est pas le niveau qui fait entrer au club. C’est l’envie.
-              </p>
-            </div>
-          </section>
-
-          {/* 4 — Les sports --------------------------------------------------- */}
-          <section className="border-y border-brand-light/40 bg-white py-20 sm:py-24">
+          {/* 3 — Les sports --------------------------------------------------- */}
+          <section className="border-b border-brand-light/40 bg-white py-20 sm:py-24">
             <div className="mx-auto max-w-4xl px-5 text-center">
               <p data-reveal className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
                 Les sports
@@ -390,7 +367,7 @@ export default async function AccueilPage() {
             </div>
           </section>
 
-          {/* 5 — Les créneaux ------------------------------------------------- */}
+          {/* 4 — Les créneaux ------------------------------------------------- */}
           <section id="creneaux" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
               <div data-reveal className="max-w-2xl">
@@ -458,7 +435,7 @@ export default async function AccueilPage() {
                 ))}
               </div>
 
-              {/* 6 — Et en plus des séances de la semaine */}
+              {/* 5 — Et en plus des séances de la semaine */}
               <div
                 data-reveal
                 className="mt-8 rounded-3xl border border-brand-light/60 bg-brand-light/15 p-6 sm:p-8"
@@ -475,7 +452,7 @@ export default async function AccueilPage() {
             </div>
           </section>
 
-          {/* 7 — Ce qu'elles y gagnent ---------------------------------------- */}
+          {/* 6 — Ce qu'elles y gagnent ---------------------------------------- */}
           <section className="bsc-grain relative overflow-hidden bg-brand-dark py-20 text-white sm:py-24">
             <div
               aria-hidden
@@ -518,7 +495,7 @@ export default async function AccueilPage() {
             </div>
           </section>
 
-          {/* 8 — Pour les parents --------------------------------------------- */}
+          {/* 7 — Pour les parents --------------------------------------------- */}
           <section className="bg-white py-20 sm:py-24">
             <div className="mx-auto max-w-5xl px-5">
               <div data-reveal className="max-w-2xl">
@@ -551,7 +528,7 @@ export default async function AccueilPage() {
             </div>
           </section>
 
-          {/* 9 — Les règles du jeu -------------------------------------------- */}
+          {/* 8 — Les règles du jeu -------------------------------------------- */}
           <section className="py-20 sm:py-24">
             <div className="mx-auto max-w-5xl px-5">
               <h2
@@ -578,7 +555,7 @@ export default async function AccueilPage() {
             </div>
           </section>
 
-          {/* 10 — Réserver sa place ------------------------------------------ */}
+          {/* 9 — Réserver sa place ------------------------------------------ */}
           <section id="adherer" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
               <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-14">
@@ -684,7 +661,7 @@ export default async function AccueilPage() {
             </div>
           </section>
 
-          {/* 11 — Appel final ------------------------------------------------ */}
+          {/* 10 — Appel final ------------------------------------------------ */}
           <section className="bsc-grain relative overflow-hidden bg-brand py-16 text-center text-white">
             <div
               aria-hidden
