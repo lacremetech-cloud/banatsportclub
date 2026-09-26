@@ -218,7 +218,7 @@ export const DEFAULT_NOTE_AUTHOR = "Bureau BSC";
  */
 export const DEFAULT_CLUB_NAME = "Banat Sport Club";
 export const DEFAULT_CLUB_EMAIL = "banatsportclub@gmail.com";
-export const DEFAULT_CLUB_PHONE = "06 25 77 35 92";
+export const DEFAULT_CLUB_PHONE = "07 75 76 53 03";
 
 /**
  * Exemples de lien de parenté proposés pour les contacts d'urgence.
@@ -265,7 +265,7 @@ export const DEFAULT_GROUP_DISPLAY: Record<
     levels: "6e à 3e",
     time: "18h00 – 19h30",
     place: "Complexe sportif des Garrigues — Haut de Massane",
-    address: "297 Av. du Comté de Nice, 34080 Montpellier",
+    address: "145 Av. du Comté de Nice, 34080 Montpellier",
     shortLabel: "Jeudi soir — Dojo",
   },
   dimanche: {

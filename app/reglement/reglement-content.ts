@@ -1,6 +1,6 @@
 /**
  * Transcription fidèle du règlement intérieur officiel de Banat Sport Club,
- * saison 2026 – 2027.
+ * saison 2026 – 2027, version du 25/09/2026.
  *
  * Ce fichier ne contient AUCUNE reformulation : le texte est repris mot pour
  * mot du PDF officiel, qui reste le document de référence. Toute mise à jour
@@ -8,13 +8,19 @@
  *
  * Le PDF lui-même est déclaré une seule fois, dans `lib/reglement.ts` : la
  * page et l'email de confirmation servent ainsi exactement le même document.
+ *
+ * Version du 25/09/2026 — ce qui a changé par rapport à la précédente :
+ * un nouvel « Article 5 — Séance d'essai » (qui décale la numérotation de
+ * tous les suivants), la licence loisir au club partenaire pour le créneau du
+ * dimanche (article 4), et le détail de l'hébergement des données chez
+ * AssoConnect (article 16).
  */
 
 export const HEADER = {
   organisation: "BANAT SPORT CLUB",
   legal: "Association loi 1901 – N° RNA : W343034172",
   title: "RÈGLEMENT INTÉRIEUR",
-  season: "Saison 2026 – 2027",
+  season: "Saison 2026 – 2027 — Règlement intérieur du 25/09/2026",
 };
 
 export const PREAMBLE =
@@ -42,7 +48,7 @@ export const ARTICLES: Article[] = [
     blocks: [
       {
         kind: "p",
-        text: "L’adhésion est annuelle et court de septembre à juin. Elle est validée après réception du dossier complet et du règlement de la cotisation. Le dossier d’inscription comprend :",
+        text: "L’adhésion est annuelle et valable du 1er septembre 2026 au 31 août 2027. Les séances sportives régulières ont lieu jusqu’au 20 juin 2027, hors vacances scolaires. L’adhésion est validée après réception du dossier complet et du règlement de la cotisation. Le dossier d’inscription comprend :",
       },
       {
         kind: "list",
@@ -66,9 +72,13 @@ export const ARTICLES: Article[] = [
     blocks: [
       {
         kind: "p",
-        text: "Le montant de la cotisation est fixé chaque saison par le Bureau avant le début des activités. La cotisation donne accès aux séances hebdomadaires ainsi qu’aux différentes activités proposées par l’association. Un kit BSC est inclus dans la cotisation.",
+        text: "Le montant de la cotisation est fixé chaque saison par le Bureau avant le début des activités. La cotisation donne accès aux séances hebdomadaires. Pour la saison 2026-2027, un kit BSC est offert à chaque adhérente.",
       },
       { kind: "highlight", text: "Cotisation annuelle : 200 €" },
+      {
+        kind: "p",
+        text: "D’autres activités pourront être proposées tout au long de l’année, pendant les vacances et l’été. Les conditions de participation seront communiquées aux familles le moment venu.",
+      },
       {
         kind: "p",
         text: "Aucun remboursement ne sera effectué en cas d’abandon en cours d’année, sauf cas exceptionnel examiné par le Bureau.",
@@ -90,10 +100,27 @@ export const ARTICLES: Article[] = [
         kind: "p",
         text: "Le programme sportif varie d’un trimestre à l’autre afin de proposer une diversité d’activités.",
       },
+      {
+        kind: "p",
+        text: "Les adhérentes inscrites au créneau du dimanche bénéficient d’une licence loisir au club partenaire (Football Club de Grabels), incluse dans la cotisation, donnant accès aux équipements et au matériel sur place.",
+      },
+      {
+        kind: "p",
+        text: "En cas de conditions météorologiques défavorables, la séance en extérieur peut être annulée. Les familles seront prévenues par message.",
+      },
     ],
   },
   {
-    title: "Article 5 — Tenue de sport",
+    title: "Article 5 — Séance d’essai",
+    blocks: [
+      {
+        kind: "p",
+        text: "Une séance d’essai gratuite peut être proposée aux filles souhaitant découvrir l’activité avant de s’inscrire. L’autorisation parentale et la fiche sanitaire restent obligatoires pour y participer.",
+      },
+    ],
+  },
+  {
+    title: "Article 6 — Tenue de sport",
     blocks: [
       {
         kind: "p",
@@ -108,10 +135,14 @@ export const ARTICLES: Article[] = [
           "Bouteille d’eau et serviette",
         ],
       },
+      {
+        kind: "p",
+        text: "Une tenue de sport propre est exigée à chaque séance.",
+      },
     ],
   },
   {
-    title: "Article 6 — Sécurité et hygiène",
+    title: "Article 7 — Sécurité et hygiène",
     blocks: [
       { kind: "p", text: "Avant chaque séance, chaque adhérente doit :" },
       {
@@ -137,7 +168,6 @@ export const ARTICLES: Article[] = [
         items: [
           "Laisser les vestiaires propres",
           "Ne pas laisser de déchets sur le lieu de pratique",
-          "Venir avec une tenue de sport propre à chaque séance",
         ],
       },
       {
@@ -147,7 +177,7 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 7 — Téléphones",
+    title: "Article 8 — Téléphones",
     blocks: [
       {
         kind: "p",
@@ -156,7 +186,7 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 8 — Photos et vidéos",
+    title: "Article 9 — Photos et vidéos",
     blocks: [
       {
         kind: "p",
@@ -165,9 +195,12 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 9 — Comportement et respect",
+    title: "Article 10 — Comportement et respect",
     blocks: [
-      { kind: "p", text: "BSC est un espace bienveillant. Chaque adhérente s’engage à :" },
+      {
+        kind: "p",
+        text: "BSC est un espace bienveillant. Chaque adhérente s’engage à :",
+      },
       {
         kind: "list",
         items: [
@@ -182,7 +215,7 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 10 — Présences et absences",
+    title: "Article 11 — Présences et absences",
     blocks: [
       {
         kind: "p",
@@ -195,16 +228,16 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 11 — Communication avec les familles",
+    title: "Article 12 — Communication avec les familles",
     blocks: [
       {
         kind: "p",
-        text: "Un groupe de communication dédié aux parents est mis en place pour transmettre les informations régulières : planning, événements, changements, absences. Les familles s’engagent à consulter régulièrement les messages.",
+        text: "Un groupe de communication dédié aux parents est mis en place pour transmettre les informations régulières : planning, événements, changements. Les familles s’engagent à consulter régulièrement les messages.",
       },
     ],
   },
   {
-    title: "Article 12 — Sanctions",
+    title: "Article 13 — Sanctions",
     blocks: [
       {
         kind: "p",
@@ -226,20 +259,20 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 13 — Responsabilité",
+    title: "Article 14 — Responsabilité",
     blocks: [
       {
         kind: "p",
-        text: "L’association décline toute responsabilité en cas de perte ou de vol d’effets personnels dans les vestiaires ou sur les lieux de pratique. Il est conseillé de ne pas apporter d’objets de valeur.",
+        text: "L’association décline toute responsabilité en cas de perte ou de vol d’effets personnels dans les vestiaires ou sur les lieux de pratique. Il est conseillé de ne pas apporter d’objets de valeur. Les objets trouvés seront conservés pendant un mois.",
       },
       {
         kind: "p",
-        text: "Les parents ou représentants légaux sont responsables de l’acheminement de leur enfant avant et après les séances. L’association n’assure pas le transport ni la surveillance en dehors des horaires de séance.",
+        text: "Les parents ou représentants légaux sont responsables de l’acheminement de leur enfant avant et après les séances. L’association n’assure pas le transport ni la surveillance en dehors des horaires de séance. Les parents s’engagent à récupérer leur enfant à l’heure. En cas de retard répété, le Bureau se réserve le droit de contacter la famille.",
       },
     ],
   },
   {
-    title: "Article 14 — Droit à l’image",
+    title: "Article 15 — Droit à l’image",
     blocks: [
       {
         kind: "p",
@@ -248,16 +281,28 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 15 — Protection des données personnelles",
+    title: "Article 16 — Protection des données personnelles",
     blocks: [
       {
         kind: "p",
-        text: "Les données personnelles recueillies lors de l’inscription sont utilisées exclusivement pour la gestion de l’association et la communication avec les familles. Elles ne sont pas communiquées à des tiers. Conformément au RGPD, chaque adhérente ou représentant légal peut demander l’accès, la rectification ou la suppression de ses données.",
+        text: "Les données personnelles recueillies lors de l’inscription sont utilisées exclusivement pour la gestion de l’association et la communication avec les familles. Elles ne sont pas communiquées à des tiers.",
+      },
+      {
+        kind: "p",
+        text: "Les données sont hébergées sur la plateforme de gestion AssoConnect, utilisée par l’association pour les inscriptions, les paiements et la comptabilité.",
+      },
+      {
+        kind: "p",
+        text: "Pour les adhérentes inscrites au créneau du dimanche, les données nécessaires à la création de la licence loisir (nom, prénom, date de naissance) sont transmises au club partenaire (Football Club de Grabels). Ces données sont utilisées exclusivement à cette fin.",
+      },
+      {
+        kind: "p",
+        text: "Conformément au RGPD, chaque adhérente ou représentant légal peut demander l’accès, la rectification ou la suppression de ses données.",
       },
     ],
   },
   {
-    title: "Article 16 — Assurance",
+    title: "Article 17 — Assurance",
     blocks: [
       {
         kind: "p",
@@ -266,7 +311,7 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    title: "Article 17 — Modification du règlement",
+    title: "Article 18 — Modification du règlement",
     blocks: [
       {
         kind: "p",
