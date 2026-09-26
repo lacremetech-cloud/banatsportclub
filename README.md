@@ -4,7 +4,7 @@ Mini-site public, formulaire d'inscription et mini-CRM pour **Banat Sport Club**
 association sportive féminine à Montpellier.
 
 - **Public** : collégiennes et lycéennes, de la 6e à la Terminale
-- **Jeudi soir — 6e à 3e** : 18h00 – 19h30, Complexe sportif des Garrigues — Haut de Massane, 297 Av. du Comté de Nice, 34080 Montpellier
+- **Jeudi soir — 6e à 3e** : 18h00 – 19h30, Complexe sportif des Garrigues — Haut de Massane, 145 Av. du Comté de Nice, 34080 Montpellier
 - **Dimanche matin — 3e à Terminale** : 10h30 – 12h30, Stade Serge Oltra — Grabels, Rue du Mas d'Armand, 34790 Grabels
 
 La 3e est volontairement éligible aux deux créneaux. Les niveaux guident le
@@ -68,7 +68,7 @@ Ce script écrit dans la table `settings` :
 | --- | --- |
 | `season` | `2026-2027` |
 | `annual_fee_cents` | `20000` (200 €) |
-| `group_jeudi_day` / `_levels` / `_time` / `_place` / `_address` | `Jeudi soir` / `6e à 3e` / `18h00 – 19h30` / `Complexe sportif des Garrigues — Haut de Massane` / `297 Av. du Comté de Nice, 34080 Montpellier` |
+| `group_jeudi_day` / `_levels` / `_time` / `_place` / `_address` | `Jeudi soir` / `6e à 3e` / `18h00 – 19h30` / `Complexe sportif des Garrigues — Haut de Massane` / `145 Av. du Comté de Nice, 34080 Montpellier` |
 | `group_dimanche_day` / `_levels` / `_time` / `_place` / `_address` | `Dimanche matin` / `3e à Terminale` / `10h30 – 12h30` / `Stade Serge Oltra — Grabels` / `Rue du Mas d'Armand, 34790 Grabels` |
 
 Le tarif et les créneaux affichés sur le site viennent **toujours** de cette
@@ -132,9 +132,12 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 | Route | Contenu |
 | --- | --- |
 | `/` | Vitrine : donne envie, puis conduit au formulaire AssoConnect |
-| `/informations` | Horaires, lieux, cotisation, tenue, règles essentielles |
-| `/reglement` | Règlement intérieur |
-| _(hors ligne)_ | `app/_le-club/` — l'ancienne page d'accueil, conservée mais non servie : le préfixe `_` la sort des routes |
+| `/informations` | Horaires, lieux, cotisation, tenue, fonctionnement des séances |
+| `/reglement` | Règlement intérieur, transcrit depuis le PDF officiel |
+| `/conditions` | Conditions d'adhésion : durée, montant, remboursement |
+| `/confidentialite` | Données personnelles (RGPD) |
+| `/mentions-legales` | Éditeur, hébergement, contact |
+| _(hors ligne)_ | `app/_le-club/` et `app/_informations/` — pages de la première version du site, conservées mais non servies : le préfixe `_` les sort des routes |
 | `/inscription` | Parcours d'inscription en 8 étapes |
 | `/inscription/paiement` | Retour après paiement Mollie : état réel de la cotisation |
 
@@ -207,6 +210,28 @@ dans un tableur francophone.
   `Recette manuelle`, `Dépense manuelle`). Aucune cotisation n'est recopiée
   dans `accounting_entries` pour produire ce fichier : les deux sources sont
   simplement lues ensemble.
+
+## Les pages publiques
+
+Toutes les pages publiques partagent la même coquille — `components/vitrine/page-shell.tsx` :
+en-tête sombre, bouton unique, pied de page commun. L'ancien en-tête clair
+(`components/site-header.tsx`) appartient à la première version du site et ne
+sert plus qu'à `/inscription`.
+
+Le pied de page ne mène qu'à des pages de la version actuelle. C'est une règle,
+pas un constat : une page de la première mouture atteignable depuis le pied de
+page donnerait au visiteur deux sites différents sous la même adresse.
+
+### Ce qui n'est pas inventé
+
+Deux mentions légales obligatoires — le **siège social** et le **directeur de
+publication** — ne figurent dans aucun document dont dispose le code. Elles se
+saisissent depuis `/admin/parametres` (`club_address`, `club_publisher`), et
+**tant qu'elles sont vides la ligne n'apparaît pas** sur la page. Afficher une
+adresse inventée sur une page légale serait pire que de ne rien afficher —
+même principe que les coordonnées bancaires.
+
+Le numéro **RNA W343034172**, lui, vient du règlement intérieur officiel.
 
 ## La vitrine d'accueil
 

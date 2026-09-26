@@ -118,6 +118,18 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           hint="Affiché sur le formulaire d’inscription, pour les situations particulières."
           required
         />
+        <Field
+          name="clubAddress"
+          label="Siège social"
+          defaultValue={settings.association.address}
+          hint="Obligatoire sur les mentions légales. Tant que ce champ est vide, la ligne n’apparaît pas sur le site."
+        />
+        <Field
+          name="clubPublisher"
+          label="Directeur / directrice de la publication"
+          defaultValue={settings.association.publisher}
+          hint="La personne responsable du site, en général la présidente. Même règle : vide, la ligne est omise."
+        />
       </Block>
 
       {error && (

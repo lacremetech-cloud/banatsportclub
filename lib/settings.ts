@@ -31,7 +31,7 @@ export type GroupInfo = {
   time: string;
   /** "Complexe sportif des Garrigues — Haut de Massane" */
   place: string;
-  /** "297 Av. du Comté de Nice, 34080 Montpellier" */
+  /** "145 Av. du Comté de Nice, 34080 Montpellier" */
   address: string;
   /** Lien Google Maps, dérivé du lieu et de l'adresse. */
   mapsUrl: string;
@@ -179,6 +179,15 @@ export type Association = {
   name: string;
   email: string;
   phone: string;
+  /**
+   * Siège social et directeur de publication : obligatoires sur les mentions
+   * légales, mais ils ne figurent dans aucun document dont dispose le code.
+   * Ils restent donc vides tant que le bureau ne les a pas saisis, et la page
+   * omet alors la ligne plutôt que d'afficher une valeur inventée — même
+   * principe que les coordonnées bancaires.
+   */
+  address: string;
+  publisher: string;
 };
 
 function readText(
@@ -199,6 +208,8 @@ function readAssociation(settings: Record<string, string>): Association {
     name: readText(settings, "club_name", DEFAULT_CLUB_NAME),
     email: readText(settings, "club_email", DEFAULT_CLUB_EMAIL),
     phone: readText(settings, "club_phone", DEFAULT_CLUB_PHONE),
+    address: readText(settings, "club_address", ""),
+    publisher: readText(settings, "club_publisher", ""),
   };
 }
 

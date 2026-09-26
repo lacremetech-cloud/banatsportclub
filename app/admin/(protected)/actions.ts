@@ -679,6 +679,10 @@ const settingsSchema = z
     clubName: requiredText("Le nom du club"),
     clubEmail: z.email("Adresse email du bureau invalide"),
     clubPhone: requiredText("Le téléphone du club", 20),
+    // Facultatifs ici, mais attendus sur les mentions légales : tant qu'ils
+    // sont vides, la page publique omet simplement la ligne.
+    clubAddress: optionalText(200),
+    clubPublisher: optionalText(120),
   })
   .superRefine((value, ctx) => {
     const [start, end] = value.season.split("-").map(Number);
@@ -739,6 +743,8 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
     club_name: v.clubName,
     club_email: v.clubEmail,
     club_phone: v.clubPhone,
+    club_address: v.clubAddress,
+    club_publisher: v.clubPublisher,
   };
 
   const upserts = Object.entries(values).map(([key, value]) =>
