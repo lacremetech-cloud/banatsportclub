@@ -1,11 +1,11 @@
-# Vidéo de fond de la vitrine `/rejoindre`
+# Vidéo de fond de la vitrine d'accueil
 
 Déposez ici un fichier nommé `hero.mp4` et/ou `hero.webm` : la vidéo apparaît
 alors automatiquement en fond du hero, sans aucune modification de code.
 
 Tant que ce dossier ne contient pas de vidéo, la page utilise son fond animé en
 CSS et **aucune requête inutile n'est émise** — la présence du fichier est
-vérifiée au rendu (`app/rejoindre/page.tsx`, `heroVideoSources`).
+vérifiée au rendu (`app/page.tsx`, `heroVideoSources`).
 
 ## Ce qui marche bien
 
