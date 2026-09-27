@@ -57,55 +57,39 @@
   will-change: transform;
 }
 
-/* --- Terrains tracés --------------------------------------------------- */
-
-/* Les lignes du terrain se dessinent elles-mêmes. */
-@keyframes bsc-draw {
-  from {
-    stroke-dashoffset: var(--bsc-dash, 600);
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.bsc-draw {
-  stroke-dasharray: var(--bsc-dash, 600);
-  animation: bsc-draw 2.4s ease-out forwards;
-}
+/* --- Photos des lieux --------------------------------------------------- */
 
 /*
- * Le ballon qui circule sur le terrain : c'est lui qui fait vivre la carte.
+ * Dérive lente sur les photos du hero.
  *
- * Les deux terrains partagent le même `viewBox` (0 0 100 64), ce qui permet une
- * seule trajectoire écrite en unités SVG. `offset-path` aurait été plus élégant
- * mais son support reste inégal ; des translations suffisent et marchent
- * partout.
+ * L'ancienne version animait des tracés SVG ; une photo, elle, n'a rien à
+ * dessiner. Ce qui lui donne vie, c'est un cadrage qui respire : quelques
+ * pour cent de zoom et un léger déport, sur près d'une demi-minute. Assez pour
+ * que l'image ne soit jamais tout à fait figée, trop lent pour qu'on puisse
+ * dire ce qui bouge.
+ *
+ * `scale` reste au-dessus de 1 d'un bout à l'autre, sinon un bord de photo
+ * apparaîtrait dans le cadre au moment du déport.
  */
-@keyframes bsc-run {
-  0% {
-    transform: translate(18px, 46px);
-  }
-  22% {
-    transform: translate(40px, 18px);
-  }
-  44% {
-    transform: translate(66px, 40px);
-  }
-  62% {
-    transform: translate(84px, 24px);
-  }
-  80% {
-    transform: translate(52px, 50px);
-  }
+@keyframes bsc-kenburns {
+  0%,
   100% {
-    transform: translate(18px, 46px);
+    transform: scale(1.06) translate3d(-1.2%, 0.8%, 0);
+  }
+  50% {
+    transform: scale(1.13) translate3d(1.2%, -0.8%, 0);
   }
 }
 
-.bsc-ball {
-  animation: bsc-run 11s ease-in-out infinite;
+.bsc-kenburns {
+  animation: bsc-kenburns 28s ease-in-out infinite;
   will-change: transform;
+}
+
+/* Décalage sur la seconde photo : les deux cadres ne respirent pas ensemble. */
+.bsc-kenburns--offset {
+  animation-duration: 34s;
+  animation-delay: -9s;
 }
 
 /* --- Bandeau défilant -------------------------------------------------- */
@@ -216,16 +200,11 @@
 @media (prefers-reduced-motion: reduce) {
   .bsc-halo,
   .bsc-sweep,
-  .bsc-draw,
-  .bsc-ball,
+  .bsc-kenburns,
   .bsc-marquee-track,
   .bsc-nudge,
   .bsc-ping {
     animation: none !important;
-  }
-
-  .bsc-draw {
-    stroke-dasharray: none;
   }
 
   .bsc-sweep {
