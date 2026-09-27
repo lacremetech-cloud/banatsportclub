@@ -8,7 +8,7 @@ import Link from "next/link";
 import { AssoConnectForm } from "@/components/vitrine/assoconnect-form";
 import { VitrineFooter } from "@/components/vitrine/page-shell";
 import { HeroVideo, Motion, ScrollProgress } from "@/components/vitrine/motion";
-import { Terrain } from "@/components/vitrine/terrain";
+import { PhotoFond, PhotoLieu } from "@/components/vitrine/photo-lieu";
 import "@/components/vitrine/vitrine.css";
 import { ADHESION_URL } from "@/lib/adhesion";
 import { formatEurosCompact } from "@/lib/constants";
@@ -49,15 +49,27 @@ export const metadata: Metadata = {
  * doit savoir, en une lecture, où il met sa fille.
  */
 
-const SPORTS = [
-  "Football",
-  "Volley",
-  "Basket",
-  "Self-défense",
-  "Cardio boxe",
-  "Circuit training",
-  "Grands jeux collectifs",
+/**
+ * Les sports, avec le pictogramme qui va avec.
+ *
+ * Une seule liste sert aux deux usages : la grille colorée de la section « Les
+ * sports » et le bandeau défilant du haut de page. Écrire les noms deux fois,
+ * c'était se garantir qu'un ajout finisse par ne figurer qu'à un seul endroit.
+ *
+ * Les pictogrammes sont décoratifs — ils sont masqués aux lecteurs d'écran, qui
+ * annonceraient sinon « ballon de football » avant de lire « Football ».
+ */
+const SPORTS_DETAIL = [
+  { emoji: "⚽", name: "Football" },
+  { emoji: "🏐", name: "Volley" },
+  { emoji: "🏀", name: "Basket" },
+  { emoji: "🥋", name: "Self-défense" },
+  { emoji: "🥊", name: "Cardio boxe" },
+  { emoji: "💪", name: "Circuit training" },
+  { emoji: "🎉", name: "Grands jeux collectifs" },
 ];
+
+const SPORTS = SPORTS_DETAIL.map((sport) => sport.name);
 
 const VALEURS = [
   "Débutante ou confirmée",
@@ -207,6 +219,23 @@ export default async function AccueilPage() {
           <section className="bsc-grain relative isolate flex min-h-[88svh] items-center overflow-hidden bg-brand-dark">
             <div aria-hidden className="absolute inset-0 -z-10">
               <div className="absolute inset-0 bg-[#3d0b1a]" />
+
+              {/*
+                Une photo derrière le titre, là où il n'y avait qu'un dégradé.
+                Elle est largement voilée : on ne doit pas la regarder, on doit
+                sentir qu'il y a un stade derrière les mots. Les halos roses
+                passent par dessus et la ramènent aux couleurs du club.
+
+                Uniquement en l'absence de vidéo : les deux fonds se
+                superposeraient sans qu'aucun ne se lise.
+              */}
+              {videoSources.length === 0 && (
+                <div className="absolute inset-0">
+                  <PhotoFond variant="stade" className="bsc-kenburns" />
+                  <div className="absolute inset-0 bg-brand-dark/[0.88]" />
+                </div>
+              )}
+
               <div className="bsc-halo absolute -left-24 top-[-18%] h-[70vh] w-[70vh] rounded-full bg-brand/45 blur-[90px]" />
               <div className="bsc-halo bsc-halo--slow absolute -right-20 bottom-[-22%] h-[60vh] w-[60vh] rounded-full bg-brand-light/35 blur-[100px]" />
               <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/10 via-transparent to-brand-dark" />
@@ -230,15 +259,26 @@ export default async function AccueilPage() {
               {groups.slice(0, 2).map((group, index) => (
                 <div
                   key={group.key}
-                  className="overflow-hidden rounded-3xl border border-white/15 shadow-2xl shadow-black/40"
+                  className="overflow-hidden rounded-3xl border border-white/20 shadow-2xl shadow-black/40"
                   style={{
-                    transform: `rotate(${index === 0 ? -3 : 2.5}deg)`,
-                    marginTop: index === 0 ? 0 : "-1.5rem",
-                    marginLeft: index === 0 ? 0 : "2rem",
+                    marginTop: index === 0 ? 0 : "-1.25rem",
+                    marginLeft: index === 0 ? 0 : "2.5rem",
                   }}
                 >
-                  <div className="relative h-44 xl:h-48">
-                    <Terrain variant={group.key === "jeudi" ? "dojo" : "stade"} />
+                  <div className="relative h-44 overflow-hidden xl:h-48">
+                    <PhotoLieu
+                      variant={group.key === "jeudi" ? "dojo" : "stade"}
+                      // Pas de `priority` : ces deux cadres n'existent qu'à
+                      // partir de `lg`, et le préchargement, lui, ne connaît
+                      // pas les points de rupture — sur téléphone il ferait
+                      // télécharger deux images jamais affichées.
+                      sizes="(min-width: 1280px) 28rem, 30vw"
+                      className={
+                        index === 0
+                          ? "bsc-kenburns"
+                          : "bsc-kenburns bsc-kenburns--offset"
+                      }
+                    />
                     <div className="absolute inset-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent p-4">
                       <span>
                         <span className="block text-lg font-extrabold uppercase tracking-tight text-white">
@@ -329,6 +369,40 @@ export default async function AccueilPage() {
                     </div>
                   ))}
                 </dl>
+
+                {/*
+                  Les deux tirages du hero sont posés à droite du titre, une
+                  place qui n'existe pas sur un téléphone — et c'est sur
+                  téléphone que la page sera surtout lue. Ce rappel en donne un
+                  aperçu là où il y a la place, sous les chiffres.
+
+                  Décoratif : le jour et le lieu sont dits en toutes lettres
+                  quelques écrans plus bas. Un lecteur d'écran n'a pas besoin
+                  de les entendre deux fois.
+                */}
+                <div
+                  aria-hidden
+                  data-reveal
+                  style={{ ["--bsc-delay" as string]: "320ms" }}
+                  className="mt-10 grid grid-cols-2 gap-3 lg:hidden"
+                >
+                  {groups.slice(0, 2).map((group) => (
+                    <div
+                      key={group.key}
+                      className="relative h-28 overflow-hidden rounded-2xl border border-white/20 sm:h-32"
+                    >
+                      <PhotoLieu
+                        variant={group.key === "jeudi" ? "dojo" : "stade"}
+                        sizes="45vw"
+                      />
+                      <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-black/10 to-transparent p-3">
+                        <span className="text-xs font-extrabold uppercase tracking-tight text-white">
+                          {group.day}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -375,6 +449,48 @@ export default async function AccueilPage() {
                 teste et trouve ce qu’elle aime.
               </p>
             </div>
+
+            {/*
+              La liste était jusqu'ici une phrase, et une phrase se survole. En
+              pastilles, chaque sport devient une chose qu'on peut regarder une
+              par une — c'est là que se joue l'envie.
+
+              Huit cases : les sept disciplines et l'ouverture. Le compte tombe
+              juste sur deux, trois ou quatre colonnes, donc aucune rangée
+              orpheline, quelle que soit la largeur de l'écran.
+            */}
+            <ul className="mx-auto mt-12 grid max-w-5xl grid-cols-2 gap-3 px-5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+              {SPORTS_DETAIL.map((sport, index) => (
+                <li
+                  key={sport.name}
+                  data-reveal
+                  style={{ ["--bsc-delay" as string]: `${index * 60}ms` }}
+                  className="group flex flex-col items-center gap-2.5 rounded-2xl border border-brand-light/50 bg-cream px-3 py-6 text-center transition hover:-translate-y-1 hover:border-brand hover:bg-brand-light/20 hover:shadow-lg hover:shadow-brand/10"
+                >
+                  <span
+                    aria-hidden
+                    className="text-4xl transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"
+                  >
+                    {sport.emoji}
+                  </span>
+                  <span className="text-sm font-bold text-brand-dark sm:text-base">
+                    {sport.name}
+                  </span>
+                </li>
+              ))}
+              <li
+                data-reveal
+                style={{ ["--bsc-delay" as string]: `${SPORTS_DETAIL.length * 60}ms` }}
+                className="flex flex-col items-center justify-center gap-2.5 rounded-2xl bg-brand px-3 py-6 text-center text-white"
+              >
+                <span aria-hidden className="text-4xl">
+                  ✨
+                </span>
+                <span className="text-sm font-bold sm:text-base">
+                  Et bien d’autres
+                </span>
+              </li>
+            </ul>
           </section>
 
           {/* 4 — Les créneaux ------------------------------------------------- */}
@@ -407,9 +523,13 @@ export default async function AccueilPage() {
                     style={{ ["--bsc-delay" as string]: `${index * 120}ms` }}
                     className="group overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-brand/10"
                   >
-                    <div className="relative h-44 overflow-hidden sm:h-52">
-                      <Terrain variant={group.key === "jeudi" ? "dojo" : "stade"} />
-                      <div className="absolute inset-0 flex items-end justify-between gap-3 bg-gradient-to-t from-brand-dark/75 to-transparent p-5">
+                    <div className="relative h-44 overflow-hidden sm:h-56">
+                      <PhotoLieu
+                        variant={group.key === "jeudi" ? "dojo" : "stade"}
+                        sizes="(min-width: 1024px) 34rem, 100vw"
+                        className="transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/75 via-black/15 to-transparent p-5">
                         <p className="text-2xl font-extrabold uppercase tracking-tight text-white sm:text-3xl">
                           {group.day}
                         </p>

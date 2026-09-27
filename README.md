@@ -265,11 +265,30 @@ doit. En SVG : il reste net en impression grand format.
 Si l'adresse de la collecte change, le QR code doit être régénéré — il n'est pas
 calculé à la volée.
 
+### Les photos des lieux
+
+Deux photos, dans `public/photos/`, illustrent les deux créneaux : les tatamis
+bleus d'un dojo pour le jeudi, une pelouse sous les projecteurs pour le
+dimanche. Elles ont remplacé les terrains dessinés en SVG, qui finissaient par
+ressembler à des pictogrammes.
+
+**Aucune personne n'y figure, et c'est une règle.** Le droit à l'image des
+adhérentes se demande famille par famille (voir `public/videos/README.md`) ;
+un lieu vide ne pose jamais cette question. Toute photo ajoutée ici doit
+respecter la même règle.
+
+Elles sont importées depuis `components/vitrine/photo-lieu.tsx` plutôt que
+référencées par leur chemin : Next lit alors leurs dimensions à la compilation,
+réserve la place exacte de l'image et fabrique la vignette floue du chargement.
+Le recadrage est décidé par variante dans ce fichier — les cadres sont beaucoup
+plus larges que hauts, et un recadrage centré ne garderait du dojo que le
+plafond.
+
 ### Le mouvement
 
-Il n'y a aucune photo ni vidéo du club dans le dépôt. Le mouvement de la page
-est donc entièrement écrit en CSS et en SVG (`components/vitrine/`) : halos qui respirent, balayage lumineux, bandeaux défilants,
-terrains qui se tracent, ballon qui circule, apparitions au défilement.
+Le reste du mouvement de la page est écrit en CSS (`components/vitrine/`) :
+halos qui respirent, balayage lumineux, bandeaux défilants, dérive lente sur
+les photos, apparitions au défilement.
 
 Trois règles tenues :
 
