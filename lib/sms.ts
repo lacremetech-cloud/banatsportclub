@@ -35,6 +35,19 @@ export function smsHref(phone: string, body = ""): string {
 const SIGNATURE = "Banat Sport Club";
 
 /**
+ * Demande de rendez-vous, depuis le site public.
+ *
+ * Seul message de ce fichier qui part dans l'autre sens : c'est la famille qui
+ * écrit au club, pas l'inverse. Volontairement court et incomplet — il doit
+ * suffire à franchir le pas sans donner l'impression qu'on a déjà répondu à sa
+ * place. Le prénom de la fille et le créneau manquent : c'est justement ce que
+ * la famille ajoutera, et ce qui rend le message vivant.
+ */
+export function rendezVousSms(): string {
+  return `Bonjour, j’aimerais prendre rendez-vous pour inscrire ma fille à ${SIGNATURE}.`;
+}
+
+/**
  * Absence constatée.
  *
  * Aucune formule dépendant de l'heure : le bureau saisit parfois la feuille

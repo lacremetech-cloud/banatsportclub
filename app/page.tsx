@@ -13,6 +13,7 @@ import "@/components/vitrine/vitrine.css";
 import { ADHESION_URL } from "@/lib/adhesion";
 import { formatEurosCompact } from "@/lib/constants";
 import { getAssociation, getSiteSettings } from "@/lib/settings";
+import { rendezVousSms, smsHref } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
@@ -602,10 +603,20 @@ export default async function AccueilPage() {
                 </h2>
               </div>
 
+              {/*
+                Les deux cartes sont cliquables en entier.
+                                
+                Le lien porte un texte visible ET un `::after` en `absolute
+                inset-0` qui couvre la carte : la zone cliquable fait toute la
+                carte, tout en gardant un intitulé lisible par un lecteur
+                d'écran. Les liens internes (téléphone, adresse) passent au
+                dessus avec `relative z-10`, sinon la nappe les avalerait —
+                imbriquer un lien dans un lien serait invalide.
+              */}
               <div className="mt-10 grid gap-5 sm:grid-cols-2">
                 <div
                   data-reveal
-                  className="rounded-3xl border-2 border-brand-light/60 bg-white p-6 sm:p-7"
+                  className="relative flex flex-col rounded-3xl border-2 border-brand-light/60 bg-white p-6 transition hover:-translate-y-0.5 hover:border-brand hover:shadow-lg hover:shadow-brand/10 focus-within:border-brand sm:p-7"
                 >
                   <p className="text-lg font-bold text-brand-dark">
                     <span aria-hidden>💻</span> 100 % en ligne
@@ -618,24 +629,31 @@ export default async function AccueilPage() {
                     <span aria-hidden>💳</span> Paiement en plusieurs fois
                     possible, à choisir au moment de l’inscription.
                   </p>
+                  <a
+                    href="#formulaire"
+                    className="mt-5 inline-flex items-center gap-2 self-start font-bold text-brand underline decoration-brand/40 underline-offset-4 after:absolute after:inset-0 after:content-[''] hover:decoration-brand"
+                  >
+                    Aller au formulaire
+                    <span aria-hidden>→</span>
+                  </a>
                 </div>
 
                 <div
                   data-reveal
                   style={{ ["--bsc-delay" as string]: "100ms" }}
-                  className="rounded-3xl border-2 border-brand-light/60 bg-white p-6 sm:p-7"
+                  className="relative flex flex-col rounded-3xl border-2 border-brand-light/60 bg-white p-6 transition hover:-translate-y-0.5 hover:border-brand hover:shadow-lg hover:shadow-brand/10 focus-within:border-brand sm:p-7"
                 >
                   <p className="text-lg font-bold text-brand-dark">
                     <span aria-hidden>🤝</span> Sur rendez-vous
                   </p>
                   <p className="mt-3 leading-relaxed text-brand-dark/80">
-                    Vous préférez nous rencontrer ? Appelez-nous
+                    Vous préférez nous rencontrer ? Écrivez-nous ou appelez-nous
                     {phoneHref ? (
                       <>
                         {" au "}
                         <a
                           href={`tel:${phoneHref}`}
-                          className="font-semibold text-brand underline"
+                          className="relative z-10 font-semibold text-brand underline"
                         >
                           {association.phone}
                         </a>
@@ -645,7 +663,7 @@ export default async function AccueilPage() {
                     )}{" "}
                     pour fixer un rendez-vous dans nos locaux :
                   </p>
-                  <p className="mt-3 flex gap-2 font-semibold text-brand-dark">
+                  <p className="relative z-10 mt-3 flex gap-2 font-semibold text-brand-dark">
                     <span aria-hidden>📍</span>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -662,6 +680,15 @@ export default async function AccueilPage() {
                     On complète le dossier ensemble et vous pouvez régler en
                     espèces ou par chèque.
                   </p>
+                  {association.phone && (
+                    <a
+                      href={smsHref(association.phone, rendezVousSms())}
+                      className="mt-5 inline-flex items-center gap-2 self-start font-bold text-brand underline decoration-brand/40 underline-offset-4 after:absolute after:inset-0 after:content-[''] hover:decoration-brand"
+                    >
+                      Demander un rendez-vous par SMS
+                      <span aria-hidden>→</span>
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -735,7 +762,12 @@ export default async function AccueilPage() {
                   </p>
                 </div>
 
-                <div data-reveal style={{ ["--bsc-delay" as string]: "120ms" }}>
+                <div
+                  id="formulaire"
+                  data-reveal
+                  style={{ ["--bsc-delay" as string]: "120ms" }}
+                  className="scroll-mt-20"
+                >
                   <AssoConnectForm />
                 </div>
               </div>
