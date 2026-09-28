@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { mapsUrl, RENDEZ_VOUS, RENDEZ_VOUS_FULL } from "@/lib/constants";
 import { getAssociation } from "@/lib/settings";
 
 /**
@@ -142,6 +143,27 @@ export async function VitrineFooter() {
               )}
               <a href={`mailto:${association.email}`} className="hover:underline">
                 {association.email}
+              </a>
+            </p>
+
+            {/*
+              L'adresse du bureau, en bas de chaque page.
+
+              Elle est annoncée comme ce qu'elle est — le lieu où l'on reçoit
+              sur rendez-vous — et non comme un lieu d'entraînement : les deux
+              gymnases ont leurs propres adresses, plus haut. Rien n'affirme
+              non plus que ce soit le siège social, tant que ce n'est pas
+              confirmé.
+            */}
+            <p className="mt-3 text-sm text-brand-dark/70">
+              Sur rendez-vous :{" "}
+              <a
+                href={mapsUrl(RENDEZ_VOUS.place, RENDEZ_VOUS.address)}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                {RENDEZ_VOUS_FULL}
               </a>
             </p>
           </div>

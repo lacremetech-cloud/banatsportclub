@@ -11,7 +11,12 @@ import { HeroVideo, Motion, ScrollProgress } from "@/components/vitrine/motion";
 import { PhotoFond, PhotoLieu } from "@/components/vitrine/photo-lieu";
 import "@/components/vitrine/vitrine.css";
 import { ADHESION_URL } from "@/lib/adhesion";
-import { formatEurosCompact } from "@/lib/constants";
+import {
+  formatEurosCompact,
+  mapsUrl,
+  RENDEZ_VOUS,
+  RENDEZ_VOUS_FULL,
+} from "@/lib/constants";
 import { getAssociation, getSiteSettings } from "@/lib/settings";
 import { rendezVousSms, smsHref } from "@/lib/sms";
 
@@ -66,7 +71,7 @@ const SPORTS_DETAIL = [
   { emoji: "🥋", name: "Self-défense" },
   { emoji: "🥊", name: "Cardio boxe" },
   { emoji: "💪", name: "Circuit training" },
-  { emoji: "🎉", name: "Grands jeux collectifs" },
+  { emoji: "🥎", name: "Jeux de balle" },
 ];
 
 const SPORTS = SPORTS_DETAIL.map((sport) => sport.name);
@@ -82,24 +87,35 @@ const VALEURS = [
   "On grandit ensemble",
 ];
 
+/**
+ * Les quatre bénéfices.
+ *
+ * Le pictogramme n'est pas une décoration : c'est lui qui donne à la section
+ * un point d'accroche ailleurs que dans le texte. Sans lui, quatre pavés de
+ * bordeaux sur bordeaux se lisaient comme un tableau.
+ */
 const BENEFICES = [
   {
     number: "01",
+    emoji: "⚡",
     title: "Bouger",
     text: "Du sport qui fait du bien, sans pression. Elles courent, elles jouent, elles repartent le sourire aux lèvres.",
   },
   {
     number: "02",
+    emoji: "🌟",
     title: "Prendre confiance",
     text: "Oser, essayer, progresser à son rythme. Sans classement, sans sélection, sans jugement.",
   },
   {
     number: "03",
+    emoji: "🤝",
     title: "Créer des liens",
     text: "Un vrai groupe, construit sur l’entraide et le respect. On arrive parfois seule, on repart avec des amies.",
   },
   {
     number: "04",
+    emoji: "🎒",
     title: "Déconnecter",
     text: "Le téléphone reste au vestiaire, le temps de la séance, pour être pleinement là, avec les autres.",
   },
@@ -144,15 +160,12 @@ const REGLES = [
  * Adresse où le bureau reçoit les familles qui préfèrent s'inscrire de vive
  * voix. Distincte des lieux de séance : ce sont des bureaux, pas un gymnase.
  */
-const RENDEZ_VOUS_ADRESSE =
-  "Bureaux & Co – Parc 2000, 84 rue Maurice Béjart, 34080 Montpellier";
-
 /** Ce que chaque lieu a de concret à offrir. */
 const LIEUX: Record<string, string> = {
   jeudi:
     "Plus de 200 m² de tatamis : de la place pour bouger, jouer au ballon, tomber sans se faire mal et profiter pleinement de la séance.",
   dimanche:
-    "Un vrai stade en plein air : de l’espace pour le foot, les grands jeux collectifs et tous les sports de plein air.",
+    "Un vrai stade en plein air : de l’espace pour le foot, les jeux de balle et tous les sports de plein air.",
 };
 
 /**
@@ -444,7 +457,7 @@ export default async function AccueilPage() {
                 className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-dark/80"
               >
                 Foot, volley, basket, self-défense, cardio boxe, circuit
-                training, grands jeux collectifs… et bien d’autres ! Le
+                training, jeux de balle… et bien d’autres ! Le
                 programme change au fil de l’année, pour que chacune découvre,
                 teste et trouve ce qu’elle aime.
               </p>
@@ -529,7 +542,7 @@ export default async function AccueilPage() {
                         sizes="(min-width: 1024px) 34rem, 100vw"
                         className="transition-transform duration-700 ease-out group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/75 via-black/15 to-transparent p-5">
+                      <div className="absolute inset-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 via-black/25 to-transparent p-5">
                         <p className="text-2xl font-extrabold uppercase tracking-tight text-white sm:text-3xl">
                           {group.day}
                         </p>
@@ -619,18 +632,35 @@ export default async function AccueilPage() {
                 Ce qu’elles y gagnent
               </h2>
 
-              <div className="mt-12 grid gap-px overflow-hidden rounded-3xl bg-white/10 sm:grid-cols-2">
+              {/*
+                Quatre pavés bordeaux séparés d'un trait sur un fond bordeaux :
+                la grille se lisait comme un tableau, et le ton sur ton rendait
+                la section terne alors qu'elle dit le plus beau de ce que le
+                club apporte.
+
+                Trois changements, tous dans la palette du club : des cartes
+                détachées plutôt qu'une grille sans joints, un pictogramme posé
+                sur un carré rose — la seule vraie rupture de couleur possible
+                sur ce fond — et une citation qui devient un bloc rose plein.
+              */}
+              <div className="mt-12 grid gap-5 sm:grid-cols-2">
                 {BENEFICES.map((item, index) => (
                   <div
                     key={item.title}
                     data-reveal
                     style={{ ["--bsc-delay" as string]: `${index * 90}ms` }}
-                    className="bg-brand-dark p-7 transition hover:bg-[#6d1430] sm:p-9"
+                    className="rounded-3xl border border-white/15 bg-white/[0.07] p-7 transition hover:-translate-y-1 hover:border-brand-light/60 hover:bg-white/[0.12] sm:p-9"
                   >
-                    <span className="text-sm font-bold text-brand-light">
+                    <span
+                      aria-hidden
+                      className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-2xl shadow-lg shadow-brand/30"
+                    >
+                      {item.emoji}
+                    </span>
+                    <span className="mt-6 block text-sm font-bold text-brand-light">
                       {item.number}
                     </span>
-                    <h3 className="mt-2 text-2xl font-bold uppercase tracking-tight">
+                    <h3 className="mt-1 text-2xl font-bold uppercase tracking-tight">
                       {item.title}
                     </h3>
                     <p className="mt-3 leading-relaxed text-white/75">{item.text}</p>
@@ -640,7 +670,7 @@ export default async function AccueilPage() {
 
               <blockquote
                 data-reveal
-                className="mt-14 max-w-3xl border-l-4 border-brand pl-6 text-xl leading-relaxed text-brand-light sm:text-2xl"
+                className="mt-12 rounded-3xl bg-brand p-8 text-xl font-semibold leading-relaxed text-white shadow-xl shadow-brand/20 sm:p-10 sm:text-2xl"
               >
                 « Se déconnecter des écrans pour se reconnecter à soi, aux autres
                 et au mouvement. »
@@ -749,8 +779,20 @@ export default async function AccueilPage() {
                     <span aria-hidden>💳</span> Paiement en plusieurs fois
                     possible, à choisir au moment de l’inscription.
                   </p>
+                  {/*
+                    Le lien mène directement à la collecte AssoConnect plutôt
+                    qu'au cadre intégré plus bas : c'est le même formulaire,
+                    mais en pleine page, sans double barre de défilement ni
+                    étape de paiement coincée dans un cadre de quelques
+                    centaines de pixels.
+
+                    Nouvel onglet : la famille qui hésite retrouve la page du
+                    club derrière elle, avec le téléphone et l'adresse.
+                  */}
                   <a
-                    href="#formulaire"
+                    href={ADHESION_URL}
+                    target="_blank"
+                    rel="noreferrer"
                     className="mt-5 inline-flex items-center gap-2 self-start font-bold text-brand underline decoration-brand/40 underline-offset-4 after:absolute after:inset-0 after:content-[''] hover:decoration-brand"
                   >
                     Aller au formulaire
@@ -786,14 +828,12 @@ export default async function AccueilPage() {
                   <p className="relative z-10 mt-3 flex gap-2 font-semibold text-brand-dark">
                     <span aria-hidden>📍</span>
                     <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        RENDEZ_VOUS_ADRESSE,
-                      )}`}
+                      href={mapsUrl(RENDEZ_VOUS.place, RENDEZ_VOUS.address)}
                       target="_blank"
                       rel="noreferrer"
                       className="underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
                     >
-                      {RENDEZ_VOUS_ADRESSE}
+                      {RENDEZ_VOUS_FULL}
                     </a>
                   </p>
                   <p className="mt-3 leading-relaxed text-brand-dark/80">

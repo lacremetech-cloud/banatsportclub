@@ -221,6 +221,25 @@ export const DEFAULT_CLUB_EMAIL = "banatsportclub@gmail.com";
 export const DEFAULT_CLUB_PHONE = "07 75 76 53 03";
 
 /**
+ * Là où le bureau reçoit les familles, sur rendez-vous.
+ *
+ * Ce n'est ni un lieu d'entraînement ni — tant que ce n'est pas confirmé — le
+ * siège social : c'est l'adresse où l'on se rencontre pour monter un dossier
+ * ensemble. Elle figure sur l'accueil et dans le pied de page, d'où sa place
+ * ici plutôt que dans l'une des deux pages.
+ *
+ * Nom du lieu et rue sont séparés pour que `mapsUrl` puisse les recomposer ;
+ * à l'affichage, ils se rejoignent par une virgule.
+ */
+export const RENDEZ_VOUS = {
+  place: "Bureaux & Co – Parc 2000",
+  address: "84 rue Maurice Béjart, 34080 Montpellier",
+} as const;
+
+/** L'adresse telle qu'on la lit, d'un seul tenant. */
+export const RENDEZ_VOUS_FULL = `${RENDEZ_VOUS.place}, ${RENDEZ_VOUS.address}`;
+
+/**
  * Exemples de lien de parenté proposés pour les contacts d'urgence.
  * Le champ reste libre : une situation familiale ne rentre pas toujours
  * dans une liste.

@@ -43,8 +43,8 @@ const PHOTOS: Record<
   },
   stade: {
     src: stade,
-    alt: "Un terrain de football en gazon synthétique sous les projecteurs.",
-    // Ici le centre tombe bien : les projecteurs en haut, la pelouse en bas.
+    alt: "Un terrain de football en gazon synthétique, en plein jour, avec un but et des arbres au fond.",
+    // Ici le centre tombe bien : le but et les arbres en haut, la pelouse en bas.
     position: "object-center",
   },
 };
