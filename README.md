@@ -239,22 +239,22 @@ L'accueil du site est une page de campagne autonome : c'est l'adresse à mettre
 sur une affiche, un flyer ou une story. Elle ne collecte rien — elle donne envie, puis conduit au
 formulaire **AssoConnect**, où se font la saisie, le paiement et le reçu.
 
-Tout ce qui concerne AssoConnect tient dans `lib/adhesion.ts` : URL de la
-collecte, version intégrable, origines autorisées. Changer de campagne ou de
-saison se fait là, en un seul endroit.
+Tout ce qui concerne AssoConnect tient dans `lib/adhesion.ts` : l'URL de la
+collecte et le QR code. Changer de campagne ou de saison se fait là, en un seul
+endroit.
 
-### Le formulaire intégré
+### L'inscription se fait toujours chez AssoConnect
 
-Le formulaire est affiché **dans** la page, par un iframe dont la hauteur est
-pilotée par AssoConnect via `postMessage`. Deux précautions :
+Le formulaire a un temps été intégré dans la page, dans un iframe dont
+AssoConnect pilotait la hauteur par `postMessage`. Il y tenait mal — double
+barre de défilement, étape de paiement à l'étroit — et l'inscription est trop
+importante pour se jouer dans un compromis d'affichage.
 
-- **L'origine est vérifiée à chaque message.** Sans ce filtre, n'importe quelle
-  page ouverte ailleurs pourrait redimensionner le cadre. Une hauteur hors de
-  `[300, 20000]` est également ignorée : un message malformé ne doit pas réduire
-  le formulaire à rien.
-- **Le lien direct est toujours affiché**, jamais conditionné au bon
-  fonctionnement du cadre. Un iframe peut être bloqué — personne ne doit se
-  retrouver devant un carré vide sans recours.
+**Tous les chemins mènent donc à la collecte en pleine page**, dans un nouvel
+onglet : le bouton de l'en-tête, les deux cartes « Deux façons de vous
+inscrire », le récapitulatif du tarif et l'appel final. Aucune saisie
+d'inscription n'a lieu sur ce site. La vérification d'origine du `postMessage`
+a disparu avec le cadre qu'elle protégeait.
 
 ### Le QR code
 
