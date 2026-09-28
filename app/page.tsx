@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-import { AssoConnectForm } from "@/components/vitrine/assoconnect-form";
 import { VitrineFooter } from "@/components/vitrine/page-shell";
 import { HeroVideo, Motion, ScrollProgress } from "@/components/vitrine/motion";
 import { PhotoFond, PhotoLieu } from "@/components/vitrine/photo-lieu";
@@ -741,14 +740,11 @@ export default async function AccueilPage() {
           {/* 9 — Réserver sa place ------------------------------------------ */}
           <section id="adherer" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
-              {/*
-                Placé AVANT le formulaire, et sur toute la largeur : une famille
-                qui préfère venir sur place ne doit pas avoir à faire défiler
-                quatre mille pixels de formulaire pour découvrir qu'un
-                rendez-vous était possible.
-              */}
               <div data-reveal className="mx-auto max-w-3xl text-center">
-                <h2 className="text-3xl font-extrabold tracking-tight text-brand-dark sm:text-4xl">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
+                  Inscriptions ouvertes — {season}
+                </p>
+                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-4xl">
                   Deux façons de vous inscrire
                 </h2>
               </div>
@@ -772,7 +768,7 @@ export default async function AccueilPage() {
                     <span aria-hidden>💻</span> 100 % en ligne
                   </p>
                   <p className="mt-3 leading-relaxed text-brand-dark/80">
-                    Remplissez le formulaire ci-dessous et réglez par carte
+                    Remplissez le formulaire en ligne et réglez par carte
                     bancaire en quelques minutes.
                   </p>
                   <p className="mt-3 font-semibold text-brand-dark">
@@ -780,12 +776,6 @@ export default async function AccueilPage() {
                     possible, à choisir au moment de l’inscription.
                   </p>
                   {/*
-                    Le lien mène directement à la collecte AssoConnect plutôt
-                    qu'au cadre intégré plus bas : c'est le même formulaire,
-                    mais en pleine page, sans double barre de défilement ni
-                    étape de paiement coincée dans un cadre de quelques
-                    centaines de pixels.
-
                     Nouvel onglet : la famille qui hésite retrouve la page du
                     club derrière elle, avec le téléphone et l'adresse.
                   */}
@@ -852,33 +842,51 @@ export default async function AccueilPage() {
                 </div>
               </div>
 
-              <div className="mt-14 grid items-start gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-14">
-                {/*
-                  Le formulaire AssoConnect fait plusieurs milliers de pixels de
-                  haut. Sans `sticky`, le prix et le QR code défilent hors de vue
-                  dès la première question et la colonne paraît abandonnée.
-                */}
-                <div data-reveal className="lg:sticky lg:top-20 lg:self-start">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-                    Inscriptions ouvertes — {season}
-                  </p>
-                  <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
-                    Réservez la place de votre fille
-                  </h2>
+              {/*
+                Le récapitulatif de l'offre, puis le bouton.
 
-                  <p className="mt-7 flex items-baseline gap-2">
-                    <span className="text-5xl font-extrabold tracking-tight text-brand-dark sm:text-6xl">
-                      {formatEurosCompact(annualFeeCents)}
-                    </span>
-                    <span className="text-lg font-semibold text-brand-dark/60">
-                      pour l’année
-                    </span>
-                  </p>
-                  <p className="mt-2 font-semibold text-brand">
-                    Paiement en plusieurs fois possible.
-                  </p>
+                Le formulaire AssoConnect était auparavant intégré ici, dans un
+                iframe. Il tenait mal dans un cadre — double barre de
+                défilement, étape de paiement à l'étroit — et l'inscription est
+                trop importante pour se jouer dans un compromis d'affichage.
+                Elle se fait désormais toujours chez AssoConnect, en pleine
+                page. Il ne reste donc de ce côté que ce qui donne envie de
+                cliquer : le prix, ce qu'il comprend, et le bouton.
+              */}
+              <div
+                data-reveal
+                className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-3xl border-2 border-brand-light/60 bg-white"
+              >
+                <div className="grid gap-9 p-7 sm:p-10 md:grid-cols-2 md:gap-12">
+                  <div>
+                    <p className="flex items-baseline gap-2">
+                      <span className="text-5xl font-extrabold tracking-tight text-brand-dark sm:text-6xl">
+                        {formatEurosCompact(annualFeeCents)}
+                      </span>
+                      <span className="text-lg font-semibold text-brand-dark/60">
+                        pour l’année
+                      </span>
+                    </p>
+                    <p className="mt-2 font-semibold text-brand">
+                      Paiement en plusieurs fois possible.
+                    </p>
 
-                  <ul className="mt-7 space-y-3">
+                    <a
+                      href={ADHESION_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-7 inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-brand px-8 text-base font-bold text-white shadow-lg shadow-brand/25 transition hover:-translate-y-0.5 hover:bg-brand-dark"
+                    >
+                      Réserver la place de votre fille
+                      <span aria-hidden>→</span>
+                    </a>
+                    <p className="mt-3 text-sm text-brand-dark/60">
+                      Le formulaire et le paiement sont gérés par AssoConnect.
+                      Le lien s’ouvre dans un nouvel onglet.
+                    </p>
+                  </div>
+
+                  <ul className="space-y-3">
                     {INCLUS.map((item) => (
                       <li key={item.text} className="flex gap-3 text-brand-dark/85">
                         <span aria-hidden className="mt-0.5 font-bold text-brand">
@@ -895,42 +903,33 @@ export default async function AccueilPage() {
                       </li>
                     ))}
                   </ul>
+                </div>
 
-                  <p className="mt-6 rounded-xl border border-brand-light/60 bg-brand-light/15 px-4 py-3 text-sm font-semibold text-brand-dark">
-                    Première saison : les places sont limitées.
-                  </p>
+                <p className="border-t border-brand-light/50 bg-brand-light/15 px-7 py-4 text-sm font-semibold text-brand-dark sm:px-10">
+                  Première saison : les places sont limitées.
+                </p>
+              </div>
 
-                  <p className="mt-7 text-sm text-brand-dark/70">
-                    Une question ?{" "}
+              <p data-reveal className="mt-8 text-center text-sm text-brand-dark/70">
+                Une question ?{" "}
+                <a
+                  href={`mailto:${association.email}`}
+                  className="font-semibold text-brand underline"
+                >
+                  {association.email}
+                </a>
+                {phoneHref && (
+                  <>
+                    {" · "}
                     <a
-                      href={`mailto:${association.email}`}
+                      href={`tel:${phoneHref}`}
                       className="font-semibold text-brand underline"
                     >
-                      {association.email}
+                      {association.phone}
                     </a>
-                    {phoneHref && (
-                      <>
-                        {" · "}
-                        <a
-                          href={`tel:${phoneHref}`}
-                          className="font-semibold text-brand underline"
-                        >
-                          {association.phone}
-                        </a>
-                      </>
-                    )}
-                  </p>
-                </div>
-
-                <div
-                  id="formulaire"
-                  data-reveal
-                  style={{ ["--bsc-delay" as string]: "120ms" }}
-                  className="scroll-mt-20"
-                >
-                  <AssoConnectForm />
-                </div>
-              </div>
+                  </>
+                )}
+              </p>
             </div>
           </section>
 
