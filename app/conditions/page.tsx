@@ -102,6 +102,12 @@ export default async function ConditionsPage() {
             club ne voit ni ne conserve vos données bancaires.
           </p>
           <p>
+            Le paiement en ligne se fait uniquement par carte bancaire, en une
+            ou plusieurs fois. Pour un règlement par chèque ou en espèces,
+            contactez le club afin de convenir d’un rendez-vous : le dossier est
+            alors complété et réglé en présentiel.
+          </p>
+          <p>
             L’adhésion est validée après réception du dossier complet et du
             règlement de la cotisation. Aucune adhérente n’est autorisée à
             participer aux séances sans dossier complet.
