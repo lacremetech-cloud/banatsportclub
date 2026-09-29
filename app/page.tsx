@@ -768,12 +768,19 @@ export default async function AccueilPage() {
                     <span aria-hidden>💻</span> 100 % en ligne
                   </p>
                   <p className="mt-3 leading-relaxed text-brand-dark/80">
-                    Remplissez le formulaire en ligne et réglez par carte
-                    bancaire en quelques minutes.
+                    Remplissez le formulaire en ligne et réglez en quelques
+                    minutes.
                   </p>
+                  {/*
+                    La restriction est dite ici plutôt qu'au bout du parcours :
+                    une famille qui règle par chèque doit l'apprendre avant de
+                    remplir le formulaire, pas en arrivant sur la page de
+                    paiement.
+                  */}
                   <p className="mt-3 font-semibold text-brand-dark">
-                    <span aria-hidden>💳</span> Paiement en plusieurs fois
-                    possible, à choisir au moment de l’inscription.
+                    <span aria-hidden>💳</span> Paiement en ligne uniquement par
+                    carte bancaire. Paiement en plusieurs fois possible, à
+                    choisir au moment de l’inscription.
                   </p>
                   {/*
                     Nouvel onglet : la famille qui hésite retrouve la page du
@@ -827,8 +834,9 @@ export default async function AccueilPage() {
                     </a>
                   </p>
                   <p className="mt-3 leading-relaxed text-brand-dark/80">
-                    On complète le dossier ensemble et vous pouvez régler en
-                    espèces ou par chèque.
+                    On complète le dossier ensemble. Pour un règlement par
+                    chèque ou en espèces, contactez-nous afin de convenir d’un
+                    règlement en présentiel.
                   </p>
                   {association.phone && (
                     <a
