@@ -311,14 +311,15 @@ export default async function AccueilPage() {
                 </p>
 
                 <h1 className="mt-5 text-[2.4rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  Enfin un club de sport{" "}
-                  <span className="text-brand-light">pensé pour elles.</span>
+                  Enfin un club de sport pensé{" "}
+                  <span className="text-sun underline decoration-white/70 decoration-4 underline-offset-8">
+                    pour elles.
+                  </span>
                 </h1>
 
-                <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-                  On a écouté leurs besoins, et on y répond : un club multisport
-                  rien que pour les filles, pour apprendre, s’amuser et grandir
-                  ensemble.
+                <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/85 sm:text-xl">
+                  Un club multisport rien que pour les filles, pour bouger,
+                  s’amuser et se retrouver.
                 </p>
 
                 <div
@@ -504,58 +505,89 @@ export default async function AccueilPage() {
               </div>
 
               {/*
-                Une seule carte, à l'identique de celles qui étaient là : le
-                club n'ouvre plus qu'un créneau, celle du dimanche est partie
-                avec lui. Elle garde la largeur du texte plutôt que la moitié
-                d'une grille, où la colonne d'à côté resterait vide.
+                La carte de l'affiche : la photo d'un côté, l'essentiel de
+                l'autre, dans l'ordre où une famille cherche — quand, pour qui,
+                où, dans quoi.
+
+                Pleine largeur : le club n'ouvre plus qu'un créneau, et une
+                carte laissée à mi-largeur donnerait l'impression qu'il en
+                manque une seconde.
               */}
               <article
                 data-reveal
-                className="group mt-12 max-w-2xl overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-brand/10"
+                className="group mt-12 overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:shadow-xl hover:shadow-brand/10 lg:grid lg:grid-cols-[1.05fr_1fr]"
               >
-                <div className="relative h-44 overflow-hidden sm:h-56">
+                <div className="relative h-56 overflow-hidden sm:h-72 lg:h-full lg:min-h-[25rem]">
                   <PhotoLieu
                     variant="dojo"
-                    sizes="(min-width: 640px) 42rem, 100vw"
+                    sizes="(min-width: 1024px) 34rem, 100vw"
                     className="transition-transform duration-700 ease-out group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 via-black/25 to-transparent p-5">
-                    <p className="text-2xl font-extrabold uppercase tracking-tight text-white sm:text-3xl">
-                      {CURRENT_SCHEDULE.day}
-                    </p>
-                    <p className="rounded-full bg-white/95 px-3.5 py-1.5 text-sm font-bold text-brand-dark">
-                      {CURRENT_SCHEDULE.time}
-                    </p>
+                  <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/60 via-transparent to-black/30 p-5">
+                    <span className="self-start rounded-full bg-brand px-4 py-1.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-black/20">
+                      <span aria-hidden>🗓</span> {CURRENT_SCHEDULE.badge}
+                    </span>
+                    <span className="self-start rounded-full bg-white/95 px-4 py-1.5 text-sm text-brand-dark shadow-lg shadow-black/20">
+                      <span aria-hidden>📍</span>{" "}
+                      <strong className="font-bold">{CURRENT_SCHEDULE.city}</strong>
+                      {", "}
+                      {CURRENT_SCHEDULE.district}
+                    </span>
                   </div>
                 </div>
 
-                <div className="p-6 sm:p-7">
-                  <p className="inline-flex rounded-full bg-brand-light/25 px-3.5 py-1.5 text-sm font-bold text-brand-dark">
-                    Pour les {CURRENT_SCHEDULE.levels}
+                <div className="p-7 sm:p-9">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
+                    {CURRENT_SCHEDULE.heading}
+                  </p>
+                  <p className="mt-2 text-4xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
+                    {CURRENT_SCHEDULE.time}
                   </p>
                   {/*
-                    Une séance n'est pas une porte qui claque : les familles
-                    qui viennent de loin ont besoin de savoir qu'on peut
-                    arriver un peu avant et repartir un peu après.
+                    Une séance n'est pas une porte qui claque : les familles qui
+                    viennent de loin ont besoin de savoir qu'on peut arriver un
+                    peu avant et repartir un peu après.
                   */}
-                  <p className="mt-3 text-sm text-brand-dark/70">
-                    Accueil dès {CURRENT_SCHEDULE.arrival} · départ jusqu’à{" "}
-                    {CURRENT_SCHEDULE.departure}
+                  <p className="mt-2.5 flex items-start gap-2 text-brand-dark/75">
+                    <span aria-hidden className="mt-0.5">🕐</span>
+                    <span>
+                      Arrivée dès{" "}
+                      <strong className="font-bold text-brand-dark">
+                        {CURRENT_SCHEDULE.arrival}
+                      </strong>{" "}
+                      · départ à{" "}
+                      <strong className="font-bold text-brand-dark">
+                        {CURRENT_SCHEDULE.departure}
+                      </strong>
+                    </span>
                   </p>
-                  <p className="mt-4 text-lg font-semibold text-brand-dark">
-                    {CURRENT_SCHEDULE.place}
+
+                  <p className="mt-6 text-2xl font-extrabold tracking-tight text-brand-dark sm:text-3xl">
+                    {CURRENT_SCHEDULE.levelsLong}
                   </p>
-                  <a
-                    href={CURRENT_SCHEDULE_MAPS_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-1 inline-block text-sm text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
-                  >
-                    {CURRENT_SCHEDULE.address} — itinéraire
-                  </a>
-                  <p className="mt-4 border-t border-brand-light/40 pt-4 text-brand-dark/75">
-                    {CURRENT_SCHEDULE.venue}
-                  </p>
+
+                  <div className="mt-6 space-y-4">
+                    <p className="flex items-start gap-3">
+                      <span aria-hidden className="mt-0.5">📍</span>
+                      <span>
+                        <span className="block font-bold text-brand-dark">
+                          {CURRENT_SCHEDULE.place}
+                        </span>
+                        <a
+                          href={CURRENT_SCHEDULE_MAPS_URL}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+                        >
+                          {CURRENT_SCHEDULE.address} — itinéraire
+                        </a>
+                      </span>
+                    </p>
+                    <p className="flex items-start gap-3 font-medium text-brand-dark/85">
+                      <span aria-hidden className="mt-0.5">🥋</span>
+                      <span>{CURRENT_SCHEDULE.venue}</span>
+                    </p>
+                  </div>
                 </div>
               </article>
 

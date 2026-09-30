@@ -339,16 +339,26 @@ export function mapsUrl(place: string, address: string): string {
  */
 export const CURRENT_SCHEDULE = {
   group: PUBLIC_GROUP,
+  /** Pastille posée sur la photo. */
+  badge: "Jeudi",
+  /** Surtitre de la carte. */
+  heading: "Chaque jeudi soir",
   day: "Jeudi soir",
   time: "18h00 – 19h30",
   levels: "6e à Terminale",
-  /** Accueil et départ : une séance n'est pas une porte qui claque. */
+  /** Même information, quand la phrase ne porte pas déjà « pour ». */
+  levelsLong: "De la 6e à la Terminale",
+  /** Arrivée et départ : une séance n'est pas une porte qui claque. */
   arrival: "17h45",
   departure: "19h45",
   place: "Complexe sportif des Garrigues",
   address: "145 avenue du Comté de Nice, Montpellier",
-  /** Ce que le lieu a de concret à offrir. */
-  venue:
+  city: "Montpellier",
+  district: "Les Hauts de Massane",
+  /** Ce que le lieu a de particulier, en une ligne. */
+  venue: "Dojo de plus de 200 m² de tatamis",
+  /** La même chose, quand il y a la place de dire pourquoi c'est bien. */
+  venueLong:
     "Plus de 200 m² de tatamis, en salle : de la place pour bouger, jouer au ballon, tomber sans se faire mal et profiter pleinement de la séance.",
 } as const;
 

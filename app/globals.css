@@ -5,6 +5,12 @@
   --color-brand-dark: #8b1a3a;
   --color-brand-light: #f48ba4;
   --color-cream: #fff7f9;
+  /*
+   * La touche jaune de l'affiche. Volontairement rare : elle ne sert qu'à
+   * souligner la promesse du hero, comme sur le flyer. Sur le framboise foncé,
+   * son contraste est très supérieur à celui du rose clair qu'elle remplace.
+   */
+  --color-sun: #ffd84d;
 }
 
 html {
