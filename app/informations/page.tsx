@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PageShell, Section, VitrineFooter } from "@/components/vitrine/page-shell";
-import { formatEuros } from "@/lib/constants";
+import {
+  CURRENT_SCHEDULE,
+  CURRENT_SCHEDULE_MAPS_URL,
+  formatEuros,
+} from "@/lib/constants";
 import { getAssociation, getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -10,13 +14,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Informations pratiques — Banat Sport Club",
   description:
-    "Horaires, lieux, tenue, cotisation et fonctionnement des séances de Banat Sport Club, à Montpellier et Grabels.",
-};
-
-/** Ce que chaque lieu a de particulier, en une phrase utile. */
-const LIEUX: Record<string, string> = {
-  jeudi: "Plus de 200 m² de tatamis, en salle.",
-  dimanche: "Un stade en plein air, terrain complet.",
+    "Horaire, lieu, tenue, cotisation et fonctionnement des séances de Banat Sport Club, à Montpellier.",
 };
 
 const TENUE = [
@@ -33,7 +31,7 @@ const AVANT_LA_SEANCE = [
 ];
 
 export default async function InformationsPage() {
-  const [{ season, annualFeeCents, groups }, association] = await Promise.all([
+  const [{ season, annualFeeCents }, association] = await Promise.all([
     getSiteSettings(),
     getAssociation(),
   ]);
@@ -43,47 +41,45 @@ export default async function InformationsPage() {
       <PageShell
         eyebrow={`Saison ${season}`}
         title="Informations pratiques"
-        intro="Les horaires, les lieux, la tenue à prévoir et le fonctionnement des séances."
+        intro="L’horaire, le lieu, la tenue à prévoir et le fonctionnement des séances."
       >
-        <Section title="Les créneaux">
+        <Section title="Le créneau">
           <p>
-            Deux créneaux ouvrent cette saison, un par tranche d’âge. Votre
-            fille suit celui qui correspond à sa classe — une séance par
-            semaine, toujours avec le même groupe.
+            Un créneau au Complexe sportif des Garrigues, pour se dépenser
+            entre filles et entre amies. Une séance par semaine, toujours avec
+            le même groupe.
           </p>
-          <div className="grid gap-4 pt-2 sm:grid-cols-2">
-            {groups.map((group) => (
-              <div
-                key={group.key}
-                className="rounded-2xl border border-brand-light/50 bg-white p-5"
-              >
-                <p className="text-lg font-extrabold uppercase tracking-tight text-brand-dark">
-                  {group.day}
-                </p>
-                <p className="mt-1 text-xl font-bold text-brand">{group.time}</p>
-                <p className="mt-2 inline-flex rounded-full bg-brand-light/25 px-3 py-1 text-sm font-bold text-brand-dark">
-                  Pour les {group.levels}
-                </p>
-                <p className="mt-3 font-semibold text-brand-dark">{group.place}</p>
-                <a
-                  href={group.mapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-block text-sm text-brand underline"
-                >
-                  {group.address} — itinéraire
-                </a>
-                {LIEUX[group.key] && (
-                  <p className="mt-3 text-sm text-brand-dark/70">
-                    {LIEUX[group.key]}
-                  </p>
-                )}
-              </div>
-            ))}
+          <div className="max-w-md rounded-2xl border border-brand-light/50 bg-white p-5">
+            <p className="text-lg font-extrabold uppercase tracking-tight text-brand-dark">
+              {CURRENT_SCHEDULE.day}
+            </p>
+            <p className="mt-1 text-xl font-bold text-brand">
+              {CURRENT_SCHEDULE.time}
+            </p>
+            <p className="mt-1 text-sm text-brand-dark/70">
+              Accueil dès {CURRENT_SCHEDULE.arrival} · départ jusqu’à{" "}
+              {CURRENT_SCHEDULE.departure}
+            </p>
+            <p className="mt-2 inline-flex rounded-full bg-brand-light/25 px-3 py-1 text-sm font-bold text-brand-dark">
+              Pour les {CURRENT_SCHEDULE.levels}
+            </p>
+            <p className="mt-3 font-semibold text-brand-dark">
+              {CURRENT_SCHEDULE.place}
+            </p>
+            <a
+              href={CURRENT_SCHEDULE_MAPS_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 inline-block text-sm text-brand underline"
+            >
+              {CURRENT_SCHEDULE.address} — itinéraire
+            </a>
+            <p className="mt-3 text-sm text-brand-dark/70">
+              Plus de 200 m² de tatamis, en salle.
+            </p>
           </div>
           <p>
-            Votre fille préfère l’autre créneau que celui prévu pour son âge ?
-            Contactez-nous, on en discute
+            Une question ou une situation particulière ? Contactez-nous
             {association.phone && (
               <>
                 {" : "}
@@ -116,11 +112,6 @@ export default async function InformationsPage() {
             <li>
               Pour cette première saison, le kit BSC — sac, gourde, accessoires
               — est offert.
-            </li>
-            <li>
-              Les adhérentes du créneau du dimanche bénéficient d’une licence
-              loisir au club partenaire, le Football Club de Grabels, incluse
-              dans la cotisation.
             </li>
           </ul>
           <p>

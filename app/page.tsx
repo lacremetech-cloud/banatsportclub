@@ -11,6 +11,8 @@ import { PhotoFond, PhotoLieu } from "@/components/vitrine/photo-lieu";
 import "@/components/vitrine/vitrine.css";
 import { ADHESION_URL } from "@/lib/adhesion";
 import {
+  CURRENT_SCHEDULE,
+  CURRENT_SCHEDULE_MAPS_URL,
   formatEurosCompact,
   mapsUrl,
   RENDEZ_VOUS,
@@ -65,9 +67,8 @@ export const metadata: Metadata = {
  */
 const SPORTS_DETAIL = [
   { emoji: "⚽", name: "Football" },
-  { emoji: "🏐", name: "Volley" },
-  { emoji: "🏀", name: "Basket" },
   { emoji: "🥋", name: "Self-défense" },
+  { emoji: "🏐", name: "Volley" },
   { emoji: "🥊", name: "Cardio boxe" },
   { emoji: "💪", name: "Circuit training" },
   { emoji: "🥎", name: "Jeux de balle" },
@@ -131,7 +132,7 @@ const GARANTIES = [
   "Des séances encadrées par une équipe passionnée",
   "Un appel à chaque séance, et un message si votre fille est absente",
   "L’assurance du club",
-  "Des lieux sportifs équipés, à Montpellier et Grabels",
+  "Un lieu sportif équipé, à Montpellier",
 ];
 
 const INCLUS = [
@@ -159,14 +160,6 @@ const REGLES = [
  * Adresse où le bureau reçoit les familles qui préfèrent s'inscrire de vive
  * voix. Distincte des lieux de séance : ce sont des bureaux, pas un gymnase.
  */
-/** Ce que chaque lieu a de concret à offrir. */
-const LIEUX: Record<string, string> = {
-  jeudi:
-    "Plus de 200 m² de tatamis : de la place pour bouger, jouer au ballon, tomber sans se faire mal et profiter pleinement de la séance.",
-  dimanche:
-    "Un vrai stade en plein air : de l’espace pour le foot, les jeux de balle et tous les sports de plein air.",
-};
-
 /**
  * Vidéo de fond du hero.
  *
@@ -185,7 +178,7 @@ function heroVideoSources(): string[] {
 }
 
 export default async function AccueilPage() {
-  const [{ season, annualFeeCents, groups }, association] = await Promise.all([
+  const [{ season, annualFeeCents }, association] = await Promise.all([
     getSiteSettings(),
     getAssociation(),
   ]);
@@ -235,7 +228,7 @@ export default async function AccueilPage() {
               {/*
                 Une photo derrière le titre, là où il n'y avait qu'un dégradé.
                 Elle est largement voilée : on ne doit pas la regarder, on doit
-                sentir qu'il y a un stade derrière les mots. Les halos roses
+                sentir qu'il y a une salle derrière les mots. Les halos roses
                 passent par dessus et la ramènent aux couleurs du club.
 
                 Uniquement en l'absence de vidéo : les deux fonds se
@@ -243,8 +236,13 @@ export default async function AccueilPage() {
               */}
               {videoSources.length === 0 && (
                 <div className="absolute inset-0">
-                  <PhotoFond variant="stade" className="bsc-kenburns" />
-                  <div className="absolute inset-0 bg-brand-dark/[0.88]" />
+                  <PhotoFond variant="dojo" className="bsc-kenburns" />
+                  {/*
+                    La photo du dojo est bien plus claire que la pelouse de nuit
+                    qu'elle remplace : à voile égal, elle éclaircissait tout le
+                    hero et on lisait la trame du faux plafond derrière le titre.
+                  */}
+                  <div className="absolute inset-0 bg-brand-dark/[0.92]" />
                 </div>
               )}
 
@@ -263,50 +261,43 @@ export default async function AccueilPage() {
               </div>
             )}
 
-            {/* Les deux lieux, posés comme deux tirages l'un sur l'autre. */}
+            {/*
+              Le lieu des séances, posé à droite du titre.
+
+              Il y avait ici deux tirages superposés, un par créneau. Le club
+              n'en ouvre plus qu'un : il ne reste que celui du jeudi, à
+              l'identique.
+            */}
             <div
               aria-hidden
-              className="pointer-events-none absolute right-8 top-1/2 hidden w-[38%] max-w-md -translate-y-1/2 xl:right-16 lg:block"
+              className="pointer-events-none absolute right-6 top-1/2 hidden w-[42%] max-w-lg -translate-y-1/2 xl:right-12 lg:block"
             >
-              {groups.slice(0, 2).map((group, index) => (
-                <div
-                  key={group.key}
-                  className="overflow-hidden rounded-3xl border border-white/20 shadow-2xl shadow-black/40"
-                  style={{
-                    marginTop: index === 0 ? 0 : "-1.25rem",
-                    marginLeft: index === 0 ? 0 : "2.5rem",
-                  }}
-                >
-                  <div className="relative h-44 overflow-hidden xl:h-48">
-                    <PhotoLieu
-                      variant={group.key === "jeudi" ? "dojo" : "stade"}
-                      // Pas de `priority` : ces deux cadres n'existent qu'à
-                      // partir de `lg`, et le préchargement, lui, ne connaît
-                      // pas les points de rupture — sur téléphone il ferait
-                      // télécharger deux images jamais affichées.
-                      sizes="(min-width: 1280px) 28rem, 30vw"
-                      className={
-                        index === 0
-                          ? "bsc-kenburns"
-                          : "bsc-kenburns bsc-kenburns--offset"
-                      }
-                    />
-                    <div className="absolute inset-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent p-4">
-                      <span>
-                        <span className="block text-lg font-extrabold uppercase tracking-tight text-white">
-                          {group.day}
-                        </span>
-                        <span className="mt-0.5 block text-xs font-semibold text-white/75">
-                          {group.levels}
-                        </span>
+              <div className="overflow-hidden rounded-3xl border border-white/20 shadow-2xl shadow-black/40">
+                <div className="relative h-72 overflow-hidden xl:h-80">
+                  <PhotoLieu
+                    variant="dojo"
+                    // Pas de `priority` : ce cadre n'existe qu'à partir de
+                    // `lg`, et le préchargement, lui, ne connaît pas les
+                    // points de rupture — sur téléphone il ferait télécharger
+                    // une image jamais affichée.
+                    sizes="(min-width: 1280px) 32rem, 40vw"
+                    className="bsc-kenburns"
+                  />
+                  <div className="absolute inset-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent p-4">
+                    <span>
+                      <span className="block text-lg font-extrabold uppercase tracking-tight text-white">
+                        {CURRENT_SCHEDULE.day}
                       </span>
-                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-brand-dark">
-                        {group.time}
+                      <span className="mt-0.5 block text-xs font-semibold text-white/75">
+                        {CURRENT_SCHEDULE.levels}
                       </span>
-                    </div>
+                    </span>
+                    <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-brand-dark">
+                      {CURRENT_SCHEDULE.time}
+                    </span>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
 
             <div className="relative mx-auto w-full max-w-6xl px-5 py-20 sm:py-28">
@@ -324,10 +315,9 @@ export default async function AccueilPage() {
                   <span className="text-brand-light">pensé pour elles.</span>
                 </h1>
 
-                <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-                  On a écouté leurs besoins, et on y répond : un club multisport
-                  rien que pour les filles, pour apprendre, s’amuser et grandir
-                  ensemble.
+                <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/85 sm:text-xl">
+                  Un club multisport rien que pour les filles, pour bouger,
+                  s’amuser et se retrouver.
                 </p>
 
                 <div
@@ -345,7 +335,7 @@ export default async function AccueilPage() {
                     href="#creneaux"
                     className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/30 px-7 text-base font-semibold text-white transition hover:bg-white/10"
                   >
-                    Voir les créneaux
+                    Voir le créneau
                   </a>
                 </div>
 
@@ -383,10 +373,10 @@ export default async function AccueilPage() {
                 </dl>
 
                 {/*
-                  Les deux tirages du hero sont posés à droite du titre, une
-                  place qui n'existe pas sur un téléphone — et c'est sur
-                  téléphone que la page sera surtout lue. Ce rappel en donne un
-                  aperçu là où il y a la place, sous les chiffres.
+                  Le tirage du hero est posé à droite du titre, une place qui
+                  n'existe pas sur un téléphone — et c'est sur téléphone que la
+                  page sera surtout lue. Ce rappel en donne un aperçu là où il y
+                  a la place, sous les chiffres.
 
                   Décoratif : le jour et le lieu sont dits en toutes lettres
                   quelques écrans plus bas. Un lecteur d'écran n'a pas besoin
@@ -396,24 +386,14 @@ export default async function AccueilPage() {
                   aria-hidden
                   data-reveal
                   style={{ ["--bsc-delay" as string]: "320ms" }}
-                  className="mt-10 grid grid-cols-2 gap-3 lg:hidden"
+                  className="relative mt-10 h-44 overflow-hidden rounded-2xl border border-white/20 sm:h-52 lg:hidden"
                 >
-                  {groups.slice(0, 2).map((group) => (
-                    <div
-                      key={group.key}
-                      className="relative h-28 overflow-hidden rounded-2xl border border-white/20 sm:h-32"
-                    >
-                      <PhotoLieu
-                        variant={group.key === "jeudi" ? "dojo" : "stade"}
-                        sizes="45vw"
-                      />
-                      <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-black/10 to-transparent p-3">
-                        <span className="text-xs font-extrabold uppercase tracking-tight text-white">
-                          {group.day}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  <PhotoLieu variant="dojo" sizes="100vw" />
+                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-black/10 to-transparent p-4">
+                    <span className="text-sm font-extrabold uppercase tracking-tight text-white">
+                      {CURRENT_SCHEDULE.day} · {CURRENT_SCHEDULE.time}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -455,10 +435,10 @@ export default async function AccueilPage() {
                 style={{ ["--bsc-delay" as string]: "100ms" }}
                 className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-dark/80"
               >
-                Foot, volley, basket, self-défense, cardio boxe, circuit
-                training, jeux de balle… et bien d’autres ! Le
-                programme change au fil de l’année, pour que chacune découvre,
-                teste et trouve ce qu’elle aime.
+                Foot, self-défense, volley, cardio boxe, circuit training,
+                jeux de balle… et bien d’autres ! Le programme change au fil de
+                l’année, pour que chacune découvre, teste et trouve ce qu’elle
+                aime.
               </p>
             </div>
 
@@ -467,9 +447,9 @@ export default async function AccueilPage() {
               pastilles, chaque sport devient une chose qu'on peut regarder une
               par une — c'est là que se joue l'envie.
 
-              Huit cases : les sept disciplines et l'ouverture. Le compte tombe
-              juste sur deux, trois ou quatre colonnes, donc aucune rangée
-              orpheline, quelle que soit la largeur de l'écran.
+              Six disciplines, puis l'ouverture. Celle-ci s'étale sur la place
+              qui reste — deux colonnes sur quatre, trois sur trois, deux sur
+              deux —, donc aucune rangée orpheline quelle que soit la largeur.
             */}
             <ul className="mx-auto mt-12 grid max-w-5xl grid-cols-2 gap-3 px-5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
               {SPORTS_DETAIL.map((sport, index) => (
@@ -493,7 +473,7 @@ export default async function AccueilPage() {
               <li
                 data-reveal
                 style={{ ["--bsc-delay" as string]: `${SPORTS_DETAIL.length * 60}ms` }}
-                className="flex flex-col items-center justify-center gap-2.5 rounded-2xl bg-brand px-3 py-6 text-center text-white"
+                className="col-span-2 flex flex-col items-center justify-center gap-2.5 rounded-2xl bg-brand px-3 py-6 text-center text-white sm:col-span-3 lg:col-span-2"
               >
                 <span aria-hidden className="text-4xl">
                   ✨
@@ -505,85 +485,117 @@ export default async function AccueilPage() {
             </ul>
           </section>
 
-          {/* 4 — Les créneaux ------------------------------------------------- */}
+          {/* 4 — Le créneau --------------------------------------------------- */}
           <section id="creneaux" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
               <div data-reveal className="max-w-2xl">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-                  Les créneaux
+                  Le créneau
                 </p>
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
                   Un créneau par semaine, rien que pour elles
                 </h2>
-                {/*
-                  « Deux créneaux » se lisait comme « elle vient deux fois par
-                  semaine ». La précision se glisse dans la phrase plutôt que de
-                  s'imposer en gras : on informe, on ne rectifie pas.
-                */}
                 <p className="mt-4 text-lg text-brand-dark/75">
-                  Deux créneaux cette saison, selon la classe de votre fille.
-                  Une séance par semaine, toujours avec le même groupe, entre
-                  filles et entre amies.
+                  Un créneau au Complexe sportif des Garrigues, pour se dépenser
+                  entre filles et entre amies. Une séance par semaine, toujours
+                  avec le même groupe.
                 </p>
               </div>
 
-              <div className="mt-12 grid gap-6 lg:grid-cols-2">
-                {groups.map((group, index) => (
-                  <article
-                    key={group.key}
-                    data-reveal
-                    style={{ ["--bsc-delay" as string]: `${index * 120}ms` }}
-                    className="group overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-brand/10"
-                  >
-                    <div className="relative h-44 overflow-hidden sm:h-56">
-                      <PhotoLieu
-                        variant={group.key === "jeudi" ? "dojo" : "stade"}
-                        sizes="(min-width: 1024px) 34rem, 100vw"
-                        className="transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 via-black/25 to-transparent p-5">
-                        <p className="text-2xl font-extrabold uppercase tracking-tight text-white sm:text-3xl">
-                          {group.day}
-                        </p>
-                        <p className="rounded-full bg-white/95 px-3.5 py-1.5 text-sm font-bold text-brand-dark">
-                          {group.time}
-                        </p>
-                      </div>
-                    </div>
+              {/*
+                La carte de l'affiche : la photo d'un côté, l'essentiel de
+                l'autre, dans l'ordre où une famille cherche — quand, pour qui,
+                où, dans quoi.
 
-                    <div className="p-6 sm:p-7">
-                      <p className="inline-flex rounded-full bg-brand-light/25 px-3.5 py-1.5 text-sm font-bold text-brand-dark">
-                        Pour les {group.levels}
-                      </p>
-                      <p className="mt-4 text-lg font-semibold text-brand-dark">
-                        {group.place}
-                      </p>
-                      <a
-                        href={group.mapsUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-block text-sm text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
-                      >
-                        {group.address} — itinéraire
-                      </a>
-                      {LIEUX[group.key] && (
-                        <p className="mt-4 border-t border-brand-light/40 pt-4 text-brand-dark/75">
-                          {LIEUX[group.key]}
-                        </p>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
+                Pleine largeur : le club n'ouvre plus qu'un créneau, et une
+                carte laissée à mi-largeur donnerait l'impression qu'il en
+                manque une seconde.
+              */}
+              <article
+                data-reveal
+                className="group mt-12 overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:shadow-xl hover:shadow-brand/10 lg:grid lg:grid-cols-[1.25fr_1fr]"
+              >
+                <div className="relative h-64 overflow-hidden sm:h-80 lg:h-full lg:min-h-[27rem]">
+                  <PhotoLieu
+                    variant="dojo"
+                    sizes="(min-width: 1024px) 40rem, 100vw"
+                    className="transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/60 via-transparent to-black/30 p-5">
+                    <span className="self-start rounded-full bg-brand px-4 py-1.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-black/20">
+                      <span aria-hidden>🗓</span> {CURRENT_SCHEDULE.badge}
+                    </span>
+                    <span className="self-start rounded-full bg-white/95 px-4 py-1.5 text-sm text-brand-dark shadow-lg shadow-black/20">
+                      <span aria-hidden>📍</span>{" "}
+                      <strong className="font-bold">{CURRENT_SCHEDULE.city}</strong>
+                      {", "}
+                      {CURRENT_SCHEDULE.district}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-7 sm:p-9 lg:flex lg:flex-col lg:justify-center">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
+                    {CURRENT_SCHEDULE.heading}
+                  </p>
+                  <p className="mt-2 text-4xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
+                    {CURRENT_SCHEDULE.time}
+                  </p>
+                  {/*
+                    Une séance n'est pas une porte qui claque : les familles qui
+                    viennent de loin ont besoin de savoir qu'on peut arriver un
+                    peu avant et repartir un peu après.
+                  */}
+                  <p className="mt-2.5 flex items-start gap-2 text-brand-dark/75">
+                    <span aria-hidden className="mt-0.5">🕐</span>
+                    <span>
+                      Arrivée dès{" "}
+                      <strong className="font-bold text-brand-dark">
+                        {CURRENT_SCHEDULE.arrival}
+                      </strong>{" "}
+                      · départ à{" "}
+                      <strong className="font-bold text-brand-dark">
+                        {CURRENT_SCHEDULE.departure}
+                      </strong>
+                    </span>
+                  </p>
+
+                  <p className="mt-6 text-2xl font-extrabold tracking-tight text-brand-dark sm:text-3xl">
+                    {CURRENT_SCHEDULE.levelsLong}
+                  </p>
+
+                  <div className="mt-6 space-y-4">
+                    <p className="flex items-start gap-3">
+                      <span aria-hidden className="mt-0.5">📍</span>
+                      <span>
+                        <span className="block font-bold text-brand-dark">
+                          {CURRENT_SCHEDULE.place}
+                        </span>
+                        <a
+                          href={CURRENT_SCHEDULE_MAPS_URL}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+                        >
+                          {CURRENT_SCHEDULE.address} — itinéraire
+                        </a>
+                      </span>
+                    </p>
+                    <p className="flex items-start gap-3 font-medium text-brand-dark/85">
+                      <span aria-hidden className="mt-0.5">🥋</span>
+                      <span>{CURRENT_SCHEDULE.venue}</span>
+                    </p>
+                  </div>
+                </div>
+              </article>
 
               {/*
-                Les tranches d'âge ne sont pas un mur : une fille peut se sentir
-                mieux dans l'autre groupe. On le dit ici plutôt que de laisser
-                la famille renoncer faute d'avoir demandé.
+                Un créneau unique ne veut pas dire un cadre rigide : une
+                situation particulière se règle par téléphone, pas en
+                renonçant.
               */}
               <p data-reveal className="mt-6 text-brand-dark/75">
-                Votre fille préfère l’autre créneau que celui prévu pour son
-                âge ? Contactez-nous, on en discute
+                Une question ou une situation particulière ? Contactez-nous
                 {phoneHref ? (
                   <>
                     {" : "}

@@ -85,10 +85,10 @@ export default async function ConfidentialitePage() {
             club ne voit ni ne conserve votre numéro de carte.
           </p>
           <p>
-            Pour les adhérentes inscrites au créneau du dimanche, les données
-            nécessaires à la licence loisir — nom, prénom, date de naissance —
-            sont transmises au club partenaire, le Football Club de Grabels, et
-            servent uniquement à cela.
+            Lorsqu’une licence loisir est créée pour une adhérente auprès de
+            notre club partenaire, le Football Club de Grabels, les données
+            nécessaires — nom, prénom, date de naissance — lui sont transmises
+            et servent uniquement à cela.
           </p>
         </Section>
 
