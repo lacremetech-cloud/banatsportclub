@@ -8,13 +8,14 @@
  */
 
 /**
- * Données techniques des deux groupes. L'affichage vient des settings.
+ * Données techniques des groupes. L'affichage vient des settings, sauf pour le
+ * créneau public : voir `CURRENT_SCHEDULE`.
  *
- * `levels` énumère les classes visées par le créneau. La 3e figure
- * volontairement dans les deux : c'est une année charnière, et une 3e peut
- * être mieux à sa place dans l'un ou l'autre groupe selon sa maturité et ses
- * horaires. Cette liste sert à CONSEILLER, jamais à interdire : aucune
- * inscription n'est refusée sur la base de la classe.
+ * Le club n'ouvre plus qu'un créneau au public, le jeudi, et il accueille
+ * toutes les classes. `dimanche` reste déclaré parce que des adhérentes, des
+ * séances et des présences y sont rattachées en base : le supprimer casserait
+ * la relecture de l'historique et les exports. Il n'est simplement plus
+ * proposé nulle part côté public — voir `PUBLIC_GROUP`.
  */
 export const GROUPS = {
   jeudi: {
@@ -22,7 +23,7 @@ export const GROUPS = {
     weekday: 4,
     startTime: "18:00",
     endTime: "19:30",
-    levels: ["6e", "5e", "4e"],
+    levels: ["6e", "5e", "4e", "3e", "2nde", "1ere", "terminale"],
   },
   dimanche: {
     weekday: 0,
@@ -31,6 +32,16 @@ export const GROUPS = {
     levels: ["3e", "2nde", "1ere", "terminale"],
   },
 } as const;
+
+/**
+ * Le seul créneau ouvert au public.
+ *
+ * Toute inscription venant du site y est rattachée sans que la famille ait à
+ * choisir : il n'y a rien à choisir. Le dimanche existe encore en base et dans
+ * l'espace bureau — c'est une solution de repli interne — mais aucun parcours
+ * public ne doit y conduire ni le mentionner.
+ */
+export const PUBLIC_GROUP = "jeudi" as const;
 
 export type GroupName = keyof typeof GROUPS;
 export const GROUP_NAMES = Object.keys(GROUPS) as GroupName[];
@@ -312,6 +323,40 @@ export function mapsUrl(place: string, address: string): string {
     `${place} ${address}`,
   )}`;
 }
+
+/**
+ * LE CRÉNEAU — ce que le site public dit des séances.
+ *
+ * Ces valeurs ne viennent volontairement pas de la table `settings` : le
+ * formulaire de réglages n'expose aucun champ de créneau, si bien qu'elles
+ * n'étaient modifiables que par une écriture SQL directe. Une ligne périmée en
+ * base aurait alors silencieusement supplanté le code — c'est exactement ce
+ * qui s'est produit, la page annonçant « 6e à 4e » le jeudi bien après que le
+ * créneau ait été ouvert à toutes les classes.
+ *
+ * Les libellés courts du CRM restent dans `DEFAULT_GROUP_DISPLAY` : l'espace
+ * bureau gère les deux groupes, l'historique compris.
+ */
+export const CURRENT_SCHEDULE = {
+  group: PUBLIC_GROUP,
+  day: "Jeudi soir",
+  time: "18h00 – 19h30",
+  levels: "6e à Terminale",
+  /** Accueil et départ : une séance n'est pas une porte qui claque. */
+  arrival: "17h45",
+  departure: "19h45",
+  place: "Complexe sportif des Garrigues",
+  address: "145 avenue du Comté de Nice, Montpellier",
+  /** Ce que le lieu a de concret à offrir. */
+  venue:
+    "Plus de 200 m² de tatamis, en salle : de la place pour bouger, jouer au ballon, tomber sans se faire mal et profiter pleinement de la séance.",
+} as const;
+
+/** Itinéraire vers le lieu des séances, dérivé de `CURRENT_SCHEDULE`. */
+export const CURRENT_SCHEDULE_MAPS_URL = mapsUrl(
+  CURRENT_SCHEDULE.place,
+  CURRENT_SCHEDULE.address,
+);
 
 export function formatEuros(cents: number): string {
   return new Intl.NumberFormat("fr-FR", {

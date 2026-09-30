@@ -4,12 +4,33 @@ Mini-site public, formulaire d'inscription et mini-CRM pour **Banat Sport Club**
 association sportive féminine à Montpellier.
 
 - **Public** : collégiennes et lycéennes, de la 6e à la Terminale
-- **Jeudi soir — 6e à 3e** : 18h00 – 19h30, Complexe sportif des Garrigues — Haut de Massane, 145 Av. du Comté de Nice, 34080 Montpellier
-- **Dimanche matin — 3e à Terminale** : 10h30 – 12h30, Stade Serge Oltra — Grabels, Rue du Mas d'Armand, 34790 Grabels
+- **Jeudi soir — 6e à Terminale** : 18h00 – 19h30 (accueil dès 17h45, départ
+  jusqu'à 19h45), Complexe sportif des Garrigues, 145 avenue du Comté de Nice,
+  Montpellier
 
-La 3e est volontairement éligible aux deux créneaux. Les niveaux guident le
-parent, ils ne bloquent aucune inscription : le bureau peut accepter une
-situation particulière.
+### Un seul créneau public
+
+Le club a ouvert un temps un second créneau le dimanche matin, au Stade Serge
+Oltra à Grabels. Il est devenu une **solution de repli interne** et n'est plus
+proposé au public — ni sur l'accueil, ni dans les pages d'information, ni dans
+les métadonnées, ni dans le parcours d'inscription.
+
+Il reste en revanche **déclaré dans le code et vivant en base** (`GROUPS`,
+`DEFAULT_GROUP_DISPLAY`, la provision de reversement au club partenaire), parce
+que des adhérentes, des séances et des présences y sont rattachées : le
+supprimer casserait la relecture de l'historique et les exports. L'espace
+bureau continue de le voir.
+
+Deux garde-fous côté public :
+
+- `CURRENT_SCHEDULE` (lib/constants.ts) porte ce que le site dit des séances.
+  Ces valeurs ne viennent pas de `settings` : le formulaire de réglages n'expose
+  aucun champ de créneau, si bien qu'une ligne périmée en base supplantait
+  silencieusement le code — c'est ainsi que la page a longtemps annoncé
+  « 6e à 4e » le jeudi.
+- `PUBLIC_GROUP` est le seul groupe qu'une inscription venue du site peut
+  porter. Le schéma de validation le force (`z.preprocess`) : un `groupName`
+  envoyé à la main, `dimanche` compris, est remplacé, pas refusé.
 
 ## Stack
 
@@ -69,7 +90,7 @@ Ce script écrit dans la table `settings` :
 | `season` | `2026-2027` |
 | `annual_fee_cents` | `20000` (200 €) |
 | `group_jeudi_day` / `_levels` / `_time` / `_place` / `_address` | `Jeudi soir` / `6e à 3e` / `18h00 – 19h30` / `Complexe sportif des Garrigues — Haut de Massane` / `145 Av. du Comté de Nice, 34080 Montpellier` |
-| `group_dimanche_day` / `_levels` / `_time` / `_place` / `_address` | `Dimanche matin` / `3e à Terminale` / `10h30 – 12h30` / `Stade Serge Oltra — Grabels` / `Rue du Mas d'Armand, 34790 Grabels` |
+| `group_dimanche_day` / `_levels` / `_time` / `_place` / `_address` | Le créneau de repli, affiché dans l'espace bureau uniquement |
 
 Le tarif et les créneaux affichés sur le site viennent **toujours** de cette
 table, jamais d'une constante recopiée dans un composant (voir
@@ -265,12 +286,12 @@ doit. En SVG : il reste net en impression grand format.
 Si l'adresse de la collecte change, le QR code doit être régénéré — il n'est pas
 calculé à la volée.
 
-### Les photos des lieux
+### La photo du lieu
 
-Deux photos, dans `public/photos/`, illustrent les deux créneaux : les tatamis
-bleus d'un dojo pour le jeudi, une pelouse sous les projecteurs pour le
-dimanche. Elles ont remplacé les terrains dessinés en SVG, qui finissaient par
-ressembler à des pictogrammes.
+Une photo, dans `public/photos/`, illustre le créneau : les tatamis bleus d'un
+dojo. Elle a remplacé les terrains dessinés en SVG, qui finissaient par
+ressembler à des pictogrammes. La pelouse qui illustrait le dimanche est partie
+avec le créneau ; git la garde si l'extérieur rouvre un jour.
 
 **Aucune personne n'y figure, et c'est une règle.** Le droit à l'image des
 adhérentes se demande famille par famille (voir `public/videos/README.md`) ;

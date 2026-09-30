@@ -129,8 +129,8 @@ export async function VitrineFooter() {
               </div>
             </div>
             <p className="mt-4 max-w-sm text-sm text-brand-dark/70">
-              Club multisport féminin — Montpellier et Grabels. Association loi
-              1901, N° RNA W343034172.
+              Club multisport féminin — Montpellier. Association loi 1901,
+              N° RNA W343034172.
             </p>
             <p className="mt-3 text-sm text-brand-dark/70">
               {phoneHref && (

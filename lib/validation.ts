@@ -4,6 +4,7 @@ import {
   ATTENDANCE_STATUSES,
   CONSENT_TYPES,
   GROUP_NAMES,
+  PUBLIC_GROUP,
   INSURANCE_STATUSES,
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
@@ -35,10 +36,22 @@ const phone = z
 
 const groupName = z.enum(GROUP_NAMES as [string, ...string[]]);
 
-/** Même liste, avec un message parlant pour le formulaire public. */
-const chosenGroupName = z.enum(GROUP_NAMES as [string, ...string[]], {
-  error: "Merci de choisir un créneau",
-});
+/**
+ * Le créneau d'une inscription venue du site.
+ *
+ * Il n'est plus choisi : le club n'ouvre qu'un créneau au public, et demander
+ * de confirmer un choix qui n'existe pas serait une question de plus pour
+ * rien. La valeur reçue est remplacée par `PUBLIC_GROUP` plutôt que refusée —
+ * un `groupName` envoyé à la main, `dimanche` compris, ne vient d'aucun
+ * parcours que nous proposons.
+ *
+ * L'espace bureau, lui, continue de pouvoir déplacer une adhérente d'un groupe
+ * à l'autre : c'est un autre schéma, et l'historique reste intact.
+ */
+const chosenGroupName = z.preprocess(
+  () => PUBLIC_GROUP,
+  z.literal(PUBLIC_GROUP),
+) as unknown as z.ZodType<string>;
 
 // --- Étapes du formulaire d'inscription -----------------------------------
 // Chaque étape a son propre schéma : le formulaire valide l'étape courante

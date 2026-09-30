@@ -11,6 +11,10 @@
  * `public/videos/README.md`). Un lieu vide ne pose jamais cette question et ne
  * met en scène personne qui n'aurait pas dit oui.
  *
+ * Il y avait ici une seconde variante, une pelouse, pour le créneau du
+ * dimanche à Grabels. Le club n'ouvre plus qu'un créneau au public : elle est
+ * partie avec lui — git la garde si l'extérieur rouvre un jour.
+ *
  * Les fichiers sont importés plutôt que référencés par leur chemin : Next lit
  * alors leurs dimensions à la compilation, réserve la place exacte de l'image —
  * donc aucun sursaut de mise en page — et fabrique la vignette floue affichée
@@ -19,9 +23,8 @@
 import Image from "next/image";
 
 import dojo from "@/public/photos/dojo-tatamis.webp";
-import stade from "@/public/photos/stade-pelouse.webp";
 
-export type LieuVariant = "dojo" | "stade";
+export type LieuVariant = "dojo";
 
 /**
  * Les textes alternatifs décrivent ce que montre la photo, sans prétendre que
@@ -40,12 +43,6 @@ const PHOTOS: Record<
     // d'ancrage pour que ce soient les tatamis — ce qu'on vient voir — qui
     // occupent l'image, avec juste assez de miroirs pour donner l'échelle.
     position: "object-[50%_85%]",
-  },
-  stade: {
-    src: stade,
-    alt: "Un terrain de football en gazon synthétique, en plein jour, avec un but et des arbres au fond.",
-    // Ici le centre tombe bien : le but et les arbres en haut, la pelouse en bas.
-    position: "object-center",
   },
 };
 

@@ -74,11 +74,6 @@ export default async function ConditionsPage() {
               est offert à chaque adhérente.
             </li>
             <li>
-              Les adhérentes du créneau du dimanche bénéficient d’une licence
-              loisir au club partenaire, le Football Club de Grabels, incluse
-              dans la cotisation.
-            </li>
-            <li>
               D’autres activités peuvent être proposées pendant l’année, les
               vacances et l’été ; leurs conditions sont communiquées le moment
               venu et certaines peuvent demander une participation
