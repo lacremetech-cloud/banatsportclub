@@ -311,10 +311,8 @@ export default async function AccueilPage() {
                 </p>
 
                 <h1 className="mt-5 text-[2.4rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  Enfin un club de sport pensé{" "}
-                  <span className="text-sun underline decoration-white/70 decoration-4 underline-offset-8">
-                    pour elles.
-                  </span>
+                  Enfin un club de sport{" "}
+                  <span className="text-brand-light">pensé pour elles.</span>
                 </h1>
 
                 <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/85 sm:text-xl">
