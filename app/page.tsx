@@ -270,17 +270,17 @@ export default async function AccueilPage() {
             */}
             <div
               aria-hidden
-              className="pointer-events-none absolute right-8 top-1/2 hidden w-[38%] max-w-md -translate-y-1/2 xl:right-16 lg:block"
+              className="pointer-events-none absolute right-6 top-1/2 hidden w-[42%] max-w-lg -translate-y-1/2 xl:right-12 lg:block"
             >
               <div className="overflow-hidden rounded-3xl border border-white/20 shadow-2xl shadow-black/40">
-                <div className="relative h-44 overflow-hidden xl:h-48">
+                <div className="relative h-72 overflow-hidden xl:h-80">
                   <PhotoLieu
                     variant="dojo"
                     // Pas de `priority` : ce cadre n'existe qu'à partir de
                     // `lg`, et le préchargement, lui, ne connaît pas les
                     // points de rupture — sur téléphone il ferait télécharger
                     // une image jamais affichée.
-                    sizes="(min-width: 1280px) 28rem, 30vw"
+                    sizes="(min-width: 1280px) 32rem, 40vw"
                     className="bsc-kenburns"
                   />
                   <div className="absolute inset-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent p-4">
@@ -388,7 +388,7 @@ export default async function AccueilPage() {
                   aria-hidden
                   data-reveal
                   style={{ ["--bsc-delay" as string]: "320ms" }}
-                  className="relative mt-10 h-32 overflow-hidden rounded-2xl border border-white/20 sm:h-40 lg:hidden"
+                  className="relative mt-10 h-44 overflow-hidden rounded-2xl border border-white/20 sm:h-52 lg:hidden"
                 >
                   <PhotoLieu variant="dojo" sizes="100vw" />
                   <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-black/10 to-transparent p-4">
@@ -515,12 +515,12 @@ export default async function AccueilPage() {
               */}
               <article
                 data-reveal
-                className="group mt-12 overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:shadow-xl hover:shadow-brand/10 lg:grid lg:grid-cols-[1.05fr_1fr]"
+                className="group mt-12 overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:shadow-xl hover:shadow-brand/10 lg:grid lg:grid-cols-[1.25fr_1fr]"
               >
-                <div className="relative h-56 overflow-hidden sm:h-72 lg:h-full lg:min-h-[25rem]">
+                <div className="relative h-64 overflow-hidden sm:h-80 lg:h-full lg:min-h-[27rem]">
                   <PhotoLieu
                     variant="dojo"
-                    sizes="(min-width: 1024px) 34rem, 100vw"
+                    sizes="(min-width: 1024px) 40rem, 100vw"
                     className="transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                   <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/60 via-transparent to-black/30 p-5">
@@ -536,7 +536,7 @@ export default async function AccueilPage() {
                   </div>
                 </div>
 
-                <div className="p-7 sm:p-9">
+                <div className="p-7 sm:p-9 lg:flex lg:flex-col lg:justify-center">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
                     {CURRENT_SCHEDULE.heading}
                   </p>
