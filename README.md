@@ -539,6 +539,13 @@ deux usages s'en servent :
 Deux copies finiraient par diverger, et une famille recevrait par email un
 document différent de celui affiché sur le site.
 
+> **Le PDF déposé est en retard d'une version.** La transcription de
+> `app/reglement/reglement-content.ts` a été mise à jour avec le règlement
+> révisé du 25/09/2026 ; le PDF, lui, est encore la version précédente — il
+> cite le créneau du dimanche, le club partenaire et un dossier de pièces
+> signées. Déposer le PDF révisé sous le même nom suffit à les réaligner :
+> rien d'autre n'est à changer.
+
 ## Email de confirmation d'inscription
 
 Dès qu'une inscription est **écrite en base**, un email de confirmation part

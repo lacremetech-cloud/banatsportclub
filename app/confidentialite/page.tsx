@@ -85,10 +85,9 @@ export default async function ConfidentialitePage() {
             club ne voit ni ne conserve votre numéro de carte.
           </p>
           <p>
-            Lorsqu’une licence loisir est créée pour une adhérente auprès de
-            notre club partenaire, le Football Club de Grabels, les données
-            nécessaires — nom, prénom, date de naissance — lui sont transmises
-            et servent uniquement à cela.
+            En dehors de cela, vos données ne sont transmises qu’aux personnes
+            et prestataires nécessaires à la gestion de l’association, dans le
+            respect de la réglementation applicable.
           </p>
         </Section>
 

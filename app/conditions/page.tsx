@@ -112,8 +112,9 @@ export default async function ConditionsPage() {
         <Section title="Séance d’essai">
           <p>
             Une séance d’essai gratuite peut être proposée avant de s’inscrire.
-            L’autorisation parentale et la fiche sanitaire restent obligatoires
-            pour y participer.
+            Pour une mineure, les informations et autorisations demandées par
+            l’association doivent avoir été renseignées par le représentant
+            légal avant la séance d’essai.
           </p>
         </Section>
 

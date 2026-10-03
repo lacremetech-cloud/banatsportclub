@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-import { VitrineFooter } from "@/components/vitrine/page-shell";
+import { PhoneIcon, VitrineFooter } from "@/components/vitrine/page-shell";
 import { HeroVideo, Motion, ScrollProgress } from "@/components/vitrine/motion";
 import { PhotoFond, PhotoLieu } from "@/components/vitrine/photo-lieu";
 import "@/components/vitrine/vitrine.css";
@@ -195,7 +195,7 @@ export default async function AccueilPage() {
         objectif : les liens de navigation ne feraient que proposer des sorties.
       */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-brand-dark/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-5 py-3">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
               src="/logo-bsc.png"
@@ -205,16 +205,38 @@ export default async function AccueilPage() {
               priority
               className="h-9 w-9 shrink-0"
             />
-            <span className="text-sm font-extrabold uppercase tracking-tight text-white sm:text-base">
+            <span className="text-sm font-extrabold uppercase tracking-tight text-white max-[379px]:hidden sm:text-base">
               Banat Sport Club
             </span>
           </Link>
-          <a
-            href="#adherer"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white hover:text-brand-dark"
-          >
-            Réserver sa place
-          </a>
+          {/*
+            Le téléphone à côté du bouton d'inscription, et non caché au bas de
+            la page : une famille qui hésite, qui a une question ou qui ne veut
+            pas remplir un formulaire doit pouvoir appeler depuis n'importe
+            quel endroit de la page. `tel:` compose directement sur un
+            téléphone.
+
+            Sur petit écran, le numéro cède la place à la seule icône : le
+            bouton d'inscription doit rester entier.
+          */}
+          <div className="flex shrink-0 items-center gap-2">
+            {phoneHref && (
+              <a
+                href={`tel:${phoneHref}`}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/30 px-2.5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 sm:px-4"
+              >
+                <PhoneIcon />
+                <span className="hidden sm:inline">{association.phone}</span>
+                <span className="sr-only sm:hidden">Nous appeler</span>
+              </a>
+            )}
+            <a
+              href="#adherer"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white hover:text-brand-dark sm:px-5"
+            >
+              Réserver sa place
+            </a>
+          </div>
         </div>
       </header>
 
@@ -966,15 +988,31 @@ export default async function AccueilPage() {
               <p data-reveal className="mt-4 text-lg text-white/85">
                 Réservez dès maintenant la place de votre fille.
               </p>
-              <a
+              <div
                 data-reveal
-                href={ADHESION_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-7 inline-flex min-h-14 items-center justify-center rounded-2xl bg-white px-8 text-base font-bold text-brand-dark transition hover:-translate-y-0.5 hover:bg-brand-dark hover:text-white"
+                className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row"
               >
-                Inscrire ma fille
-              </a>
+                <a
+                  href={ADHESION_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-white px-8 text-base font-bold text-brand-dark transition hover:-translate-y-0.5 hover:bg-brand-dark hover:text-white sm:w-auto"
+                >
+                  Inscrire ma fille
+                </a>
+                {/*
+                  Toutes les familles ne veulent pas d'un formulaire. Le même
+                  bouton, en second, pour celles qui préfèrent une voix.
+                */}
+                {phoneHref && (
+                  <a
+                    href={`tel:${phoneHref}`}
+                    className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-white/50 px-8 text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:w-auto"
+                  >
+                    <PhoneIcon className="h-5 w-5" /> Nous appeler
+                  </a>
+                )}
+              </div>
             </div>
           </section>
         </main>

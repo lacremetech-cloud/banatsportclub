@@ -9,11 +9,21 @@
  * Le PDF lui-même est déclaré une seule fois, dans `lib/reglement.ts` : la
  * page et l'email de confirmation servent ainsi exactement le même document.
  *
- * Version du 25/09/2026 — ce qui a changé par rapport à la précédente :
- * un nouvel « Article 5 — Séance d'essai » (qui décale la numérotation de
- * tous les suivants), la licence loisir au club partenaire pour le créneau du
- * dimanche (article 4), et le détail de l'hébergement des données chez
- * AssoConnect (article 16).
+ * Version du 25/09/2026, révisée — ce qui a changé par rapport à la
+ * transcription précédente :
+ *
+ * - l'inscription se fait par formulaire en ligne, et le dossier n'est plus
+ *   une liste de pièces signées mais de consentements confirmés (article 2) ;
+ * - le paiement en plusieurs échéances et le règlement hors ligne entrent au
+ *   règlement (article 3) ;
+ * - la licence loisir au club partenaire disparaît, le club n'ouvrant plus
+ *   qu'un créneau (articles 4 et 16) ;
+ * - la séance d'essai demande des informations renseignées, non des pièces
+ *   signées (article 5) ;
+ * - la communication ne passe plus par un seul groupe mais par plusieurs
+ *   canaux (article 12) ;
+ * - le refus du droit à l'image n'« exclut » plus l'adhérente, il la tient
+ *   hors des prises de vue concernées (article 15).
  */
 
 export const HEADER = {
@@ -24,7 +34,7 @@ export const HEADER = {
 };
 
 export const PREAMBLE =
-  "Le présent règlement intérieur complète les statuts de l’association Banat Sport Club. Il s’applique à l’ensemble des adhérentes, des encadrantes et des familles. Chaque adhérente et son représentant légal s’engagent à en prendre connaissance et à le respecter.";
+  "Le présent règlement intérieur complète les statuts de l’association Banat Sport Club. Il s’applique à l’ensemble des adhérentes, des encadrantes et des familles. Chaque adhérente et, pour les mineures, son représentant légal s’engagent à en prendre connaissance et à le respecter.";
 
 export type Block =
   | { kind: "p"; text: string }
@@ -48,17 +58,29 @@ export const ARTICLES: Article[] = [
     blocks: [
       {
         kind: "p",
-        text: "L’adhésion est annuelle et valable du 1er septembre 2026 au 31 août 2027. Les séances sportives régulières ont lieu jusqu’au 20 juin 2027, hors vacances scolaires. L’adhésion est validée après réception du dossier complet et du règlement de la cotisation. Le dossier d’inscription comprend :",
+        text: "L’adhésion est annuelle et valable du 1er septembre 2026 au 31 août 2027. Les séances sportives régulières ont lieu jusqu’au 20 juin 2027, hors vacances scolaires.",
+      },
+      {
+        kind: "p",
+        text: "L’inscription est réalisée au moyen du formulaire en ligne mis à disposition par l’association. Pour les adhérentes mineures, le formulaire est complété par leur représentant légal ; l’adhérente majeure effectue elle-même son inscription et donne ses propres consentements.",
+      },
+      {
+        kind: "p",
+        text: "La validation du formulaire et la confirmation des consentements obligatoires matérialisent l’acceptation des informations, autorisations et dispositions du présent règlement intérieur.",
+      },
+      {
+        kind: "p",
+        text: "L’adhésion est validée après réception d’un dossier complet et acceptation des modalités de règlement de la cotisation. Le dossier d’inscription comprend :",
       },
       {
         kind: "list",
         items: [
-          "Fiche d’inscription complétée et signée",
-          "Autorisation parentale signée (pour les mineures)",
-          "Fiche sanitaire de liaison",
-          "Autorisation relative au droit à l’image",
-          "Règlement intérieur signé",
-          "Règlement de la cotisation",
+          "Formulaire d’inscription complété",
+          "Informations sanitaires nécessaires",
+          "Autorisation du représentant légal (pour les mineures)",
+          "Consentements et autorisations demandés lors de l’inscription, dont le choix relatif au droit à l’image",
+          "Acceptation du règlement intérieur",
+          "Règlement de la cotisation selon les modalités convenues",
         ],
       },
       {
@@ -78,6 +100,10 @@ export const ARTICLES: Article[] = [
       {
         kind: "p",
         text: "D’autres activités pourront être proposées tout au long de l’année, pendant les vacances et l’été. Les conditions de participation seront communiquées aux familles le moment venu.",
+      },
+      {
+        kind: "p",
+        text: "Le règlement peut être effectué en une fois ou en plusieurs échéances lorsque cette possibilité est proposée par l’association. Il peut, à titre exceptionnel, être effectué hors ligne puis enregistré par l’association.",
       },
       {
         kind: "p",
@@ -102,11 +128,7 @@ export const ARTICLES: Article[] = [
       },
       {
         kind: "p",
-        text: "Les adhérentes inscrites au créneau du dimanche bénéficient d’une licence loisir au club partenaire (Football Club de Grabels), incluse dans la cotisation, donnant accès aux équipements et au matériel sur place.",
-      },
-      {
-        kind: "p",
-        text: "En cas de conditions météorologiques défavorables, la séance en extérieur peut être annulée. Les familles seront prévenues par message.",
+        text: "Lorsqu’une activité est organisée en extérieur, elle peut être modifiée, reportée ou annulée en cas de conditions météorologiques défavorables. Les familles en seront informées.",
       },
     ],
   },
@@ -115,7 +137,7 @@ export const ARTICLES: Article[] = [
     blocks: [
       {
         kind: "p",
-        text: "Une séance d’essai gratuite peut être proposée aux filles souhaitant découvrir l’activité avant de s’inscrire. L’autorisation parentale et la fiche sanitaire restent obligatoires pour y participer.",
+        text: "Une séance d’essai gratuite peut être proposée aux filles souhaitant découvrir l’activité avant de s’inscrire. Pour une mineure, les informations et autorisations demandées par l’association doivent avoir été renseignées par le représentant légal avant la séance d’essai.",
       },
     ],
   },
@@ -232,7 +254,7 @@ export const ARTICLES: Article[] = [
     blocks: [
       {
         kind: "p",
-        text: "Un groupe de communication dédié aux parents est mis en place pour transmettre les informations régulières : planning, événements, changements. Les familles s’engagent à consulter régulièrement les messages.",
+        text: "Un ou plusieurs canaux de communication sont utilisés par l’association pour transmettre aux adhérentes et aux familles les informations relatives au planning, aux événements et aux éventuels changements : notamment WhatsApp, message individuel, email ou tout autre moyen communiqué par l’association. Les familles s’engagent à consulter régulièrement les messages.",
       },
     ],
   },
@@ -276,7 +298,7 @@ export const ARTICLES: Article[] = [
     blocks: [
       {
         kind: "p",
-        text: "L’association peut être amenée à prendre des photos ou vidéos lors des séances et événements, à des fins d’archivage interne uniquement. Une autorisation relative au droit à l’image est signée lors de l’inscription. En cas de refus, l’adhérente sera exclue des prises de vue. Aucune image ne sera diffusée sur les réseaux sociaux ou tout support public.",
+        text: "L’association peut être amenée à prendre des photos ou vidéos lors des séances et événements, à des fins d’archivage interne uniquement. Une autorisation relative au droit à l’image est recueillie lors de l’inscription. En cas de refus, l’adhérente n’est pas intégrée aux prises de vue concernées. Aucune image ne sera diffusée sur les réseaux sociaux ou tout support public sans autorisation appropriée.",
       },
     ],
   },
@@ -285,15 +307,11 @@ export const ARTICLES: Article[] = [
     blocks: [
       {
         kind: "p",
-        text: "Les données personnelles recueillies lors de l’inscription sont utilisées exclusivement pour la gestion de l’association et la communication avec les familles. Elles ne sont pas communiquées à des tiers.",
+        text: "Les données personnelles recueillies lors de l’inscription sont utilisées exclusivement pour la gestion de l’association et la communication avec les familles. Elles ne sont transmises qu’aux personnes et prestataires nécessaires à la gestion de l’association, dans le respect de la réglementation applicable.",
       },
       {
         kind: "p",
         text: "Les données sont hébergées sur la plateforme de gestion AssoConnect, utilisée par l’association pour les inscriptions, les paiements et la comptabilité.",
-      },
-      {
-        kind: "p",
-        text: "Pour les adhérentes inscrites au créneau du dimanche, les données nécessaires à la création de la licence loisir (nom, prénom, date de naissance) sont transmises au club partenaire (Football Club de Grabels). Ces données sont utilisées exclusivement à cette fin.",
       },
       {
         kind: "p",

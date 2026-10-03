@@ -163,10 +163,10 @@ export default async function InformationsPage() {
             ne viendra pas, prévenez l’encadrante.
           </p>
           <p>
-            Un groupe de communication dédié aux parents transmet les
-            informations régulières : planning, événements, changements. En cas
-            de météo défavorable, l’annulation d’une séance en extérieur y est
-            annoncée.
+            Les informations régulières — planning, événements, changements —
+            vous sont transmises par les canaux annoncés par le club :
+            WhatsApp, message individuel ou email. En cas de météo défavorable,
+            l’annulation d’une activité en extérieur y est annoncée.
           </p>
         </Section>
 
