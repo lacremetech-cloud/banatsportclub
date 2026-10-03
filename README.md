@@ -539,6 +539,13 @@ deux usages s'en servent :
 Deux copies finiraient par diverger, et une famille recevrait par email un
 document différent de celui affiché sur le site.
 
+Les deux doivent être remplacés ensemble : le PDF dans `public/`, et la
+transcription de `app/reglement/reglement-content.ts`. Un script de
+comparaison existe pour le vérifier — il extrait le texte du PDF et contrôle
+que **chaque** fragment de la transcription (en-tête, préambule, titre
+d'article, paragraphe, puce) s'y retrouve mot pour mot. La version du
+25/09/2026 révisée a été validée ainsi : 88 fragments sur 88.
+
 ## Email de confirmation d'inscription
 
 Dès qu'une inscription est **écrite en base**, un email de confirmation part
