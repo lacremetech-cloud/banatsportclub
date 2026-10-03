@@ -539,12 +539,12 @@ deux usages s'en servent :
 Deux copies finiraient par diverger, et une famille recevrait par email un
 document différent de celui affiché sur le site.
 
-> **Le PDF déposé est en retard d'une version.** La transcription de
-> `app/reglement/reglement-content.ts` a été mise à jour avec le règlement
-> révisé du 25/09/2026 ; le PDF, lui, est encore la version précédente — il
-> cite le créneau du dimanche, le club partenaire et un dossier de pièces
-> signées. Déposer le PDF révisé sous le même nom suffit à les réaligner :
-> rien d'autre n'est à changer.
+Les deux doivent être remplacés ensemble : le PDF dans `public/`, et la
+transcription de `app/reglement/reglement-content.ts`. Un script de
+comparaison existe pour le vérifier — il extrait le texte du PDF et contrôle
+que **chaque** fragment de la transcription (en-tête, préambule, titre
+d'article, paragraphe, puce) s'y retrouve mot pour mot. La version du
+25/09/2026 révisée a été validée ainsi : 88 fragments sur 88.
 
 ## Email de confirmation d'inscription
 
