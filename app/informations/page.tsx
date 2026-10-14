@@ -3,9 +3,11 @@ import Link from "next/link";
 
 import { PageShell, Section, VitrineFooter } from "@/components/vitrine/page-shell";
 import {
-  CURRENT_SCHEDULE,
-  CURRENT_SCHEDULE_MAPS_URL,
   formatEuros,
+  SCHEDULE_LEVELS,
+  SCHEDULE_LEVELS_LONG,
+  SCHEDULES,
+  scheduleMapsUrl,
 } from "@/lib/constants";
 import { getAssociation, getSiteSettings } from "@/lib/settings";
 
@@ -14,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Informations pratiques — Banat Sport Club",
   description:
-    "Horaire, lieu, tenue, cotisation et fonctionnement des séances de Banat Sport Club, à Montpellier.",
+    "Horaires, lieux, tenue, cotisation et fonctionnement des séances de Banat Sport Club, à Montpellier.",
 };
 
 const TENUE = [
@@ -41,42 +43,59 @@ export default async function InformationsPage() {
       <PageShell
         eyebrow={`Saison ${season}`}
         title="Informations pratiques"
-        intro="L’horaire, le lieu, la tenue à prévoir et le fonctionnement des séances."
+        intro="Les horaires, les lieux, la tenue à prévoir et le fonctionnement des séances."
       >
-        <Section title="Le créneau">
+        <Section title="Les créneaux">
           <p>
-            Un créneau au Complexe sportif des Garrigues, pour se dépenser
-            entre filles et entre amies. Une séance par semaine, toujours avec
-            le même groupe.
+            {SCHEDULE_LEVELS_LONG}, deux créneaux cette saison. La même
+            adhésion donne accès aux deux : votre fille vient à l’un, à
+            l’autre, ou aux deux.
           </p>
-          <div className="max-w-md rounded-2xl border border-brand-light/50 bg-white p-5">
-            <p className="text-lg font-extrabold uppercase tracking-tight text-brand-dark">
-              {CURRENT_SCHEDULE.day}
-            </p>
-            <p className="mt-1 text-xl font-bold text-brand">
-              {CURRENT_SCHEDULE.time}
-            </p>
-            <p className="mt-1 text-sm text-brand-dark/70">
-              Accueil dès {CURRENT_SCHEDULE.arrival} · départ jusqu’à{" "}
-              {CURRENT_SCHEDULE.departure}
-            </p>
-            <p className="mt-2 inline-flex rounded-full bg-brand-light/25 px-3 py-1 text-sm font-bold text-brand-dark">
-              Pour les {CURRENT_SCHEDULE.levels}
-            </p>
-            <p className="mt-3 font-semibold text-brand-dark">
-              {CURRENT_SCHEDULE.place}
-            </p>
-            <a
-              href={CURRENT_SCHEDULE_MAPS_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 inline-block text-sm text-brand underline"
-            >
-              {CURRENT_SCHEDULE.address} — itinéraire
-            </a>
-            <p className="mt-3 text-sm text-brand-dark/70">
-              Plus de 200 m² de tatamis, en salle.
-            </p>
+          <div className="grid gap-4 pt-2 sm:grid-cols-2">
+            {SCHEDULES.map((creneau) => (
+              <div
+                key={creneau.group}
+                className="rounded-2xl border border-brand-light/50 bg-white p-5"
+              >
+                <p className="flex flex-wrap items-center gap-2">
+                  <span className="text-lg font-extrabold uppercase tracking-tight text-brand-dark">
+                    {creneau.day}
+                  </span>
+                  {creneau.isNew && (
+                    <span className="rounded-full bg-brand px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wide text-white">
+                      Nouveau
+                    </span>
+                  )}
+                </p>
+                <p className="mt-1 text-xl font-bold text-brand">{creneau.time}</p>
+                {creneau.arrival && creneau.departure && (
+                  <p className="mt-1 text-sm text-brand-dark/70">
+                    Arrivée dès {creneau.arrival} · départ à {creneau.departure}
+                  </p>
+                )}
+                {creneau.note && (
+                  <p className="mt-1 text-sm text-brand-dark/70">{creneau.note}</p>
+                )}
+                <p className="mt-2 inline-flex rounded-full bg-brand-light/25 px-3 py-1 text-sm font-bold text-brand-dark">
+                  Pour les {SCHEDULE_LEVELS}
+                </p>
+                <p className="mt-3 font-semibold text-brand-dark">{creneau.place}</p>
+                <a
+                  href={scheduleMapsUrl(creneau)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block text-sm text-brand underline"
+                >
+                  {creneau.address} — itinéraire
+                </a>
+                <p className="mt-3 text-sm text-brand-dark/70">{creneau.venue}.</p>
+                {creneau.partner && (
+                  <p className="mt-1 text-sm font-semibold text-brand-dark/80">
+                    {creneau.partner}.
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
           <p>
             Une question ou une situation particulière ? Contactez-nous
@@ -94,9 +113,10 @@ export default async function InformationsPage() {
             .
           </p>
           <p className="text-sm text-brand-dark/70">
-            Les séances régulières ont lieu jusqu’au 20 juin 2027, hors vacances
-            scolaires. Des activités ponctuelles peuvent être proposées pendant
-            les vacances.
+            Les séances régulières ont lieu jusqu’au 20 juin 2027, hors
+            vacances scolaires. Des activités ponctuelles peuvent être proposées
+            pendant les vacances. Les jours de compétition, une séance peut être
+            décalée — vous en êtes prévenus à l’avance.
           </p>
         </Section>
 

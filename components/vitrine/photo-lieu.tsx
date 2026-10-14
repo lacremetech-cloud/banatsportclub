@@ -11,9 +11,9 @@
  * `public/videos/README.md`). Un lieu vide ne pose jamais cette question et ne
  * met en scène personne qui n'aurait pas dit oui.
  *
- * Il y avait ici une seconde variante, une pelouse, pour le créneau du
- * dimanche à Grabels. Le club n'ouvre plus qu'un créneau au public : elle est
- * partie avec lui — git la garde si l'extérieur rouvre un jour.
+ * Le dojo vient d'une photo fournie par le club ; la grande salle est
+ * recadrée depuis l'affiche du nouveau créneau. Elle est donc moins définie —
+ * la photo d'origine, si elle existe, donnerait mieux.
  *
  * Les fichiers sont importés plutôt que référencés par leur chemin : Next lit
  * alors leurs dimensions à la compilation, réserve la place exacte de l'image —
@@ -23,8 +23,9 @@
 import Image from "next/image";
 
 import dojo from "@/public/photos/dojo-tatamis.webp";
+import palais from "@/public/photos/palais-des-sports.webp";
 
-export type LieuVariant = "dojo";
+export type LieuVariant = "dojo" | "palais";
 
 /**
  * Les textes alternatifs décrivent ce que montre la photo, sans prétendre que
@@ -43,6 +44,13 @@ const PHOTOS: Record<
     // d'ancrage pour que ce soient les tatamis — ce qu'on vient voir — qui
     // occupent l'image, avec juste assez de miroirs pour donner l'échelle.
     position: "object-[50%_85%]",
+  },
+  palais: {
+    src: palais,
+    alt: "La grande salle du Palais des Sports : parquet, buts de handball et gradins bleus.",
+    // Déjà une bande large : il n'y a rien à aller chercher plus haut ou plus
+    // bas, le centre tient toute la salle.
+    position: "object-center",
   },
 };
 

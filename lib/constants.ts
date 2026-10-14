@@ -8,14 +8,17 @@
  */
 
 /**
- * Données techniques des groupes. L'affichage vient des settings, sauf pour le
- * créneau public : voir `CURRENT_SCHEDULE`.
+ * Données techniques des groupes. L'affichage public vient de `SCHEDULES`.
  *
- * Le club n'ouvre plus qu'un créneau au public, le jeudi, et il accueille
- * toutes les classes. `dimanche` reste déclaré parce que des adhérentes, des
- * séances et des présences y sont rattachées en base : le supprimer casserait
- * la relecture de l'historique et les exports. Il n'est simplement plus
- * proposé nulle part côté public — voir `PUBLIC_GROUP`.
+ * Les deux créneaux accueillent toutes les classes, de la 6e à la Terminale,
+ * et la même adhésion donne accès aux deux : une adhérente peut venir au
+ * jeudi, au dimanche, ou aux deux.
+ *
+ * Le dimanche a changé de lieu et d'horaire en cours de saison — il se tenait
+ * à Grabels jusqu'à 12h30, il se tient désormais au Palais des Sports Pierre
+ * de Coubertin jusqu'à 12h00. Ces heures ne servent qu'à créer les NOUVELLES
+ * séances : celles déjà enregistrées gardent les leurs, et l'historique reste
+ * lisible.
  */
 export const GROUPS = {
   jeudi: {
@@ -28,20 +31,21 @@ export const GROUPS = {
   dimanche: {
     weekday: 0,
     startTime: "10:30",
-    endTime: "12:30",
-    levels: ["3e", "2nde", "1ere", "terminale"],
+    endTime: "12:00",
+    levels: ["6e", "5e", "4e", "3e", "2nde", "1ere", "terminale"],
   },
 } as const;
 
 /**
- * Le seul créneau ouvert au public.
+ * Le groupe auquel une inscription venue du site est rattachée.
  *
- * Toute inscription venant du site y est rattachée sans que la famille ait à
- * choisir : il n'y a rien à choisir. Le dimanche existe encore en base et dans
- * l'espace bureau — c'est une solution de repli interne — mais aucun parcours
- * public ne doit y conduire ni le mentionner.
+ * La famille n'a toujours rien à choisir, mais pour une autre raison qu'avant :
+ * l'adhésion donne accès aux DEUX créneaux. Le groupe porté par la fiche n'est
+ * donc qu'un rattachement par défaut, celui du créneau historique ; l'espace
+ * bureau peut le changer, et il ne commande en rien le droit de venir à
+ * l'autre séance.
  */
-export const PUBLIC_GROUP = "jeudi" as const;
+export const DEFAULT_GROUP = "jeudi" as const;
 
 export type GroupName = keyof typeof GROUPS;
 export const GROUP_NAMES = Object.keys(GROUPS) as GroupName[];
@@ -300,11 +304,11 @@ export const DEFAULT_GROUP_DISPLAY: Record<
   },
   dimanche: {
     day: "Dimanche matin",
-    levels: "3e à Terminale",
-    time: "10h30 – 12h30",
-    place: "Stade Serge Oltra — Grabels",
-    address: "Rue du Mas d'Armand, 34790 Grabels",
-    shortLabel: "Dimanche matin — Stade Grabels",
+    levels: "6e à Terminale",
+    time: "10h30 – 12h00",
+    place: "Palais des Sports Pierre de Coubertin",
+    address: "25 rue de Gênes, 34080 Montpellier",
+    shortLabel: "Dimanche matin — Palais des Sports",
   },
 };
 
@@ -325,48 +329,84 @@ export function mapsUrl(place: string, address: string): string {
 }
 
 /**
- * LE CRÉNEAU — ce que le site public dit des séances.
+ * LES CRÉNEAUX — ce que le site public dit des séances.
  *
- * Ces valeurs ne viennent volontairement pas de la table `settings` : le
- * formulaire de réglages n'expose aucun champ de créneau, si bien qu'elles
- * n'étaient modifiables que par une écriture SQL directe. Une ligne périmée en
- * base aurait alors silencieusement supplanté le code — c'est exactement ce
- * qui s'est produit, la page annonçant « 6e à 4e » le jeudi bien après que le
- * créneau ait été ouvert à toutes les classes.
+ * Source de vérité unique : l'accueil, la page « Informations pratiques », les
+ * conditions d'adhésion et les métadonnées lisent ce tableau et rien d'autre.
+ * Ces informations étaient autrefois recopiées dans quatre fichiers, ce qui
+ * garantissait qu'un changement d'horaire en oublie un.
  *
- * Les libellés courts du CRM restent dans `DEFAULT_GROUP_DISPLAY` : l'espace
- * bureau gère les deux groupes, l'historique compris.
+ * Elles ne viennent volontairement pas de la table `settings` : le formulaire
+ * de réglages n'expose aucun champ de créneau, si bien qu'une ligne périmée en
+ * base supplantait silencieusement le code — c'est ainsi que la page a
+ * longtemps annoncé « 6e à 4e » le jeudi.
+ *
+ * L'ordre du tableau est l'ordre d'affichage : le jeudi d'abord, parce qu'il
+ * existe depuis le début de la saison.
  */
-export const CURRENT_SCHEDULE = {
-  group: PUBLIC_GROUP,
-  /** Pastille posée sur la photo. */
-  badge: "Jeudi",
-  /** Surtitre de la carte. */
-  heading: "Chaque jeudi soir",
-  day: "Jeudi soir",
-  time: "18h00 – 19h30",
-  levels: "6e à Terminale",
-  /** Même information, quand la phrase ne porte pas déjà « pour ». */
-  levelsLong: "De la 6e à la Terminale",
-  /** Arrivée et départ : une séance n'est pas une porte qui claque. */
-  arrival: "17h45",
-  departure: "19h45",
-  place: "Complexe sportif des Garrigues",
-  address: "145 avenue du Comté de Nice, Montpellier",
-  city: "Montpellier",
-  district: "Les Hauts de Massane",
-  /** Ce que le lieu a de particulier, en une ligne. */
-  venue: "Dojo de plus de 200 m² de tatamis",
-  /** La même chose, quand il y a la place de dire pourquoi c'est bien. */
-  venueLong:
-    "Plus de 200 m² de tatamis, en salle : de la place pour bouger, jouer au ballon, tomber sans se faire mal et profiter pleinement de la séance.",
-} as const;
+export const SCHEDULES = [
+  {
+    group: "jeudi",
+    /** Pastille posée sur la photo. */
+    badge: "Jeudi",
+    /** Surtitre de la carte. */
+    heading: "Chaque jeudi soir",
+    day: "Jeudi soir",
+    time: "18h00 – 19h30",
+    /** Arrivée et départ : une séance n'est pas une porte qui claque. */
+    arrival: "17h45",
+    departure: "19h45",
+    place: "Complexe sportif des Garrigues",
+    address: "145 avenue du Comté de Nice, Montpellier",
+    district: "Les Hauts de Massane",
+    /** Ce que le lieu a de particulier, en une ligne. */
+    venue: "Dojo de plus de 200 m² de tatamis",
+    note: null,
+    photo: "dojo",
+    /** Signalé comme nouveau sur la carte, le temps que ça le soit encore. */
+    isNew: false,
+    partner: null,
+  },
+  {
+    group: "dimanche",
+    badge: "Dimanche",
+    heading: "Chaque dimanche matin",
+    day: "Dimanche matin",
+    time: "10h30 – 12h00",
+    arrival: null,
+    departure: null,
+    place: "Palais des Sports Pierre de Coubertin",
+    address: "25 rue de Gênes, 34080 Montpellier",
+    district: "Hauts de Massane",
+    venue: "Grande salle couverte, parquet et gradins",
+    /*
+     * La salle accueille des compétitions. Le dire sur la carte évite le
+     * dimanche matin où une famille se déplace pour une porte fermée — et
+     * occupe, au passage, la place que tient l'horaire d'arrivée en face.
+     */
+    note: "Les jours de compétition, la séance peut être décalée.",
+    photo: "palais",
+    isNew: true,
+    partner: "En partenariat avec MMF",
+  },
+] as const;
 
-/** Itinéraire vers le lieu des séances, dérivé de `CURRENT_SCHEDULE`. */
-export const CURRENT_SCHEDULE_MAPS_URL = mapsUrl(
-  CURRENT_SCHEDULE.place,
-  CURRENT_SCHEDULE.address,
-);
+export type Schedule = (typeof SCHEDULES)[number];
+
+/**
+ * Les classes accueillies, communes aux deux créneaux.
+ *
+ * Elle est sortie des créneaux eux-mêmes pour que la page puisse l'annoncer
+ * une seule fois, au-dessus des deux cartes : répéter « 6e à Terminale » deux
+ * fois laisse croire qu'il y a quelque part une différence.
+ */
+export const SCHEDULE_LEVELS = "6e à Terminale";
+export const SCHEDULE_LEVELS_LONG = "De la 6e à la Terminale";
+
+/** Itinéraire vers un créneau, dérivé de son lieu et de son adresse. */
+export function scheduleMapsUrl(schedule: Schedule): string {
+  return mapsUrl(schedule.place, schedule.address);
+}
 
 export function formatEuros(cents: number): string {
   return new Intl.NumberFormat("fr-FR", {

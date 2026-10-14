@@ -46,7 +46,7 @@ export default async function ConditionsPage() {
         <Section title="Objet">
           <p>
             L’adhésion à {association.name} donne accès aux séances
-            hebdomadaires du créneau attribué, pour la saison {season}. Elle est
+            hebdomadaires des deux créneaux, pour la saison {season}. Elle est
             souscrite par le représentant légal de l’adhérente mineure.
           </p>
         </Section>
