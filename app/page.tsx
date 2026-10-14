@@ -11,9 +11,11 @@ import { PhotoFond, PhotoLieu } from "@/components/vitrine/photo-lieu";
 import "@/components/vitrine/vitrine.css";
 import { ADHESION_URL } from "@/lib/adhesion";
 import {
-  CURRENT_SCHEDULE,
-  CURRENT_SCHEDULE_MAPS_URL,
   formatEurosCompact,
+  SCHEDULE_LEVELS,
+  SCHEDULE_LEVELS_LONG,
+  SCHEDULES,
+  scheduleMapsUrl,
   mapsUrl,
   RENDEZ_VOUS,
   RENDEZ_VOUS_FULL,
@@ -25,7 +27,7 @@ export const dynamic = "force-dynamic";
 
 /** Reprise à l'identique dans la description, l'aperçu social et Twitter. */
 const DESCRIPTION =
-  "Club multisport pour les filles à Montpellier : foot, volley, basket, self-défense, cardio boxe. Un créneau par semaine, dans un cadre bienveillant, sans compétition. Inscriptions ouvertes.";
+  "Club multisport pour les filles à Montpellier, de la 6e à la Terminale : foot, self-défense, volley, cardio boxe, circuit training. Deux créneaux par semaine, le jeudi soir et le dimanche matin, dans un cadre bienveillant et sans compétition. Inscriptions ouvertes.";
 
 export const metadata: Metadata = {
   title: "Banat Sport Club — Enfin un club de sport pensé pour elles",
@@ -132,7 +134,7 @@ const GARANTIES = [
   "Des séances encadrées par une équipe passionnée",
   "Un appel à chaque séance, et un message si votre fille est absente",
   "L’assurance du club",
-  "Un lieu sportif équipé, à Montpellier",
+  "Deux lieux sportifs équipés, à Montpellier",
 ];
 
 const INCLUS = [
@@ -284,42 +286,55 @@ export default async function AccueilPage() {
             )}
 
             {/*
-              Le lieu des séances, posé à droite du titre.
+              Les deux lieux, posés comme deux tirages l'un sur l'autre.
 
-              Il y avait ici deux tirages superposés, un par créneau. Le club
-              n'en ouvre plus qu'un : il ne reste que celui du jeudi, à
-              l'identique.
+              Le club a rouvert un second créneau : le cadre unique redevient
+              une paire, décalée, pour qu'on voie du premier coup d'œil qu'il y
+              a deux rendez-vous et non un seul.
             */}
             <div
               aria-hidden
-              className="pointer-events-none absolute right-6 top-1/2 hidden w-[42%] max-w-lg -translate-y-1/2 xl:right-12 lg:block"
+              className="pointer-events-none absolute right-6 top-1/2 hidden w-[40%] max-w-md -translate-y-1/2 xl:right-12 lg:block"
             >
-              <div className="overflow-hidden rounded-3xl border border-white/20 shadow-2xl shadow-black/40">
-                <div className="relative h-72 overflow-hidden xl:h-80">
-                  <PhotoLieu
-                    variant="dojo"
-                    // Pas de `priority` : ce cadre n'existe qu'à partir de
-                    // `lg`, et le préchargement, lui, ne connaît pas les
-                    // points de rupture — sur téléphone il ferait télécharger
-                    // une image jamais affichée.
-                    sizes="(min-width: 1280px) 32rem, 40vw"
-                    className="bsc-kenburns"
-                  />
-                  <div className="absolute inset-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent p-4">
-                    <span>
-                      <span className="block text-lg font-extrabold uppercase tracking-tight text-white">
-                        {CURRENT_SCHEDULE.day}
+              {SCHEDULES.map((creneau, index) => (
+                <div
+                  key={creneau.group}
+                  className="overflow-hidden rounded-3xl border border-white/20 shadow-2xl shadow-black/40"
+                  style={{
+                    marginTop: index === 0 ? 0 : "-1.25rem",
+                    marginLeft: index === 0 ? 0 : "2.5rem",
+                  }}
+                >
+                  <div className="relative h-48 overflow-hidden xl:h-52">
+                    <PhotoLieu
+                      variant={creneau.photo}
+                      // Pas de `priority` : ces cadres n'existent qu'à partir
+                      // de `lg`, et le préchargement, lui, ne connaît pas les
+                      // points de rupture — sur téléphone il ferait télécharger
+                      // deux images jamais affichées.
+                      sizes="(min-width: 1280px) 28rem, 35vw"
+                      className={
+                        index === 0
+                          ? "bsc-kenburns"
+                          : "bsc-kenburns bsc-kenburns--offset"
+                      }
+                    />
+                    <div className="absolute inset-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/65 to-transparent p-4">
+                      <span>
+                        <span className="block text-lg font-extrabold uppercase tracking-tight text-white">
+                          {creneau.day}
+                        </span>
+                        <span className="mt-0.5 block text-xs font-semibold text-white/75">
+                          {SCHEDULE_LEVELS}
+                        </span>
                       </span>
-                      <span className="mt-0.5 block text-xs font-semibold text-white/75">
-                        {CURRENT_SCHEDULE.levels}
+                      <span className="shrink-0 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-brand-dark">
+                        {creneau.time}
                       </span>
-                    </span>
-                    <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-brand-dark">
-                      {CURRENT_SCHEDULE.time}
-                    </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
 
             <div className="relative mx-auto w-full max-w-6xl px-5 py-20 sm:py-28">
@@ -357,7 +372,7 @@ export default async function AccueilPage() {
                     href="#creneaux"
                     className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/30 px-7 text-base font-semibold text-white transition hover:bg-white/10"
                   >
-                    Voir le créneau
+                    Voir les créneaux
                   </a>
                 </div>
 
@@ -381,7 +396,7 @@ export default async function AccueilPage() {
                   className="mt-10 grid max-w-xl grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-7 sm:grid-cols-3"
                 >
                   {[
-                    { k: "Rendez-vous", v: "Une fois par semaine" },
+                    { k: "Rendez-vous", v: "Jeudi et dimanche" },
                     { k: "Niveau", v: "Débutante ou confirmée" },
                     { k: "Esprit", v: "Loisir et bienveillance" },
                   ].map((item) => (
@@ -395,27 +410,39 @@ export default async function AccueilPage() {
                 </dl>
 
                 {/*
-                  Le tirage du hero est posé à droite du titre, une place qui
-                  n'existe pas sur un téléphone — et c'est sur téléphone que la
-                  page sera surtout lue. Ce rappel en donne un aperçu là où il y
-                  a la place, sous les chiffres.
+                  Les tirages du hero sont posés à droite du titre, une place
+                  qui n'existe pas sur un téléphone — et c'est sur téléphone que
+                  la page sera surtout lue. Ce rappel en donne un aperçu là où
+                  il y a la place, sous les chiffres.
 
-                  Décoratif : le jour et le lieu sont dits en toutes lettres
-                  quelques écrans plus bas. Un lecteur d'écran n'a pas besoin
-                  de les entendre deux fois.
+                  Décoratif : les jours, les heures et les lieux sont dits en
+                  toutes lettres un écran plus bas. Un lecteur d'écran n'a pas
+                  besoin de les entendre deux fois.
                 */}
                 <div
                   aria-hidden
                   data-reveal
                   style={{ ["--bsc-delay" as string]: "320ms" }}
-                  className="relative mt-10 h-44 overflow-hidden rounded-2xl border border-white/20 sm:h-52 lg:hidden"
+                  className="mt-10 grid grid-cols-2 gap-3 lg:hidden"
                 >
-                  <PhotoLieu variant="dojo" sizes="100vw" />
-                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-black/10 to-transparent p-4">
-                    <span className="text-sm font-extrabold uppercase tracking-tight text-white">
-                      {CURRENT_SCHEDULE.day} · {CURRENT_SCHEDULE.time}
-                    </span>
-                  </div>
+                  {SCHEDULES.map((creneau) => (
+                    <div
+                      key={creneau.group}
+                      className="relative h-32 overflow-hidden rounded-2xl border border-white/20 sm:h-40"
+                    >
+                      <PhotoLieu variant={creneau.photo} sizes="45vw" />
+                      <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/75 via-black/10 to-transparent p-3">
+                        <span>
+                          <span className="block text-xs font-extrabold uppercase tracking-tight text-white">
+                            {creneau.day}
+                          </span>
+                          <span className="mt-0.5 block text-[0.7rem] font-semibold text-white/80">
+                            {creneau.time}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -507,112 +534,137 @@ export default async function AccueilPage() {
             </ul>
           </section>
 
-          {/* 4 — Le créneau --------------------------------------------------- */}
+          {/* 4 — Les créneaux ------------------------------------------------- */}
           <section id="creneaux" className="scroll-mt-16 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5">
-              <div data-reveal className="max-w-2xl">
+              <div data-reveal className="max-w-3xl">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-                  Le créneau
+                  Les créneaux
                 </p>
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
-                  Un créneau par semaine, rien que pour elles
+                  Deux créneaux par semaine, rien que pour elles
                 </h2>
+                {/*
+                  Le point à ne pas rater : les deux créneaux ne se partagent
+                  pas les filles par âge ou par niveau. C'est la même adhésion,
+                  et on vient à ce qu'on veut — une fois, deux fois, ou une
+                  semaine sur deux.
+                */}
                 <p className="mt-4 text-lg text-brand-dark/75">
-                  Un créneau au Complexe sportif des Garrigues, pour se dépenser
-                  entre filles et entre amies. Une séance par semaine, toujours
-                  avec le même groupe.
+                  {SCHEDULE_LEVELS_LONG}, le jeudi soir et le dimanche matin.
+                  La même adhésion donne accès aux deux : votre fille vient à
+                  l’un, à l’autre, ou aux deux. Toujours entre filles et entre
+                  amies.
                 </p>
               </div>
 
-              {/*
-                La carte de l'affiche : la photo d'un côté, l'essentiel de
-                l'autre, dans l'ordre où une famille cherche — quand, pour qui,
-                où, dans quoi.
-
-                Pleine largeur : le club n'ouvre plus qu'un créneau, et une
-                carte laissée à mi-largeur donnerait l'impression qu'il en
-                manque une seconde.
-              */}
-              <article
-                data-reveal
-                className="group mt-12 overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:shadow-xl hover:shadow-brand/10 lg:grid lg:grid-cols-[1.25fr_1fr]"
-              >
-                <div className="relative h-64 overflow-hidden sm:h-80 lg:h-full lg:min-h-[27rem]">
-                  <PhotoLieu
-                    variant="dojo"
-                    sizes="(min-width: 1024px) 40rem, 100vw"
-                    className="transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/60 via-transparent to-black/30 p-5">
-                    <span className="self-start rounded-full bg-brand px-4 py-1.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-black/20">
-                      <span aria-hidden>🗓</span> {CURRENT_SCHEDULE.badge}
-                    </span>
-                    <span className="self-start rounded-full bg-white/95 px-4 py-1.5 text-sm text-brand-dark shadow-lg shadow-black/20">
-                      <span aria-hidden>📍</span>{" "}
-                      <strong className="font-bold">{CURRENT_SCHEDULE.city}</strong>
-                      {", "}
-                      {CURRENT_SCHEDULE.district}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-7 sm:p-9 lg:flex lg:flex-col lg:justify-center">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-                    {CURRENT_SCHEDULE.heading}
-                  </p>
-                  <p className="mt-2 text-4xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
-                    {CURRENT_SCHEDULE.time}
-                  </p>
-                  {/*
-                    Une séance n'est pas une porte qui claque : les familles qui
-                    viennent de loin ont besoin de savoir qu'on peut arriver un
-                    peu avant et repartir un peu après.
-                  */}
-                  <p className="mt-2.5 flex items-start gap-2 text-brand-dark/75">
-                    <span aria-hidden className="mt-0.5">🕐</span>
-                    <span>
-                      Arrivée dès{" "}
-                      <strong className="font-bold text-brand-dark">
-                        {CURRENT_SCHEDULE.arrival}
-                      </strong>{" "}
-                      · départ à{" "}
-                      <strong className="font-bold text-brand-dark">
-                        {CURRENT_SCHEDULE.departure}
-                      </strong>
-                    </span>
-                  </p>
-
-                  <p className="mt-6 text-2xl font-extrabold tracking-tight text-brand-dark sm:text-3xl">
-                    {CURRENT_SCHEDULE.levelsLong}
-                  </p>
-
-                  <div className="mt-6 space-y-4">
-                    <p className="flex items-start gap-3">
-                      <span aria-hidden className="mt-0.5">📍</span>
-                      <span>
-                        <span className="block font-bold text-brand-dark">
-                          {CURRENT_SCHEDULE.place}
+              <div className="mt-12 grid gap-6 lg:grid-cols-2">
+                {SCHEDULES.map((creneau, index) => (
+                  <article
+                    key={creneau.group}
+                    data-reveal
+                    style={{ ["--bsc-delay" as string]: `${index * 120}ms` }}
+                    className="group flex flex-col overflow-hidden rounded-3xl border border-brand-light/50 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-brand/10"
+                  >
+                    <div className="relative h-48 overflow-hidden sm:h-56">
+                      <PhotoLieu
+                        variant={creneau.photo}
+                        sizes="(min-width: 1024px) 34rem, 100vw"
+                        className="transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/70 via-transparent to-black/40 p-5">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-black/20">
+                            {creneau.badge}
+                          </span>
+                          {creneau.isNew && (
+                            <span className="rounded-full bg-white px-3.5 py-1.5 text-sm font-extrabold uppercase tracking-wide text-brand-dark shadow-lg shadow-black/20">
+                              Nouveau
+                            </span>
+                          )}
                         </span>
-                        <a
-                          href={CURRENT_SCHEDULE_MAPS_URL}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
-                        >
-                          {CURRENT_SCHEDULE.address} — itinéraire
-                        </a>
-                      </span>
-                    </p>
-                    <p className="flex items-start gap-3 font-medium text-brand-dark/85">
-                      <span aria-hidden className="mt-0.5">🥋</span>
-                      <span>{CURRENT_SCHEDULE.venue}</span>
-                    </p>
-                  </div>
-                </div>
-              </article>
+                        <span className="self-start rounded-full bg-white/95 px-4 py-1.5 text-sm text-brand-dark">
+                          <span aria-hidden>📍</span>{" "}
+                          <strong className="font-bold">Montpellier</strong>
+                          {", "}
+                          {creneau.district}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-6 sm:p-7">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
+                        {creneau.heading}
+                      </p>
+                      <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-dark sm:text-4xl">
+                        {creneau.time}
+                      </p>
+                      {/*
+                        Une séance n'est pas une porte qui claque. Le dimanche
+                        n'a pas encore d'horaire d'accueil annoncé : on
+                        n'invente pas la ligne, on l'omet.
+                      */}
+                      {creneau.arrival && creneau.departure && (
+                        <p className="mt-2 flex items-start gap-2 text-sm text-brand-dark/75">
+                          <span aria-hidden className="mt-0.5">🕐</span>
+                          <span>
+                            Arrivée dès{" "}
+                            <strong className="font-bold text-brand-dark">
+                              {creneau.arrival}
+                            </strong>{" "}
+                            · départ à{" "}
+                            <strong className="font-bold text-brand-dark">
+                              {creneau.departure}
+                            </strong>
+                          </span>
+                        </p>
+                      )}
+                      {creneau.note && (
+                        <p className="mt-2 flex items-start gap-2 text-sm text-brand-dark/75">
+                          <span aria-hidden className="mt-0.5">🗓</span>
+                          <span>{creneau.note}</span>
+                        </p>
+                      )}
+
+                      <p className="mt-5 inline-flex self-start rounded-full bg-brand-light/25 px-3.5 py-1.5 text-sm font-bold text-brand-dark">
+                        Pour les {SCHEDULE_LEVELS}
+                      </p>
+
+                      <div className="mt-5 space-y-3 border-t border-brand-light/40 pt-5">
+                        <p className="flex items-start gap-3">
+                          <span aria-hidden className="mt-0.5">📍</span>
+                          <span>
+                            <span className="block font-bold text-brand-dark">
+                              {creneau.place}
+                            </span>
+                            <a
+                              href={scheduleMapsUrl(creneau)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+                            >
+                              {creneau.address} — itinéraire
+                            </a>
+                          </span>
+                        </p>
+                        <p className="flex items-start gap-3 text-brand-dark/80">
+                          <span aria-hidden className="mt-0.5">🏟</span>
+                          <span>{creneau.venue}</span>
+                        </p>
+                        {creneau.partner && (
+                          <p className="flex items-start gap-3 font-semibold text-brand-dark">
+                            <span aria-hidden className="mt-0.5">🤝</span>
+                            <span>{creneau.partner}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
 
               {/*
-                Un créneau unique ne veut pas dire un cadre rigide : une
+                Deux créneaux ne veulent pas dire un cadre rigide : une
                 situation particulière se règle par téléphone, pas en
                 renonçant.
               */}

@@ -4,7 +4,7 @@ import {
   ATTENDANCE_STATUSES,
   CONSENT_TYPES,
   GROUP_NAMES,
-  PUBLIC_GROUP,
+  DEFAULT_GROUP,
   INSURANCE_STATUSES,
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
@@ -39,9 +39,9 @@ const groupName = z.enum(GROUP_NAMES as [string, ...string[]]);
 /**
  * Le créneau d'une inscription venue du site.
  *
- * Il n'est plus choisi : le club n'ouvre qu'un créneau au public, et demander
- * de confirmer un choix qui n'existe pas serait une question de plus pour
- * rien. La valeur reçue est remplacée par `PUBLIC_GROUP` plutôt que refusée —
+ * Il n'est plus choisi : l'adhésion donne accès aux deux créneaux, et demander
+ * de choisir entre deux séances auxquelles on peut venir toutes les deux
+ * serait une question de plus pour rien. La valeur reçue est remplacée par `DEFAULT_GROUP` plutôt que refusée —
  * un `groupName` envoyé à la main, `dimanche` compris, ne vient d'aucun
  * parcours que nous proposons.
  *
@@ -49,8 +49,8 @@ const groupName = z.enum(GROUP_NAMES as [string, ...string[]]);
  * à l'autre : c'est un autre schéma, et l'historique reste intact.
  */
 const chosenGroupName = z.preprocess(
-  () => PUBLIC_GROUP,
-  z.literal(PUBLIC_GROUP),
+  () => DEFAULT_GROUP,
+  z.literal(DEFAULT_GROUP),
 ) as unknown as z.ZodType<string>;
 
 // --- Étapes du formulaire d'inscription -----------------------------------

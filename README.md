@@ -4,33 +4,36 @@ Mini-site public, formulaire d'inscription et mini-CRM pour **Banat Sport Club**
 association sportive féminine à Montpellier.
 
 - **Public** : collégiennes et lycéennes, de la 6e à la Terminale
-- **Jeudi soir — 6e à Terminale** : 18h00 – 19h30 (accueil dès 17h45, départ
-  jusqu'à 19h45), Complexe sportif des Garrigues, 145 avenue du Comté de Nice,
-  Montpellier
+- **Jeudi soir** : 18h00 – 19h30 (arrivée dès 17h45, départ à 19h45), Complexe
+  sportif des Garrigues, 145 avenue du Comté de Nice, Montpellier — dojo de
+  plus de 200 m² de tatamis
+- **Dimanche matin** : 10h30 – 12h00, Palais des Sports Pierre de Coubertin,
+  25 rue de Gênes, Montpellier — en partenariat avec MMF
 
-### Un seul créneau public
+### Deux créneaux, une seule adhésion
 
-Le club a ouvert un temps un second créneau le dimanche matin, au Stade Serge
-Oltra à Grabels. Il est devenu une **solution de repli interne** et n'est plus
-proposé au public — ni sur l'accueil, ni dans les pages d'information, ni dans
-les métadonnées, ni dans le parcours d'inscription.
+Les deux créneaux accueillent **toutes les classes, de la 6e à la Terminale**,
+et la même adhésion donne accès aux deux : une adhérente vient au jeudi, au
+dimanche, ou aux deux. Il n'y a ni répartition par âge, ni choix à faire à
+l'inscription.
 
-Il reste en revanche **déclaré dans le code et vivant en base** (`GROUPS`,
-`DEFAULT_GROUP_DISPLAY`, la provision de reversement au club partenaire), parce
-que des adhérentes, des séances et des présences y sont rattachées : le
-supprimer casserait la relecture de l'historique et les exports. L'espace
-bureau continue de le voir.
+Le dimanche a changé de lieu en cours de saison — il se tenait au Stade Serge
+Oltra à Grabels, en extérieur, jusqu'à 12h30. Les séances déjà enregistrées
+gardent leurs heures : seules les NOUVELLES prennent les heures actuelles, et
+l'historique reste lisible.
 
-Deux garde-fous côté public :
+Deux points d'appui :
 
-- `CURRENT_SCHEDULE` (lib/constants.ts) porte ce que le site dit des séances.
-  Ces valeurs ne viennent pas de `settings` : le formulaire de réglages n'expose
-  aucun champ de créneau, si bien qu'une ligne périmée en base supplantait
-  silencieusement le code — c'est ainsi que la page a longtemps annoncé
-  « 6e à 4e » le jeudi.
-- `PUBLIC_GROUP` est le seul groupe qu'une inscription venue du site peut
-  porter. Le schéma de validation le force (`z.preprocess`) : un `groupName`
-  envoyé à la main, `dimanche` compris, est remplacé, pas refusé.
+- `SCHEDULES` (lib/constants.ts) porte ce que le site dit des séances, dans
+  l'ordre d'affichage. Ces valeurs ne viennent pas de `settings` : le
+  formulaire de réglages n'expose aucun champ de créneau, si bien qu'une ligne
+  périmée en base supplantait silencieusement le code — c'est ainsi que la page
+  a longtemps annoncé « 6e à 4e » le jeudi.
+- `DEFAULT_GROUP` est le groupe qu'une inscription venue du site porte par
+  défaut. Le schéma de validation le force (`z.preprocess`) : la famille n'a
+  rien à choisir, puisque l'adhésion couvre les deux créneaux. Le bureau peut
+  changer le rattachement d'une fiche ; il ne commande pas le droit de venir à
+  l'autre séance.
 
 ## Stack
 
@@ -90,7 +93,7 @@ Ce script écrit dans la table `settings` :
 | `season` | `2026-2027` |
 | `annual_fee_cents` | `20000` (200 €) |
 | `group_jeudi_day` / `_levels` / `_time` / `_place` / `_address` | `Jeudi soir` / `6e à 3e` / `18h00 – 19h30` / `Complexe sportif des Garrigues — Haut de Massane` / `145 Av. du Comté de Nice, 34080 Montpellier` |
-| `group_dimanche_day` / `_levels` / `_time` / `_place` / `_address` | Le créneau de repli, affiché dans l'espace bureau uniquement |
+| `group_dimanche_day` / `_levels` / `_time` / `_place` / `_address` | `Dimanche matin` / `6e à Terminale` / `10h30 – 12h00` / `Palais des Sports Pierre de Coubertin` / `25 rue de Gênes, 34080 Montpellier` |
 
 Le tarif et les créneaux affichés sur le site viennent **toujours** de cette
 table, jamais d'une constante recopiée dans un composant (voir
@@ -211,8 +214,8 @@ Trois garanties, tenues par le code :
 
 Le parcours public affiche le nom exact du gymnase et son adresse — un parent
 doit pouvoir trouver la salle. Le CRM affiche un libellé court
-(`group_<clé>_short_label` : « Jeudi soir — Dojo », « Dimanche matin — Stade
-Grabels »), parce que le bureau sait déjà où ont lieu les séances et qu'une
+(`group_<clé>_short_label` : « Jeudi soir — Dojo », « Dimanche matin — Palais
+des Sports »), parce que le bureau sait déjà où ont lieu les séances et qu'une
 adresse répétée sur chaque ligne encombre l'écran.
 
 ## Exports CSV
@@ -286,12 +289,16 @@ doit. En SVG : il reste net en impression grand format.
 Si l'adresse de la collecte change, le QR code doit être régénéré — il n'est pas
 calculé à la volée.
 
-### La photo du lieu
+### Les photos des lieux
 
-Une photo, dans `public/photos/`, illustre le créneau : les tatamis bleus d'un
-dojo. Elle a remplacé les terrains dessinés en SVG, qui finissaient par
-ressembler à des pictogrammes. La pelouse qui illustrait le dimanche est partie
-avec le créneau ; git la garde si l'extérieur rouvre un jour.
+Deux photos, dans `public/photos/`, illustrent les deux créneaux : les tatamis
+bleus du dojo pour le jeudi, la grande salle du Palais des Sports pour le
+dimanche. Elles ont remplacé les terrains dessinés en SVG, qui finissaient par
+ressembler à des pictogrammes.
+
+Celle du Palais des Sports est **recadrée depuis l'affiche du club** : elle est
+donc moins définie que l'autre. La photo d'origine, si elle existe, donnerait
+mieux.
 
 **Aucune personne n'y figure, et c'est une règle.** Le droit à l'image des
 adhérentes se demande famille par famille (voir `public/videos/README.md`) ;
