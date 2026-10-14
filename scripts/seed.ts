@@ -10,7 +10,6 @@ import {
   GROUP_NAMES,
 } from "../lib/constants";
 import {
-  DEFAULT_PARTNER_CLUB_FEE_CENTS,
   DEFAULT_SOLIDARITY_FEE_CENTS,
 } from "../lib/fees";
 import { db, schema } from "../lib/db";
@@ -24,8 +23,6 @@ const SETTINGS: Record<string, string> = {
   annual_fee_cents: String(DEFAULT_ANNUAL_FEE_CENTS),
   // Tarif solidaire accordé au cas par cas par le bureau.
   solidarity_fee_cents: String(DEFAULT_SOLIDARITY_FEE_CENTS),
-  // Reversement prévu par adhérente du dimanche (provision, pas une dépense).
-  partner_club_fee_cents: String(DEFAULT_PARTNER_CLUB_FEE_CENTS),
   // Identité de l'association, modifiable ensuite depuis /admin/parametres.
   club_name: DEFAULT_CLUB_NAME,
   club_email: DEFAULT_CLUB_EMAIL,

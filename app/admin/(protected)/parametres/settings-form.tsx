@@ -61,12 +61,6 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           label="Cotisation solidaire"
           defaultValue={euros(settings.solidarityFeeCents)}
         />
-        <Money
-          name="partnerClubFeeEuros"
-          label="Reversement club partenaire"
-          defaultValue={euros(settings.partnerClubFeeCents)}
-          hint="Par adhérente du dimanche. Provision indicative : aucune dépense n’est créée."
-        />
       </Block>
 
       <Block

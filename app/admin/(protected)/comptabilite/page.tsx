@@ -45,7 +45,6 @@ export default async function ComptabilitePage({
     : "all") as AccountingKind;
 
   const overview = await getAccountingOverview(period, kind);
-  const { partnerClub } = overview;
 
   return (
     <div className="space-y-6">
@@ -80,40 +79,6 @@ export default async function ComptabilitePage({
         <AddEntryForm type="INCOME" />
         <AddEntryForm type="EXPENSE" />
       </div>
-
-      {partnerClub.memberCount > 0 && (
-        <section className="rounded-2xl border-2 border-brand-light/50 bg-brand-light/10 p-5">
-          <h2 className="font-bold text-brand-dark">
-            Reversement club partenaire à prévoir
-          </h2>
-          <p className="mt-2 text-2xl font-bold text-brand-dark">
-            {formatEuros(partnerClub.expectedCents)}
-          </p>
-          <p className="mt-1 text-brand-dark/70">
-            {partnerClub.memberCount} adhérente{partnerClub.memberCount > 1 ? "s" : ""} du
-            dimanche × {formatEuros(partnerClub.feePerMemberCents)}
-          </p>
-          <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
-            <div className="flex gap-2">
-              <dt className="text-brand-dark/60">Déjà reversé</dt>
-              <dd className="font-semibold text-brand-dark">
-                {formatEuros(partnerClub.paidCents)}
-              </dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="text-brand-dark/60">Reste à reverser</dt>
-              <dd className="font-semibold text-brand">
-                {formatEuros(partnerClub.remainingCents)}
-              </dd>
-            </div>
-          </dl>
-          <p className="mt-3 text-sm text-brand-dark/60">
-            Provision indicative : aucune dépense n’est créée automatiquement. Le
-            reversement n’apparaît dans les dépenses que lorsque le bureau le
-            saisit réellement.
-          </p>
-        </section>
-      )}
 
       <nav className="-mx-5 space-y-2 overflow-x-auto px-5">
         <ul className="flex min-w-max gap-2">

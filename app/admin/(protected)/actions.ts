@@ -670,7 +670,6 @@ const settingsSchema = z
       .refine((value) => /^\d{4}-\d{4}$/.test(value), "Saison attendue au format 2026-2027"),
     annualFeeEuros: euros("Cotisation standard"),
     solidarityFeeEuros: euros("Cotisation solidaire"),
-    partnerClubFeeEuros: euros("Reversement club partenaire"),
 
     bankHolder: optionalText(120),
     bankIban: optionalText(60),
@@ -734,7 +733,6 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
     season: v.season,
     annual_fee_cents: String(Math.round(v.annualFeeEuros * 100)),
     solidarity_fee_cents: String(Math.round(v.solidarityFeeEuros * 100)),
-    partner_club_fee_cents: String(Math.round(v.partnerClubFeeEuros * 100)),
     // L'IBAN est stocké en majuscules, espaces conservés : c'est la forme que
     // le bureau relit et recopie.
     bank_holder: v.bankHolder,
