@@ -193,7 +193,7 @@ Sur Vercel, les ajouter dans *Settings → Environment Variables*.
 
 Tout ce qui change d'une saison à l'autre vit dans la table `settings` et se
 modifie depuis `/admin/parametres`, sans redéploiement : saison active, tarif
-standard, tarif solidaire, reversement au club partenaire, coordonnées
+standard, tarif solidaire, coordonnées
 bancaires, nom du club, email du bureau, téléphone du club.
 
 Trois garanties, tenues par le code :
@@ -485,15 +485,22 @@ depuis la Comptabilité** : sa correction reste dans le module Paiements, là o�
 elle a été créée. Les saisies manuelles, elles, se suppriment avec
 confirmation.
 
-### Reversement au club partenaire
+### Plus de provision de reversement
 
-Un encadré affiche le reversement à prévoir pour le groupe du dimanche :
-nombre d'adhérentes non annulées × `settings.partner_club_fee_cents` (50 €).
+La Comptabilité affichait un encadré « Reversement club partenaire à prévoir » :
+nombre d'adhérentes du dimanche × un montant par adhérente. Cette provision
+datait de la licence loisir au Football Club de Grabels, qui n'existe plus — ni
+dans le règlement révisé, ni dans l'organisation du club.
 
-C'est une **provision, pas une dépense**. Rien n'est écrit en base et aucune
-dépense n'est créée automatiquement. « À prévoir : 1 500 € » et « déjà reversé :
-500 € » sont deux chiffres distincts, et le second ne bouge que lorsque le
-bureau saisit un reversement réel.
+Elle est retirée : l'adhésion est la même pour les deux créneaux, et rien n'est
+dû à personne par adhérente. La catégorie de dépense « Reversement club
+partenaire » reste disponible dans le formulaire de saisie, pour que les
+écritures passées restent lisibles et qu'un reversement réel puisse toujours
+être noté.
+
+La clé `settings.partner_club_fee_cents` n'est plus lue. Elle est laissée en
+base plutôt que supprimée : plus rien ne s'en sert, et une suppression ne
+gagnerait rien.
 
 ## Archives et corbeille
 

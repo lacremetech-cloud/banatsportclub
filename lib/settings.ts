@@ -13,7 +13,6 @@ import {
 } from "./constants";
 import { db, schema } from "./db";
 import {
-  DEFAULT_PARTNER_CLUB_FEE_CENTS,
   DEFAULT_SOLIDARITY_FEE_CENTS,
   type FeeType,
 } from "./fees";
@@ -117,15 +116,6 @@ export async function getFeeScale(): Promise<FeeScale> {
   };
 }
 
-/** Reversement prévu pour chaque adhérente du groupe du dimanche. */
-export async function getPartnerClubFeeCents(): Promise<number> {
-  return readCents(
-    await getSettings(),
-    "partner_club_fee_cents",
-    DEFAULT_PARTNER_CLUB_FEE_CENTS,
-  );
-}
-
 /**
  * Tout ce dont une page publique a besoin, en une seule lecture.
  * Saison, tarif et créneaux viennent de la base : aucun composant ne les
@@ -224,7 +214,6 @@ export type AdminSettings = {
   season: string;
   annualFeeCents: number;
   solidarityFeeCents: number;
-  partnerClubFeeCents: number;
   bank: BankDetails;
   association: Association;
 };
@@ -238,11 +227,6 @@ export async function getAdminSettings(): Promise<AdminSettings> {
       settings,
       "solidarity_fee_cents",
       DEFAULT_SOLIDARITY_FEE_CENTS,
-    ),
-    partnerClubFeeCents: readCents(
-      settings,
-      "partner_club_fee_cents",
-      DEFAULT_PARTNER_CLUB_FEE_CENTS,
     ),
     bank: {
       holder: settings.bank_holder?.trim() || null,

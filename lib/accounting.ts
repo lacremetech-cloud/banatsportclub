@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 
 import { db, schema } from "./db";
-import { getPartnerClubFeeCents, getSiteSettings } from "./settings";
+import { getSiteSettings } from "./settings";
 
 /**
  * Suivi de trésorerie de l'association.
@@ -71,25 +71,7 @@ export type AccountingOverview = {
   expenseCents: number;
   balanceCents: number;
   movements: Movement[];
-  partnerClub: PartnerClubProvision;
 };
-
-/**
- * Provision de reversement au club partenaire.
- *
- * C'est une INFORMATION, pas une dépense : rien n'est écrit en base. Tant que
- * le bureau n'a pas saisi de reversement réel, « à prévoir » et « déjà versé »
- * restent deux chiffres différents, et c'est exactement le but.
- */
-export type PartnerClubProvision = {
-  memberCount: number;
-  feePerMemberCents: number;
-  expectedCents: number;
-  paidCents: number;
-  remainingCents: number;
-};
-
-export const PARTNER_CLUB_CATEGORY = "Reversement club partenaire";
 
 /** Premier jour du mois en cours, au format AAAA-MM-JJ. */
 function firstDayOfMonth(): string {
@@ -101,46 +83,6 @@ function firstDayOfMonth(): string {
 /** Une date Postgres (`date`) ou un timestamp, ramenés à AAAA-MM-JJ. */
 function isoDay(value: string | Date): string {
   return typeof value === "string" ? value.slice(0, 10) : value.toISOString().slice(0, 10);
-}
-
-async function getPartnerClubProvision(season: string): Promise<PartnerClubProvision> {
-  const feePerMemberCents = await getPartnerClubFeeCents();
-
-  const [members] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.members)
-    .where(
-      and(
-        eq(schema.members.season, season),
-        eq(schema.members.groupName, "dimanche"),
-        sql`${schema.members.registrationStatus} <> 'CANCELLED'`,
-      ),
-    );
-
-  const [paid] = await db
-    .select({
-      total: sql<number>`coalesce(sum(${schema.accountingEntries.amountCents}), 0)::int`,
-    })
-    .from(schema.accountingEntries)
-    .where(
-      and(
-        eq(schema.accountingEntries.season, season),
-        eq(schema.accountingEntries.type, "EXPENSE"),
-        eq(schema.accountingEntries.category, PARTNER_CLUB_CATEGORY),
-      ),
-    );
-
-  const memberCount = Number(members?.count ?? 0);
-  const expectedCents = memberCount * feePerMemberCents;
-  const paidCents = Number(paid?.total ?? 0);
-
-  return {
-    memberCount,
-    feePerMemberCents,
-    expectedCents,
-    paidCents,
-    remainingCents: Math.max(expectedCents - paidCents, 0),
-  };
 }
 
 export async function getAccountingOverview(
@@ -166,7 +108,7 @@ export async function getAccountingOverview(
     entryConditions.push(gte(schema.accountingEntries.entryDate, from));
   }
 
-  const [paymentRows, entryRows, partnerClub] = await Promise.all([
+  const [paymentRows, entryRows] = await Promise.all([
     db
       .select({
         id: schema.payments.id,
@@ -190,7 +132,6 @@ export async function getAccountingOverview(
       .from(schema.accountingEntries)
       .where(entryConditions.length > 0 ? and(...entryConditions) : undefined)
       .orderBy(desc(schema.accountingEntries.entryDate)),
-    getPartnerClubProvision(season),
   ]);
 
   const movements: Movement[] = [
@@ -248,7 +189,6 @@ export async function getAccountingOverview(
     expenseCents,
     balanceCents: incomeCents - expenseCents,
     movements: visible,
-    partnerClub,
   };
 }
 

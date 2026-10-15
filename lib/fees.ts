@@ -25,8 +25,6 @@ export const FEE_TYPE_LABELS: Record<FeeType, string> = {
 /** Tarif solidaire par défaut, si la clé manque dans `settings`. */
 export const DEFAULT_SOLIDARITY_FEE_CENTS = 10000;
 
-/** Reversement prévu par adhérente du dimanche, si la clé manque. */
-export const DEFAULT_PARTNER_CLUB_FEE_CENTS = 5000;
 
 /**
  * Échéanciers.
